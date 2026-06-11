@@ -70,7 +70,7 @@ def generate_frame_times(duration_seconds: float, interval_seconds: float = DEFA
 def format_frame_filename(time_seconds: float) -> str:
     if time_seconds < 0:
         raise FrameExtractorError("time_secondsは0以上の値を指定してください。")
-    return f"{round(time_seconds):06d}.jpg"
+    return f"{int(time_seconds * 1000):09d}.jpg"
 
 
 def _run_ffmpeg_extract_frame(video_path: str, time_seconds: float, image_path: Path) -> None:

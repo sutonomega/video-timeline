@@ -31,10 +31,11 @@ class FrameExtractorTest(unittest.TestCase):
         with self.assertRaisesRegex(FrameExtractorError, "interval_seconds"):
             generate_frame_times(10.0, 0.0)
 
-    def test_format_frame_filename_uses_seconds(self):
-        self.assertEqual(format_frame_filename(0.0), "000000.jpg")
-        self.assertEqual(format_frame_filename(10.0), "000010.jpg")
-        self.assertEqual(format_frame_filename(120.4), "000120.jpg")
+    def test_format_frame_filename_uses_milliseconds(self):
+        self.assertEqual(format_frame_filename(0.0), "000000000.jpg")
+        self.assertEqual(format_frame_filename(10.0), "000010000.jpg")
+        self.assertEqual(format_frame_filename(120.4), "000120400.jpg")
+        self.assertEqual(format_frame_filename(2.5), "000002500.jpg")
 
     def test_extract_frames_runs_ffmpeg_for_each_time(self):
         metadata = VideoMetadata(
@@ -53,7 +54,10 @@ class FrameExtractorTest(unittest.TestCase):
 
         self.assertEqual([frame.time_seconds for frame in frames], [0.0, 10.0, 20.0])
         self.assertEqual([frame.index for frame in frames], [0, 1, 2])
-        self.assertEqual([Path(frame.image).name for frame in frames], ["000000.jpg", "000010.jpg", "000020.jpg"])
+        self.assertEqual(
+            [Path(frame.image).name for frame in frames],
+            ["000000000.jpg", "000010000.jpg", "000020000.jpg"],
+        )
         self.assertEqual(run.call_count, 3)
         first_command = run.call_args_list[0].args[0]
         self.assertEqual(first_command[:2], ["ffmpeg", "-y"])
