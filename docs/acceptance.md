@@ -28,7 +28,7 @@ ffmpeg -y -f lavfi -i testsrc=size=640x360:rate=1:duration=2 -vf drawtext=text='
 ## 実行コマンド
 
 ```bash
-PYTHONPATH=/home/codex/work_git/video-timeline/src python3 -m video_timeline.cli sample.mp4 --output timeline.json --frames-dir frames
+PYTHONPATH=src python3 -m video_timeline.cli sample.mp4 --output timeline.json --frames-dir frames
 ```
 
 実行結果:

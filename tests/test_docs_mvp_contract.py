@@ -65,7 +65,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("docs/acceptance.md", readme)
         self.assertIn("[x] 短い検証用MP4とOllamaでのMVP受け入れ確認", roadmap)
         self.assertIn("qwen2.5vl:7b", acceptance)
-        self.assertIn("PYTHONPATH=/home/codex/work_git/video-timeline/src python3 -m video_timeline.cli", acceptance)
+        self.assertIn("PYTHONPATH=src python3 -m video_timeline.cli", acceptance)
 
 
 if __name__ == "__main__":
