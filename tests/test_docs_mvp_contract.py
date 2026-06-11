@@ -13,6 +13,9 @@ class DocsMvpContractTest(unittest.TestCase):
             "video-timeline input.mp4 --output timeline.json",
             "`input`",
             "`--output`",
+            "`--interval-seconds`",
+            "`--frames-dir`",
+            "`--vl-provider`",
             "`version`",
             "`generated_at`",
             "`video.path`",
@@ -21,11 +24,10 @@ class DocsMvpContractTest(unittest.TestCase):
             "`video.frame_count`",
             "`video.width`",
             "`video.height`",
-            "`scenes[].index`",
-            "`scenes[].start_seconds`",
-            "`scenes[].end_seconds`",
-            "`scenes[].duration_seconds`",
-            "`scenes[].label`",
+            "`frame_summaries[].index`",
+            "`frame_summaries[].time_seconds`",
+            "`frame_summaries[].image`",
+            "`frame_summaries[].summary`",
         ]
 
         missing_terms = [term for term in required_terms if term not in text]

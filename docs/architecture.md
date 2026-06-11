@@ -6,10 +6,12 @@ Input
 - Video File
 
 Analysis
-- Scene Detection
-- Event Detection
+- Frame Extraction
+- Frame Summary
+- Summary Grouping
 
 Output
+- Frame Summary JSON
 - Timeline
 
 Storage
@@ -18,6 +20,6 @@ Storage
 
 Main Modules
 - video_loader
-- scene_detector
-- event_detector
+- frame_extractor
+- frame_summarizer
 - timeline_generator
