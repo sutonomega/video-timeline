@@ -12,6 +12,7 @@ Turn video scenes into structured timeline logs that can be used for review, com
 - Fixed-interval frame extraction
 - VL frame summarization with Ollama
 - Timeline grouping from frame summaries
+- Event candidate generation from timeline segments
 - JSON export
 
 ## Usage

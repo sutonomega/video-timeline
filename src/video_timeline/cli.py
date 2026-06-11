@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 import sys
 
+from .event_detector import detect_events
 from .frame_extractor import DEFAULT_INTERVAL_SECONDS, extract_frames
 from .frame_summarizer import (
     AnalysisMetadata,
@@ -35,11 +36,13 @@ def run(args: argparse.Namespace) -> Path:
     frames = extract_frames(video, frames_dir=args.frames_dir, interval_seconds=args.interval_seconds)
     frame_summaries = summarize_frames_with_ollama(frames, model=DEFAULT_VL_MODEL)
     timeline = build_timeline(frame_summaries, video)
+    events = detect_events(timeline)
     document = build_frame_summary_document(
         video=video,
         analysis=AnalysisMetadata(interval_seconds=args.interval_seconds),
         frame_summaries=frame_summaries,
         timeline=timeline,
+        events=events,
     )
     output_path = Path(args.output)
     save_frame_summary_json(document, output_path)

@@ -75,6 +75,14 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("end_seconds", architecture)
         self.assertIn("frame_indices", architecture)
 
+    def test_architecture_defines_event_detector_contract(self):
+        architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+
+        self.assertIn("event_detector", architecture)
+        self.assertIn("events", architecture)
+        self.assertIn("timeline_index", architecture)
+        self.assertIn("activity", architecture)
+
 
 if __name__ == "__main__":
     unittest.main()

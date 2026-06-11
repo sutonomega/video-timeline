@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from video_timeline.cli import main
+from video_timeline.event_detector import EventCandidate
 from video_timeline.frame_extractor import ExtractedFrame
 from video_timeline.frame_summarizer import FrameSummary
 from video_timeline.timeline_generator import TimelineEntry
@@ -44,6 +45,15 @@ class CliTest(unittest.TestCase):
                 frame_indices=[0],
             )
         ]
+        events = [
+            EventCandidate(
+                kind="activity",
+                start_seconds=0.0,
+                end_seconds=12.5,
+                summary="ChatGPTで仕様相談をしている",
+                timeline_index=0,
+            )
+        ]
 
         with TemporaryDirectory() as directory:
             output_path = Path(directory) / "timeline.json"
@@ -52,6 +62,7 @@ class CliTest(unittest.TestCase):
                 patch("video_timeline.cli.extract_frames", return_value=frames) as extract,
                 patch("video_timeline.cli.summarize_frames_with_ollama", return_value=summaries) as summarize,
                 patch("video_timeline.cli.build_timeline", return_value=timeline) as build_timeline,
+                patch("video_timeline.cli.detect_events", return_value=events) as detect_events,
             ):
                 with patch("sys.stdout", new_callable=io.StringIO):
                     exit_code = main(
@@ -73,6 +84,7 @@ class CliTest(unittest.TestCase):
         extract.assert_called_once_with(video, frames_dir="custom_frames", interval_seconds=5.0)
         summarize.assert_called_once_with(frames, model="qwen2.5vl:7b")
         build_timeline.assert_called_once_with(summaries, video)
+        detect_events.assert_called_once_with(timeline)
         self.assertEqual(saved["video"]["path"], "/tmp/input.mp4")
         self.assertEqual(saved["analysis"]["interval_seconds"], 5.0)
         self.assertEqual(saved["analysis"]["vl_provider"], "ollama")
@@ -86,6 +98,18 @@ class CliTest(unittest.TestCase):
                     "end_seconds": 12.5,
                     "summary": "ChatGPTで仕様相談をしている",
                     "frame_indices": [0],
+                }
+            ],
+        )
+        self.assertEqual(
+            saved["events"],
+            [
+                {
+                    "kind": "activity",
+                    "start_seconds": 0.0,
+                    "end_seconds": 12.5,
+                    "summary": "ChatGPTで仕様相談をしている",
+                    "timeline_index": 0,
                 }
             ],
         )

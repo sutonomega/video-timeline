@@ -13,6 +13,7 @@ Analysis
 Output
 - Frame Summary JSON
 - Timeline
+- Events
 
 Storage
 - JSON
@@ -23,6 +24,7 @@ Main Modules
 - frame_extractor
 - frame_summarizer
 - timeline_generator
+- event_detector
 
 ## video_loader
 
@@ -62,3 +64,14 @@ Main Modules
 - 最後の区間の`end_seconds`は動画の`duration_seconds`を使う
 
 MVP直後の最小実装では、意味的な類似判定は行わず、正規化した文字列の完全一致だけを同一要約として扱う。embeddingやLLMによる類似要約の統合は後続機能とする。
+
+## event_detector
+
+責務:
+
+- `timeline`を時系列順に読み込む
+- 各タイムライン区間をイベント候補に変換する
+- `kind`、`start_seconds`、`end_seconds`、`summary`、`timeline_index`を持つ`events`を生成する
+- MVP直後の最小実装では`kind`を`activity`に固定する
+
+重要度判定、詳細なイベント種別分類、音声認識やシーン分割との統合は後続機能とする。
