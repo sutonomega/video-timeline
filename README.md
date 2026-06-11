@@ -42,6 +42,6 @@ The MVP scope and completion criteria are defined in [docs/mvp.md](docs/mvp.md).
 
 ## Status
 
-MVP implemented
+MVP accepted with a generated sample MP4 and Ollama.
 
-Real-video acceptance with Ollama is still pending.
+Acceptance details are recorded in [docs/acceptance.md](docs/acceptance.md).

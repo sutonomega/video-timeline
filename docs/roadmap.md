@@ -6,9 +6,10 @@
 - [x] フレーム要約JSON生成（#4）
 - [x] JSON保存（#4）
 - [x] CLI統合（#5）
-- [ ] 実動画とOllamaでのMVP受け入れ確認
+- [x] 短い検証用MP4とOllamaでのMVP受け入れ確認（#13）
 
 MVPの完了条件とCLI仕様は[mvp.md](mvp.md)に定義する。
+受け入れ確認の結果は[acceptance.md](acceptance.md)に記録する。
 
 ## 次
 

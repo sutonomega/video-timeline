@@ -47,9 +47,25 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertEqual(missing_terms, [])
 
     def test_existing_docs_link_to_mvp_spec(self):
-        for relative_path in ["README.md", "docs/roadmap.md", "docs/architecture.md"]:
+        for relative_path in [
+            "README.md",
+            "docs/roadmap.md",
+            "docs/architecture.md",
+            "docs/acceptance.md",
+        ]:
             text = (ROOT / relative_path).read_text(encoding="utf-8")
             self.assertIn("mvp.md", text)
+
+    def test_docs_record_mvp_acceptance(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
+        acceptance = (ROOT / "docs" / "acceptance.md").read_text(encoding="utf-8")
+
+        self.assertIn("MVP accepted", readme)
+        self.assertIn("docs/acceptance.md", readme)
+        self.assertIn("[x] 短い検証用MP4とOllamaでのMVP受け入れ確認", roadmap)
+        self.assertIn("qwen2.5vl:7b", acceptance)
+        self.assertIn("PYTHONPATH=/home/codex/work_git/video-timeline/src python3 -m video_timeline.cli", acceptance)
 
 
 if __name__ == "__main__":
