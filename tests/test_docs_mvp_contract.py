@@ -92,8 +92,11 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("event_detector", architecture)
         self.assertIn("events", architecture)
         self.assertIn("timeline_index", architecture)
+        self.assertIn("importance_score", architecture)
         self.assertIn("activity", architecture)
         self.assertIn("検索UI", architecture)
+        self.assertIn("区間の長さ", architecture)
+        self.assertIn("duration score", architecture)
 
     def test_roadmap_prioritizes_real_video_quality_review_before_event_importance(self):
         roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
@@ -101,6 +104,12 @@ class DocsMvpContractTest(unittest.TestCase):
         quality_review = roadmap.index("実動画でframe_summaryからtimelineまでの品質を確認する")
         event_importance = roadmap.index("イベント重要度判定")
         self.assertLess(quality_review, event_importance)
+
+    def test_roadmap_marks_lightweight_event_importance_done(self):
+        roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
+
+        self.assertIn("[x] イベント候補に軽量な重要度スコアを追加する（#30）", roadmap)
+        self.assertIn("[ ] LLMや分類を使ったイベント重要度判定", roadmap)
 
     def test_quality_review_records_frame_summary_to_timeline_findings(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")

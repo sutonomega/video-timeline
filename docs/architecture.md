@@ -74,7 +74,9 @@ Main Modules
 
 - `timeline`を時系列順に読み込む
 - 各タイムライン区間をイベント候補に変換する
-- `kind`、`start_seconds`、`end_seconds`、`summary`、`timeline_index`を持つ`events`を生成する
+- `kind`、`start_seconds`、`end_seconds`、`summary`、`timeline_index`、`importance_score`を持つ`events`を生成する
 - MVP直後の最小実装では`kind`を`activity`に固定する
 
 現時点では`timeline`と`events`は近い構造だが、後続の検索UIや重要度判定で`kind`を使えるように、イベント候補として別配列に分けて保存する。`coding`、`chat`、`browser`などの詳細分類、重要度判定、音声認識やシーン分割との統合は後続機能とする。
+
+軽量な重要度判定では、外部AIを使わず区間の長さから`importance_score`を計算する。現時点の値は実質的にはduration scoreだが、後続でLLMやイベント種別を加えて重要度として育てるため、出力名は`importance_score`のままにする。スコアは`0.0`から`1.0`の範囲に収める。

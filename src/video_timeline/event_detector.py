@@ -6,6 +6,8 @@ from .timeline_generator import TimelineEntry
 
 
 DEFAULT_EVENT_KIND = "activity"
+IMPORTANCE_DURATION_FULL_SCORE_SECONDS = 60.0
+MIN_IMPORTANCE_SCORE = 0.1
 
 
 @dataclass(frozen=True)
@@ -15,6 +17,7 @@ class EventCandidate:
     end_seconds: float
     summary: str
     timeline_index: int
+    importance_score: float
 
     def to_dict(self) -> dict[str, float | int | str]:
         return {
@@ -23,6 +26,7 @@ class EventCandidate:
             "end_seconds": self.end_seconds,
             "summary": self.summary,
             "timeline_index": self.timeline_index,
+            "importance_score": self.importance_score,
         }
 
 
@@ -37,6 +41,13 @@ def detect_events(timeline: list[TimelineEntry]) -> list[EventCandidate]:
                 end_seconds=entry.end_seconds,
                 summary=entry.summary,
                 timeline_index=timeline_index,
+                importance_score=calculate_importance_score(entry),
             )
         )
     return events
+
+
+def calculate_importance_score(entry: TimelineEntry) -> float:
+    duration_seconds = max(0.0, entry.end_seconds - entry.start_seconds)
+    score = duration_seconds / IMPORTANCE_DURATION_FULL_SCORE_SECONDS
+    return round(min(1.0, max(MIN_IMPORTANCE_SCORE, score)), 2)
