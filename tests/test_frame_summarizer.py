@@ -194,6 +194,7 @@ class FrameSummarizerTest(unittest.TestCase):
                 end_seconds=10.0,
                 summary="仕様相談をしている",
                 timeline_index=0,
+                importance_score=0.17,
             )
         ]
 
@@ -214,6 +215,7 @@ class FrameSummarizerTest(unittest.TestCase):
                     "end_seconds": 10.0,
                     "summary": "仕様相談をしている",
                     "timeline_index": 0,
+                    "importance_score": 0.17,
                 }
             ],
         )

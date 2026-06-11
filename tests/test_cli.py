@@ -75,6 +75,7 @@ class CliTest(unittest.TestCase):
                 end_seconds=12.5,
                 summary="ChatGPTで仕様相談をしている",
                 timeline_index=0,
+                importance_score=0.21,
             )
         ]
 
@@ -141,6 +142,7 @@ class CliTest(unittest.TestCase):
                     "end_seconds": 12.5,
                     "summary": "ChatGPTで仕様相談をしている",
                     "timeline_index": 0,
+                    "importance_score": 0.21,
                 }
             ],
         )
