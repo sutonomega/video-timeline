@@ -70,8 +70,25 @@ MVPではVLプロバイダーとモデルを固定する。
 入力検証:
 
 - ファイルが存在しない場合はエラーにする
+- `mp4`以外の拡張子はMVPではエラーにする
 - 動画として読み込めない場合はエラーにする
 - duration、fps、frame_count、width、heightを取得する
+- メタデータ取得には`ffprobe`を使う
+
+## 動画メタデータ仕様
+
+`video_loader`は入力動画を検証し、後続のフレーム抽出で使うメタデータを返す。
+
+返す項目:
+
+- `path`
+- `duration_seconds`
+- `fps`
+- `frame_count`
+- `width`
+- `height`
+
+MVPでは`mp4`のみ対応する。CLIから入力動画を受け取る処理は、MVP CLI統合のIssueで接続する。
 
 ## 処理仕様
 

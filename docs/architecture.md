@@ -23,3 +23,12 @@ Main Modules
 - frame_extractor
 - frame_summarizer
 - timeline_generator
+
+## video_loader
+
+責務:
+
+- 入力動画ファイルの存在確認
+- MVP対応形式の検証
+- `ffprobe`によるduration、fps、frame_count、width、heightの取得
+- 後続モジュールへ渡す動画メタデータ構造の生成

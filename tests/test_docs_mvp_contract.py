@@ -24,6 +24,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`video.frame_count`",
             "`video.width`",
             "`video.height`",
+            "`ffprobe`",
             "`analysis.interval_seconds`",
             "`analysis.vl_provider`",
             "`analysis.vl_model`",
