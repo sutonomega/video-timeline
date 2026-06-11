@@ -10,7 +10,7 @@ class DocsMvpContractTest(unittest.TestCase):
         text = (ROOT / "docs" / "mvp.md").read_text(encoding="utf-8")
 
         required_terms = [
-            "video-timeline input.mp4 --output timeline.json",
+            "PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json",
             "`input`",
             "`--output`",
             "`--interval-seconds`",
