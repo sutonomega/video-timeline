@@ -108,3 +108,69 @@ PYTHONPATH=src python3 -m video_timeline.cli /tmp/video-timeline-quality/workflo
 - 類似統合の閾値を実データで比較して調整する
 - `timeline` 区間ごとに代表summaryを生成する
 - `events.kind` の分類は、timeline統合品質を改善した後に進める
+
+## 2026-06-11 類似統合閾値の比較
+
+Issue #28 の確認として、Issue #20 で使った3本の検証動画の `frame_summaries` から、完全一致のみの `timeline` と軽量類似統合ありの `timeline` を比較した。
+
+軽量類似統合の閾値:
+
+```text
+SUMMARY_SIMILARITY_THRESHOLD = 0.6
+```
+
+比較結果:
+
+| 検証動画 | 完全一致のみ | 類似統合あり | 判定 |
+| --- | ---: | ---: | --- |
+| `workflow_chat_coding.mp4` | 3区間 | 3区間 | 過統合なし |
+| `browser_docs_pr.mp4` | 3区間 | 3区間 | 過統合なし |
+| `repeated_chat_then_test.mp4` | 3区間 | 2区間 | ChatGPT相談の過分割が改善 |
+
+`workflow_chat_coding.mp4` では、ChatGPT相談、VSCode実装、Terminalテストが別区間のままだった。
+
+`browser_docs_pr.mp4` では、GitHub Issue確認、README編集、PR作成が別区間のままだった。
+
+`repeated_chat_then_test.mp4` では、次の2区間が1つにまとまった。
+
+Before:
+
+```json
+[
+  {
+    "start_seconds": 0.0,
+    "end_seconds": 10.0,
+    "summary": "ユーザーはChatGPTの仕様について議論しているようです。",
+    "frame_indices": [0]
+  },
+  {
+    "start_seconds": 10.0,
+    "end_seconds": 20.0,
+    "summary": "ユーザーはChatGPTの要件について議論しているようです。",
+    "frame_indices": [1]
+  }
+]
+```
+
+After:
+
+```json
+{
+  "start_seconds": 0.0,
+  "end_seconds": 20.0,
+  "summary": "ユーザーはChatGPTの仕様について議論しているようです。",
+  "frame_indices": [0, 1]
+}
+```
+
+判定:
+
+- 閾値 `0.6` は、今回の3本では維持でよい。
+- 明確に異なる作業を結合する過統合は確認されなかった。
+- Issue #20 で見つかったChatGPT相談の過分割は改善した。
+- ただし検証動画は短く、画面上の文字も明確なため、実録画での継続確認は必要。
+
+次に確認したいこと:
+
+- 実際の画面録画で、エディタ操作やブラウザ操作が長く続く場合の統合具合を見る。
+- 閾値を設定値化するかは、実録画で過統合・過分割が見えてから判断する。

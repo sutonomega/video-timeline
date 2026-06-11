@@ -119,7 +119,18 @@ class DocsMvpContractTest(unittest.TestCase):
         roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
 
         self.assertIn("[x] 類似要約の軽量な区間統合（#25）", roadmap)
-        self.assertIn("[ ] 類似統合の閾値を実データで比較する（#28）", roadmap)
+        self.assertIn("[x] 類似統合の閾値を実データで比較する（#28）", roadmap)
+
+    def test_quality_review_records_similarity_threshold_comparison(self):
+        quality_review = (ROOT / "docs" / "quality_review.md").read_text(encoding="utf-8")
+
+        self.assertIn("SUMMARY_SIMILARITY_THRESHOLD = 0.6", quality_review)
+        self.assertIn("完全一致のみ", quality_review)
+        self.assertIn("類似統合あり", quality_review)
+        self.assertIn("workflow_chat_coding.mp4", quality_review)
+        self.assertIn("browser_docs_pr.mp4", quality_review)
+        self.assertIn("repeated_chat_then_test.mp4", quality_review)
+        self.assertIn("閾値 `0.6` は、今回の3本では維持でよい。", quality_review)
 
 
 if __name__ == "__main__":
