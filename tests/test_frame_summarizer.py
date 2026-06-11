@@ -107,6 +107,46 @@ class FrameSummarizerTest(unittest.TestCase):
         )
         self.assertEqual(document["frame_summaries"][0]["summary"], "仕様相談をしている")
 
+    def test_build_frame_summary_document_includes_timeline_when_given(self):
+        class Timeline:
+            def to_dict(self):
+                return {
+                    "start_seconds": 0.0,
+                    "end_seconds": 10.0,
+                    "summary": "仕様相談をしている",
+                    "frame_indices": [0],
+                }
+
+        video = VideoMetadata(
+            path="/tmp/input.mp4",
+            duration_seconds=10.0,
+            fps=30.0,
+            frame_count=300,
+            width=1920,
+            height=1080,
+        )
+        analysis = AnalysisMetadata(interval_seconds=10.0)
+
+        document = build_frame_summary_document(
+            video=video,
+            analysis=analysis,
+            frame_summaries=[],
+            timeline=[Timeline()],
+            generated_at="2026-06-11T00:00:00Z",
+        )
+
+        self.assertEqual(
+            document["timeline"],
+            [
+                {
+                    "start_seconds": 0.0,
+                    "end_seconds": 10.0,
+                    "summary": "仕様相談をしている",
+                    "frame_indices": [0],
+                }
+            ],
+        )
+
     def test_save_frame_summary_json_writes_utf8_json(self):
         document = {
             "version": 1,

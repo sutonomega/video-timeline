@@ -12,6 +12,7 @@ from .frame_summarizer import (
     save_frame_summary_json,
     summarize_frames_with_ollama,
 )
+from .timeline_generator import build_timeline
 from .video_loader import load_video_metadata
 
 
@@ -33,10 +34,12 @@ def run(args: argparse.Namespace) -> Path:
     video = load_video_metadata(args.input)
     frames = extract_frames(video, frames_dir=args.frames_dir, interval_seconds=args.interval_seconds)
     frame_summaries = summarize_frames_with_ollama(frames, model=DEFAULT_VL_MODEL)
+    timeline = build_timeline(frame_summaries, video)
     document = build_frame_summary_document(
         video=video,
         analysis=AnalysisMetadata(interval_seconds=args.interval_seconds),
         frame_summaries=frame_summaries,
+        timeline=timeline,
     )
     output_path = Path(args.output)
     save_frame_summary_json(document, output_path)

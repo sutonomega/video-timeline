@@ -67,6 +67,17 @@ class CliTest(unittest.TestCase):
         self.assertEqual(saved["analysis"]["vl_provider"], "ollama")
         self.assertEqual(saved["analysis"]["vl_model"], "qwen2.5vl:7b")
         self.assertEqual(saved["frame_summaries"][0]["summary"], "ChatGPTで仕様相談をしている")
+        self.assertEqual(
+            saved["timeline"],
+            [
+                {
+                    "start_seconds": 0.0,
+                    "end_seconds": 12.5,
+                    "summary": "ChatGPTで仕様相談をしている",
+                    "frame_indices": [0],
+                }
+            ],
+        )
 
     def test_cli_returns_error_for_pipeline_failure(self):
         with patch("video_timeline.cli.load_video_metadata", side_effect=ValueError("failed")):

@@ -93,15 +93,19 @@ def build_frame_summary_document(
     video: VideoMetadata,
     analysis: AnalysisMetadata,
     frame_summaries: list[FrameSummary],
+    timeline: list | None = None,
     generated_at: str | None = None,
 ) -> dict:
-    return {
+    document = {
         "version": 1,
         "generated_at": generated_at or _utc_now_isoformat(),
         "video": video.to_dict(),
         "analysis": analysis.to_dict(),
         "frame_summaries": [summary.to_dict() for summary in sorted(frame_summaries, key=lambda item: item.time_seconds)],
     }
+    if timeline is not None:
+        document["timeline"] = [entry.to_dict() for entry in timeline]
+    return document
 
 
 def save_frame_summary_json(document: dict, output_path: str | Path) -> None:
