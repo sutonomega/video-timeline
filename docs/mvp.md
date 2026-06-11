@@ -36,18 +36,18 @@ MVPで実装しないこと:
 最小CLIは次の形にする。
 
 ```bash
-video-timeline input.mp4 --output timeline.json
+PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json
 ```
 
 引数:
 
 - `input`: 入力動画ファイルのパス
 - `--output`: 出力JSONファイルのパス
+- `--interval-seconds`: フレーム抽出間隔。既定値は`10`
+- `--frames-dir`: 抽出フレームの保存先。既定値は`frames`
 
 将来拡張する任意引数:
 
-- `--interval-seconds`: フレーム抽出間隔。MVPでは`10`を既定値とする
-- `--frames-dir`: 抽出フレームの保存先
 - `--vl-provider`: フレーム要約に使うVLプロバイダー。MVP後に切り替え可能にする
 - `--format`: 出力形式。MVPでは`json`を既定値とする
 

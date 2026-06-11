@@ -8,10 +8,33 @@ Turn video scenes into structured timeline logs that can be used for review, com
 
 ## Features
 
-- Scene detection
-- Timeline generation
-- Event extraction
+- Video metadata loading
+- Fixed-interval frame extraction
+- VL frame summarization with Ollama
 - JSON export
+
+## Usage
+
+Requirements:
+
+- Python 3.12+
+- ffmpeg / ffprobe
+- Ollama
+- qwen2.5vl:7b
+
+Prepare the VL model:
+
+```bash
+ollama pull qwen2.5vl:7b
+```
+
+Run:
+
+```bash
+PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json
+```
+
+The command extracts frames into `frames/`, summarizes them with Ollama, and writes a frame summary JSON file.
 
 ## MVP Spec
 
@@ -19,4 +42,4 @@ The MVP scope and completion criteria are defined in [docs/mvp.md](docs/mvp.md).
 
 ## Status
 
-🚧 Under development
+MVP complete
