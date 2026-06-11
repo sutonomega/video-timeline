@@ -42,4 +42,6 @@ The MVP scope and completion criteria are defined in [docs/mvp.md](docs/mvp.md).
 
 ## Status
 
-MVP complete
+MVP implemented
+
+Real-video acceptance with Ollama is still pending.
