@@ -35,7 +35,7 @@ class VideoLoaderTest(unittest.TestCase):
 
                 metadata = load_video_metadata(video_path)
 
-        self.assertEqual(metadata.path, str(video_path))
+        self.assertEqual(metadata.path, str(video_path.resolve()))
         self.assertEqual(metadata.duration_seconds, 12.5)
         self.assertAlmostEqual(metadata.fps, 29.97002997)
         self.assertEqual(metadata.frame_count, 375)
@@ -44,7 +44,7 @@ class VideoLoaderTest(unittest.TestCase):
         self.assertEqual(
             metadata.to_dict(),
             {
-                "path": str(video_path),
+                "path": str(video_path.resolve()),
                 "duration_seconds": 12.5,
                 "fps": metadata.fps,
                 "frame_count": 375,
@@ -101,6 +101,29 @@ class VideoLoaderTest(unittest.TestCase):
                 metadata = load_video_metadata(video_path)
 
         self.assertEqual(metadata.frame_count, 60)
+
+    def test_metadata_path_is_absolute(self):
+        with TemporaryDirectory() as directory:
+            video_path = Path(directory) / "input.mp4"
+            video_path.write_bytes(b"fake")
+
+            with patch("video_timeline.video_loader.subprocess.run") as run:
+                run.return_value.stdout = """{
+                  "format": {"duration": "1.0"},
+                  "streams": [
+                    {
+                      "codec_type": "video",
+                      "avg_frame_rate": "30/1",
+                      "nb_frames": "30",
+                      "width": 320,
+                      "height": 180
+                    }
+                  ]
+                }"""
+
+                metadata = load_video_metadata(video_path)
+
+        self.assertTrue(Path(metadata.path).is_absolute())
 
 
 if __name__ == "__main__":

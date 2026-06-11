@@ -36,6 +36,7 @@ class VideoMetadata:
 def load_video_metadata(path: str | Path) -> VideoMetadata:
     video_path = Path(path)
     _validate_input_path(video_path)
+    resolved_path = video_path.resolve()
     payload = _run_ffprobe(video_path)
     stream = _find_video_stream(payload)
 
@@ -46,7 +47,7 @@ def load_video_metadata(path: str | Path) -> VideoMetadata:
     height = _parse_positive_int(stream.get("height"), "height")
 
     return VideoMetadata(
-        path=str(video_path),
+        path=str(resolved_path),
         duration_seconds=duration_seconds,
         fps=fps,
         frame_count=frame_count,
