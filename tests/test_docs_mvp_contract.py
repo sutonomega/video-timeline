@@ -71,6 +71,7 @@ class DocsMvpContractTest(unittest.TestCase):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
         self.assertIn("frame summarization started: 3/120", readme)
+        self.assertIn("remaining: 12m 30s", readme)
 
     def test_architecture_defines_timeline_generator_contract(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")

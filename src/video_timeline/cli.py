@@ -3,9 +3,10 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 import sys
+import time
 
 from .event_detector import detect_events
-from .frame_extractor import DEFAULT_INTERVAL_SECONDS, extract_frames
+from .frame_extractor import DEFAULT_INTERVAL_SECONDS, ExtractedFrame, extract_frames
 from .frame_summarizer import (
     AnalysisMetadata,
     DEFAULT_VL_MODEL,
@@ -19,6 +20,41 @@ from .video_loader import load_video_metadata
 
 def print_progress(message: str) -> None:
     print(message, flush=True)
+
+
+class FrameSummarizationProgress:
+    def __init__(self) -> None:
+        self.started_at = time.monotonic()
+
+    def __call__(self, current: int, total: int, frame: ExtractedFrame) -> None:
+        remaining = self._format_remaining(current, total)
+        print_progress(
+            f"frame summarization started: {current}/{total} "
+            f"({frame.time_seconds:g}s, remaining: {remaining})"
+        )
+
+    def _format_remaining(self, current: int, total: int) -> str:
+        completed = current - 1
+        remaining = total - completed
+        if completed <= 0:
+            return "calculating"
+
+        elapsed_seconds = time.monotonic() - self.started_at
+        average_seconds = elapsed_seconds / completed
+        remaining_seconds = round(average_seconds * remaining)
+        return format_duration(remaining_seconds)
+
+
+def format_duration(seconds: int) -> str:
+    if seconds < 60:
+        return f"{seconds}s"
+
+    minutes, remaining_seconds = divmod(seconds, 60)
+    if minutes < 60:
+        return f"{minutes}m {remaining_seconds}s"
+
+    hours, remaining_minutes = divmod(minutes, 60)
+    return f"{hours}h {remaining_minutes}m {remaining_seconds}s"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -44,9 +80,7 @@ def run(args: argparse.Namespace) -> Path:
     frame_summaries = summarize_frames_with_ollama(
         frames,
         model=DEFAULT_VL_MODEL,
-        progress=lambda current, total, frame: print_progress(
-            f"frame summarization started: {current}/{total} ({frame.time_seconds:g}s)"
-        ),
+        progress=FrameSummarizationProgress(),
     )
     print_progress("タイムライン生成中")
     timeline = build_timeline(frame_summaries, video)

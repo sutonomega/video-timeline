@@ -10,7 +10,7 @@ from unittest.mock import ANY, patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from video_timeline.cli import main
+from video_timeline.cli import FrameSummarizationProgress, format_duration, main
 from video_timeline.event_detector import EventCandidate
 from video_timeline.frame_extractor import ExtractedFrame
 from video_timeline.frame_summarizer import FrameSummary
@@ -19,6 +19,29 @@ from video_timeline.video_loader import VideoMetadata
 
 
 class CliTest(unittest.TestCase):
+    def test_format_duration_formats_seconds_minutes_and_hours(self):
+        self.assertEqual(format_duration(12), "12s")
+        self.assertEqual(format_duration(90), "1m 30s")
+        self.assertEqual(format_duration(3661), "1h 1m 1s")
+
+    def test_frame_summarization_progress_reports_remaining_time(self):
+        frames = [
+            ExtractedFrame(index=0, time_seconds=0.0, image="frames/000000000.jpg"),
+            ExtractedFrame(index=1, time_seconds=10.0, image="frames/000010000.jpg"),
+        ]
+
+        with (
+            patch("video_timeline.cli.time.monotonic", side_effect=[100.0, 130.0]),
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+        ):
+            progress = FrameSummarizationProgress()
+            progress(1, 2, frames[0])
+            progress(2, 2, frames[1])
+
+        output = stdout.getvalue()
+        self.assertIn("frame summarization started: 1/2 (0s, remaining: calculating)", output)
+        self.assertIn("frame summarization started: 2/2 (10s, remaining: 30s)", output)
+
     def test_cli_connects_video_to_frame_summary_json(self):
         video = VideoMetadata(
             path="/tmp/input.mp4",
