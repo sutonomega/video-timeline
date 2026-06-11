@@ -67,6 +67,14 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("qwen2.5vl:7b", acceptance)
         self.assertIn("PYTHONPATH=src python3 -m video_timeline.cli", acceptance)
 
+    def test_architecture_defines_timeline_generator_contract(self):
+        architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+
+        self.assertIn("timeline_generator", architecture)
+        self.assertIn("start_seconds", architecture)
+        self.assertIn("end_seconds", architecture)
+        self.assertIn("frame_indices", architecture)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -50,3 +50,15 @@ Main Modules
 - Ollama HTTP API呼び出しの境界を提供
 - video、analysis、frame_summariesを持つJSON構造の生成
 - UTF-8 JSONファイルへの保存
+
+## timeline_generator
+
+責務:
+
+- `frame_summaries`を時系列順に読み込む
+- 連続する同一`summary`を1つの区間にまとめる
+- 要約が変わった地点で区間を分ける
+- `start_seconds`、`end_seconds`、`summary`、`frame_indices`を持つ`timeline`を生成する
+- 最後の区間の`end_seconds`は動画の`duration_seconds`を使う
+
+MVP直後の最小実装では、意味的な類似判定は行わず、正規化した文字列の完全一致だけを同一要約として扱う。embeddingやLLMによる類似要約の統合は後続機能とする。

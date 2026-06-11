@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from video_timeline.cli import main
 from video_timeline.frame_extractor import ExtractedFrame
 from video_timeline.frame_summarizer import FrameSummary
+from video_timeline.timeline_generator import TimelineEntry
 from video_timeline.video_loader import VideoMetadata
 
 
@@ -35,6 +36,14 @@ class CliTest(unittest.TestCase):
                 summary="ChatGPTで仕様相談をしている",
             )
         ]
+        timeline = [
+            TimelineEntry(
+                start_seconds=0.0,
+                end_seconds=12.5,
+                summary="ChatGPTで仕様相談をしている",
+                frame_indices=[0],
+            )
+        ]
 
         with TemporaryDirectory() as directory:
             output_path = Path(directory) / "timeline.json"
@@ -42,6 +51,7 @@ class CliTest(unittest.TestCase):
                 patch("video_timeline.cli.load_video_metadata", return_value=video) as load_video,
                 patch("video_timeline.cli.extract_frames", return_value=frames) as extract,
                 patch("video_timeline.cli.summarize_frames_with_ollama", return_value=summaries) as summarize,
+                patch("video_timeline.cli.build_timeline", return_value=timeline) as build_timeline,
             ):
                 with patch("sys.stdout", new_callable=io.StringIO):
                     exit_code = main(
@@ -62,11 +72,23 @@ class CliTest(unittest.TestCase):
         load_video.assert_called_once_with("input.mp4")
         extract.assert_called_once_with(video, frames_dir="custom_frames", interval_seconds=5.0)
         summarize.assert_called_once_with(frames, model="qwen2.5vl:7b")
+        build_timeline.assert_called_once_with(summaries, video)
         self.assertEqual(saved["video"]["path"], "/tmp/input.mp4")
         self.assertEqual(saved["analysis"]["interval_seconds"], 5.0)
         self.assertEqual(saved["analysis"]["vl_provider"], "ollama")
         self.assertEqual(saved["analysis"]["vl_model"], "qwen2.5vl:7b")
         self.assertEqual(saved["frame_summaries"][0]["summary"], "ChatGPTで仕様相談をしている")
+        self.assertEqual(
+            saved["timeline"],
+            [
+                {
+                    "start_seconds": 0.0,
+                    "end_seconds": 12.5,
+                    "summary": "ChatGPTで仕様相談をしている",
+                    "frame_indices": [0],
+                }
+            ],
+        )
 
     def test_cli_returns_error_for_pipeline_failure(self):
         with patch("video_timeline.cli.load_video_metadata", side_effect=ValueError("failed")):

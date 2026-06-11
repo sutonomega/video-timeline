@@ -5,11 +5,14 @@ from datetime import datetime, timezone
 import base64
 import json
 from pathlib import Path
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 from urllib import request, error
 
 from .frame_extractor import ExtractedFrame
 from .video_loader import VideoMetadata
+
+if TYPE_CHECKING:
+    from .timeline_generator import TimelineEntry
 
 
 DEFAULT_VL_PROVIDER = "ollama"
@@ -93,15 +96,19 @@ def build_frame_summary_document(
     video: VideoMetadata,
     analysis: AnalysisMetadata,
     frame_summaries: list[FrameSummary],
+    timeline: list[TimelineEntry] | None = None,
     generated_at: str | None = None,
 ) -> dict:
-    return {
+    document = {
         "version": 1,
         "generated_at": generated_at or _utc_now_isoformat(),
         "video": video.to_dict(),
         "analysis": analysis.to_dict(),
         "frame_summaries": [summary.to_dict() for summary in sorted(frame_summaries, key=lambda item: item.time_seconds)],
     }
+    if timeline is not None:
+        document["timeline"] = [entry.to_dict() for entry in timeline]
+    return document
 
 
 def save_frame_summary_json(document: dict, output_path: str | Path) -> None:

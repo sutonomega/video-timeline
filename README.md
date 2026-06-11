@@ -11,6 +11,7 @@ Turn video scenes into structured timeline logs that can be used for review, com
 - Video metadata loading
 - Fixed-interval frame extraction
 - VL frame summarization with Ollama
+- Timeline grouping from frame summaries
 - JSON export
 
 ## Usage
