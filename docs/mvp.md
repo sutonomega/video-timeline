@@ -155,7 +155,7 @@ MVPのJSONは次の構造にする。
     {
       "index": 0,
       "time_seconds": 120.0,
-      "image": "frames/000120.jpg",
+      "image": "frames/000120000.jpg",
       "summary": "ChatGPTで動画タイムライン生成ツールの仕様を相談している"
     }
   ]
@@ -179,6 +179,29 @@ MVPのJSONは次の構造にする。
 - `frame_summaries[].time_seconds`
 - `frame_summaries[].image`
 - `frame_summaries[].summary`
+
+## フレーム要約JSON生成仕様
+
+`frame_summarizer`は抽出済みフレームをVLで要約し、MVPの出力JSONを生成する。
+
+MVPの既定値:
+
+- VLプロバイダー: `ollama`
+- VLモデル: `qwen2.5vl:7b`
+- フレーム抽出間隔: 10秒
+
+責務:
+
+- 抽出済みフレームごとに要約文を生成する
+- video、analysis、frame_summariesを持つJSON構造を生成する
+- frame_summariesをtime_seconds昇順で保存する
+- JSONをUTF-8で保存する
+
+Ollama呼び出し:
+
+- ローカルのOllama HTTP APIを使う
+- 画像はbase64にして`/api/generate`へ渡す
+- 自動テストではOllama呼び出し境界を差し替えて検証する
 
 ## 完了条件
 

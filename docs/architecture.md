@@ -41,3 +41,12 @@ Main Modules
 - `ffmpeg`によるフレーム画像の保存
 - index、time_seconds、imageを持つ抽出結果の生成
 - 短い動画や端数秒を含む動画でも決定的に動く抽出制御
+
+## frame_summarizer
+
+責務:
+
+- 抽出済みフレームをVLで要約
+- Ollama HTTP API呼び出しの境界を提供
+- video、analysis、frame_summariesを持つJSON構造の生成
+- UTF-8 JSONファイルへの保存

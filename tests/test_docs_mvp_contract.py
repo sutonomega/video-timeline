@@ -27,6 +27,8 @@ class DocsMvpContractTest(unittest.TestCase):
             "`ffprobe`",
             "`ffmpeg`",
             "`frame_extractor`",
+            "`frame_summarizer`",
+            "`/api/generate`",
             "`index`",
             "`time_seconds`",
             "`image`",
