@@ -54,6 +54,21 @@ class FrameSummarizerTest(unittest.TestCase):
             ],
         )
 
+    def test_summarize_frames_reports_progress_in_sorted_order(self):
+        frames = [
+            ExtractedFrame(index=1, time_seconds=10.0, image="frames/000010000.jpg"),
+            ExtractedFrame(index=0, time_seconds=0.0, image="frames/000000000.jpg"),
+        ]
+        progress_calls = []
+
+        summarize_frames(
+            frames,
+            lambda frame: f"{frame.time_seconds:g}秒の画面",
+            progress=lambda current, total, frame: progress_calls.append((current, total, frame.index)),
+        )
+
+        self.assertEqual(progress_calls, [(1, 2, 0), (2, 2, 1)])
+
     def test_summarize_frames_rejects_empty_summary(self):
         frames = [ExtractedFrame(index=0, time_seconds=0.0, image="frames/000000000.jpg")]
 
@@ -73,6 +88,20 @@ class FrameSummarizerTest(unittest.TestCase):
             prompt="この画像でユーザーが何をしているかを日本語で1文で要約してください。",
             api_url="http://ollama/api/generate",
         )
+
+    def test_summarize_frames_with_ollama_passes_progress_callback(self):
+        frames = [ExtractedFrame(index=0, time_seconds=0.0, image="frames/000000000.jpg")]
+        progress_calls = []
+
+        with patch("video_timeline.frame_summarizer.summarize_image_with_ollama", return_value="仕様相談をしている"):
+            summarize_frames_with_ollama(
+                frames,
+                model="qwen2.5vl:7b",
+                api_url="http://ollama/api/generate",
+                progress=lambda current, total, frame: progress_calls.append((current, total, frame.index)),
+            )
+
+        self.assertEqual(progress_calls, [(1, 1, 0)])
 
     def test_build_frame_summary_document_contains_video_analysis_and_summaries(self):
         video = VideoMetadata(

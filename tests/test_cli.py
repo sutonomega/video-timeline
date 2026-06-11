@@ -4,7 +4,7 @@ import json
 import sys
 from tempfile import TemporaryDirectory
 import unittest
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -64,7 +64,7 @@ class CliTest(unittest.TestCase):
                 patch("video_timeline.cli.build_timeline", return_value=timeline) as build_timeline,
                 patch("video_timeline.cli.detect_events", return_value=events) as detect_events,
             ):
-                with patch("sys.stdout", new_callable=io.StringIO):
+                with patch("sys.stdout", new_callable=io.StringIO) as stdout:
                     exit_code = main(
                         [
                             "input.mp4",
@@ -78,13 +78,21 @@ class CliTest(unittest.TestCase):
                     )
 
             saved = json.loads(output_path.read_text(encoding="utf-8"))
+            output = stdout.getvalue()
 
         self.assertEqual(exit_code, 0)
         load_video.assert_called_once_with("input.mp4")
         extract.assert_called_once_with(video, frames_dir="custom_frames", interval_seconds=5.0)
-        summarize.assert_called_once_with(frames, model="qwen2.5vl:7b")
+        summarize.assert_called_once_with(frames, model="qwen2.5vl:7b", progress=ANY)
         build_timeline.assert_called_once_with(summaries, video)
         detect_events.assert_called_once_with(timeline)
+        self.assertIn("動画メタデータ取得中", output)
+        self.assertIn("フレーム抽出中", output)
+        self.assertIn("フレーム要約中", output)
+        self.assertIn("タイムライン生成中", output)
+        self.assertIn("イベント生成中", output)
+        self.assertIn("JSON保存中", output)
+        self.assertIn(f"wrote {output_path}", output)
         self.assertEqual(saved["video"]["path"], "/tmp/input.mp4")
         self.assertEqual(saved["analysis"]["interval_seconds"], 5.0)
         self.assertEqual(saved["analysis"]["vl_provider"], "ollama")
@@ -116,7 +124,10 @@ class CliTest(unittest.TestCase):
 
     def test_cli_returns_error_for_pipeline_failure(self):
         with patch("video_timeline.cli.load_video_metadata", side_effect=ValueError("failed")):
-            with patch("sys.stderr", new_callable=io.StringIO):
+            with (
+                patch("sys.stdout", new_callable=io.StringIO),
+                patch("sys.stderr", new_callable=io.StringIO),
+            ):
                 exit_code = main(["input.mp4", "--output", "timeline.json"])
 
         self.assertEqual(exit_code, 1)
