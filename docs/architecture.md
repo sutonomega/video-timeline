@@ -32,3 +32,12 @@ Main Modules
 - MVP対応形式の検証
 - `ffprobe`によるduration、fps、frame_count、width、heightの取得
 - 後続モジュールへ渡す動画メタデータ構造の生成
+
+## frame_extractor
+
+責務:
+
+- 動画メタデータから固定間隔の抽出時刻を生成
+- `ffmpeg`によるフレーム画像の保存
+- index、time_seconds、imageを持つ抽出結果の生成
+- 短い動画や端数秒を含む動画でも決定的に動く抽出制御
