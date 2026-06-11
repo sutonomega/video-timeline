@@ -52,6 +52,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "docs/roadmap.md",
             "docs/architecture.md",
             "docs/acceptance.md",
+            "docs/quality_review.md",
         ]:
             text = (ROOT / relative_path).read_text(encoding="utf-8")
             self.assertIn("mvp.md", text)
@@ -96,6 +97,19 @@ class DocsMvpContractTest(unittest.TestCase):
         quality_review = roadmap.index("実動画でframe_summaryからtimelineまでの品質を確認する")
         event_importance = roadmap.index("イベント重要度判定")
         self.assertLess(quality_review, event_importance)
+
+    def test_quality_review_records_frame_summary_to_timeline_findings(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
+        quality_review = (ROOT / "docs" / "quality_review.md").read_text(encoding="utf-8")
+
+        self.assertIn("docs/quality_review.md", readme)
+        self.assertIn("[x] 実動画でframe_summaryからtimelineまでの品質を確認する（#20）", roadmap)
+        self.assertIn("workflow_chat_coding.mp4", quality_review)
+        self.assertIn("browser_docs_pr.mp4", quality_review)
+        self.assertIn("repeated_chat_then_test.mp4", quality_review)
+        self.assertIn("過分割", quality_review)
+        self.assertIn("類似要約の意味的な区間統合", quality_review)
 
 
 if __name__ == "__main__":
