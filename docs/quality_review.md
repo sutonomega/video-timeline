@@ -100,10 +100,10 @@ PYTHONPATH=src python3 -m video_timeline.cli /tmp/video-timeline-quality/workflo
 - `frame_summaries` の品質は、画面上のテキストが明確な動画ではMVP後続機能の土台として十分に使える。
 - `timeline` は異なる活動の切り分けには使える。
 - ただし、同じ活動が近い表現で続く場合は過分割しやすい。
-- 次は完全一致ではなく、近い要約を統合する仕組みを検討する。
+- 完全一致だけでなく、近い要約を統合する仕組みが必要。
 
 ## 改善候補
 
-- 類似要約の意味的な区間統合を追加する
+- 類似要約の意味的な区間統合を追加する（#25）
 - `timeline` 区間ごとに代表summaryを生成する
 - `events.kind` の分類は、timeline統合品質を改善した後に進める
