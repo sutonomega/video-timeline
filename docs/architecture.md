@@ -1,5 +1,7 @@
 # Architecture
 
+MVPの入出力契約は[mvp.md](mvp.md)を正とする。
+
 Input
 - Video File
 
