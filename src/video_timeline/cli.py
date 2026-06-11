@@ -44,7 +44,9 @@ def run(args: argparse.Namespace) -> Path:
     frame_summaries = summarize_frames_with_ollama(
         frames,
         model=DEFAULT_VL_MODEL,
-        progress=lambda current, total, frame: print_progress(f"frame summarization: {current}/{total} ({frame.time_seconds:g}s)"),
+        progress=lambda current, total, frame: print_progress(
+            f"frame summarization started: {current}/{total} ({frame.time_seconds:g}s)"
+        ),
     )
     print_progress("タイムライン生成中")
     timeline = build_timeline(frame_summaries, video)
