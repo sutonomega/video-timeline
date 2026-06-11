@@ -83,6 +83,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("frame_indices", architecture)
         self.assertIn("連続する近い`summary`", architecture)
         self.assertIn("代表summary", architecture)
+        self.assertIn("軽量な類似判定", architecture)
+        self.assertIn("閾値は実データで調整", architecture)
 
     def test_architecture_defines_event_detector_contract(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
@@ -116,7 +118,8 @@ class DocsMvpContractTest(unittest.TestCase):
     def test_roadmap_marks_semantic_summary_grouping_done(self):
         roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
 
-        self.assertIn("[x] 類似要約の意味的な区間統合（#25）", roadmap)
+        self.assertIn("[x] 類似要約の軽量な区間統合（#25）", roadmap)
+        self.assertIn("[ ] 類似統合の閾値を実データで比較する（#28）", roadmap)
 
 
 if __name__ == "__main__":

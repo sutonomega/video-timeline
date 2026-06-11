@@ -105,5 +105,6 @@ PYTHONPATH=src python3 -m video_timeline.cli /tmp/video-timeline-quality/workflo
 ## 改善候補
 
 - 類似要約の意味的な区間統合を追加する（#25）
+- 類似統合の閾値を実データで比較して調整する
 - `timeline` 区間ごとに代表summaryを生成する
 - `events.kind` の分類は、timeline統合品質を改善した後に進める
