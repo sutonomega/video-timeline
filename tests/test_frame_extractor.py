@@ -36,6 +36,7 @@ class FrameExtractorTest(unittest.TestCase):
         self.assertEqual(format_frame_filename(10.0), "000010000.jpg")
         self.assertEqual(format_frame_filename(120.4), "000120400.jpg")
         self.assertEqual(format_frame_filename(2.5), "000002500.jpg")
+        self.assertEqual(format_frame_filename(2.3), "000002300.jpg")
 
     def test_extract_frames_runs_ffmpeg_for_each_time(self):
         metadata = VideoMetadata(
