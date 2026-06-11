@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from video_timeline.frame_summarizer import FrameSummary
-from video_timeline.timeline_generator import build_timeline
+from video_timeline.timeline_generator import are_similar_summaries, build_timeline
 from video_timeline.video_loader import VideoMetadata
 
 
@@ -46,6 +46,49 @@ class TimelineGeneratorTest(unittest.TestCase):
                     "frame_indices": [2, 3],
                 },
             ],
+        )
+
+    def test_build_timeline_groups_consecutive_similar_summaries(self):
+        video = VideoMetadata(
+            path="/tmp/input.mp4",
+            duration_seconds=30.0,
+            fps=30.0,
+            frame_count=900,
+            width=1920,
+            height=1080,
+        )
+        summaries = [
+            FrameSummary(index=0, time_seconds=0.0, image="frames/000000000.jpg", summary="ユーザーはChatGPTの仕様について議論しているようです。"),
+            FrameSummary(index=1, time_seconds=10.0, image="frames/000010000.jpg", summary="ユーザーはChatGPTの要件について議論しているようです。"),
+            FrameSummary(index=2, time_seconds=20.0, image="frames/000020000.jpg", summary="ユーザーはターミナルでテスト実行を行っている。"),
+        ]
+
+        timeline = build_timeline(summaries, video)
+
+        self.assertEqual(
+            [entry.to_dict() for entry in timeline],
+            [
+                {
+                    "start_seconds": 0.0,
+                    "end_seconds": 20.0,
+                    "summary": "ユーザーはChatGPTの仕様について議論しているようです。",
+                    "frame_indices": [0, 1],
+                },
+                {
+                    "start_seconds": 20.0,
+                    "end_seconds": 30.0,
+                    "summary": "ユーザーはターミナルでテスト実行を行っている。",
+                    "frame_indices": [2],
+                },
+            ],
+        )
+
+    def test_are_similar_summaries_keeps_different_work_separate(self):
+        self.assertFalse(
+            are_similar_summaries(
+                "ユーザーはChatGPTの仕様について議論しているようです。",
+                "ユーザーはターミナルでテスト実行を行っている。",
+            )
         )
 
     def test_build_timeline_sorts_by_time_and_index(self):
