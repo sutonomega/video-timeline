@@ -12,6 +12,7 @@ from .frame_extractor import ExtractedFrame
 from .video_loader import VideoMetadata
 
 if TYPE_CHECKING:
+    from .event_detector import EventCandidate
     from .timeline_generator import TimelineEntry
 
 
@@ -97,6 +98,7 @@ def build_frame_summary_document(
     analysis: AnalysisMetadata,
     frame_summaries: list[FrameSummary],
     timeline: list[TimelineEntry] | None = None,
+    events: list[EventCandidate] | None = None,
     generated_at: str | None = None,
 ) -> dict:
     document = {
@@ -108,6 +110,8 @@ def build_frame_summary_document(
     }
     if timeline is not None:
         document["timeline"] = [entry.to_dict() for entry in timeline]
+    if events is not None:
+        document["events"] = [event.to_dict() for event in events]
     return document
 
 

@@ -22,6 +22,7 @@ from video_timeline.frame_summarizer import (
     summarize_frames_with_ollama,
     summarize_image_with_ollama,
 )
+from video_timeline.event_detector import EventCandidate
 from video_timeline.video_loader import VideoMetadata
 
 
@@ -143,6 +144,47 @@ class FrameSummarizerTest(unittest.TestCase):
                     "end_seconds": 10.0,
                     "summary": "仕様相談をしている",
                     "frame_indices": [0],
+                }
+            ],
+        )
+
+    def test_build_frame_summary_document_includes_events_when_given(self):
+        video = VideoMetadata(
+            path="/tmp/input.mp4",
+            duration_seconds=10.0,
+            fps=30.0,
+            frame_count=300,
+            width=1920,
+            height=1080,
+        )
+        analysis = AnalysisMetadata(interval_seconds=10.0)
+        events = [
+            EventCandidate(
+                kind="activity",
+                start_seconds=0.0,
+                end_seconds=10.0,
+                summary="仕様相談をしている",
+                timeline_index=0,
+            )
+        ]
+
+        document = build_frame_summary_document(
+            video=video,
+            analysis=analysis,
+            frame_summaries=[],
+            events=events,
+            generated_at="2026-06-11T00:00:00Z",
+        )
+
+        self.assertEqual(
+            document["events"],
+            [
+                {
+                    "kind": "activity",
+                    "start_seconds": 0.0,
+                    "end_seconds": 10.0,
+                    "summary": "仕様相談をしている",
+                    "timeline_index": 0,
                 }
             ],
         )
