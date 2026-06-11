@@ -96,6 +96,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("activity", architecture)
         self.assertIn("検索UI", architecture)
         self.assertIn("区間の長さ", architecture)
+        self.assertIn("duration score", architecture)
 
     def test_roadmap_prioritizes_real_video_quality_review_before_event_importance(self):
         roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
