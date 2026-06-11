@@ -48,8 +48,17 @@ video-timeline input.mp4 --output timeline.json
 
 - `--interval-seconds`: フレーム抽出間隔。MVPでは`10`を既定値とする
 - `--frames-dir`: 抽出フレームの保存先
-- `--vl-provider`: フレーム要約に使うVLプロバイダー
+- `--vl-provider`: フレーム要約に使うVLプロバイダー。MVP後に切り替え可能にする
 - `--format`: 出力形式。MVPでは`json`を既定値とする
+
+## VL仕様
+
+MVPではVLプロバイダーとモデルを固定する。
+
+- 既定プロバイダー: `ollama`
+- 既定モデル: `qwen2.5vl:7b`
+
+プロバイダーやモデルの切り替えはMVP後の拡張とする。
 
 ## 入力仕様
 
@@ -92,6 +101,11 @@ MVPのJSONは次の構造にする。
     "width": 1920,
     "height": 1080
   },
+  "analysis": {
+    "interval_seconds": 10,
+    "vl_provider": "ollama",
+    "vl_model": "qwen2.5vl:7b"
+  },
   "frame_summaries": [
     {
       "index": 0,
@@ -113,6 +127,9 @@ MVPのJSONは次の構造にする。
 - `video.frame_count`
 - `video.width`
 - `video.height`
+- `analysis.interval_seconds`
+- `analysis.vl_provider`
+- `analysis.vl_model`
 - `frame_summaries[].index`
 - `frame_summaries[].time_seconds`
 - `frame_summaries[].image`
