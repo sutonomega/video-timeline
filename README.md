@@ -49,3 +49,5 @@ The MVP scope and completion criteria are defined in [docs/mvp.md](docs/mvp.md).
 MVP accepted with a generated sample MP4 and Ollama.
 
 Acceptance details are recorded in [docs/acceptance.md](docs/acceptance.md).
+
+Quality review notes are recorded in [docs/quality_review.md](docs/quality_review.md).
