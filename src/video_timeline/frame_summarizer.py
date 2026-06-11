@@ -57,11 +57,20 @@ class FrameSummary:
 
 
 FrameSummaryFunction = Callable[[ExtractedFrame], str]
+FrameSummaryProgress = Callable[[int, int, ExtractedFrame], None]
 
 
-def summarize_frames(frames: list[ExtractedFrame], summarize_image: FrameSummaryFunction) -> list[FrameSummary]:
+def summarize_frames(
+    frames: list[ExtractedFrame],
+    summarize_image: FrameSummaryFunction,
+    progress: FrameSummaryProgress | None = None,
+) -> list[FrameSummary]:
     summaries: list[FrameSummary] = []
-    for frame in sorted(frames, key=lambda item: item.time_seconds):
+    sorted_frames = sorted(frames, key=lambda item: item.time_seconds)
+    total_frames = len(sorted_frames)
+    for position, frame in enumerate(sorted_frames, start=1):
+        if progress is not None:
+            progress(position, total_frames, frame)
         summary = summarize_image(frame).strip()
         if not summary:
             raise FrameSummarizerError(f"空の要約が返されました: {frame.image}")
@@ -81,6 +90,7 @@ def summarize_frames_with_ollama(
     model: str = DEFAULT_VL_MODEL,
     prompt: str = DEFAULT_SUMMARY_PROMPT,
     api_url: str = DEFAULT_OLLAMA_URL,
+    progress: FrameSummaryProgress | None = None,
 ) -> list[FrameSummary]:
     return summarize_frames(
         frames,
@@ -90,6 +100,7 @@ def summarize_frames_with_ollama(
             prompt=prompt,
             api_url=api_url,
         ),
+        progress=progress,
     )
 
 

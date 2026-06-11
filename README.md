@@ -38,6 +38,8 @@ PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json
 
 The command extracts frames into `frames/`, summarizes them with Ollama, and writes a frame summary JSON file.
 
+While running, the CLI prints the current processing stage and frame summarization progress, such as `frame summarization: 3/120`.
+
 ## MVP Spec
 
 The MVP scope and completion criteria are defined in [docs/mvp.md](docs/mvp.md).

@@ -67,6 +67,11 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("qwen2.5vl:7b", acceptance)
         self.assertIn("PYTHONPATH=src python3 -m video_timeline.cli", acceptance)
 
+    def test_readme_mentions_cli_progress_output(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("frame summarization: 3/120", readme)
+
     def test_architecture_defines_timeline_generator_contract(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
