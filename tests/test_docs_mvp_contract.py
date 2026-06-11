@@ -82,6 +82,14 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("events", architecture)
         self.assertIn("timeline_index", architecture)
         self.assertIn("activity", architecture)
+        self.assertIn("検索UI", architecture)
+
+    def test_roadmap_prioritizes_real_video_quality_review_before_event_importance(self):
+        roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
+
+        quality_review = roadmap.index("実動画でframe_summaryからtimelineまでの品質を確認する")
+        event_importance = roadmap.index("イベント重要度判定")
+        self.assertLess(quality_review, event_importance)
 
 
 if __name__ == "__main__":
