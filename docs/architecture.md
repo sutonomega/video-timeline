@@ -51,6 +51,8 @@ CLIから使う場合は、`--frames-dir`をベースディレクトリとして
 責務:
 
 - 抽出済みフレームをVLで要約
+- フレームごとの検索用タグを生成する
+- タグを小文字英数字と`_`中心に正規化する
 - Ollama HTTP API呼び出しの境界を提供
 - video、analysis、frame_summariesを持つJSON構造の生成
 - UTF-8 JSONファイルへの保存

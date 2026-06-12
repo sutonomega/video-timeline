@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import base64
 import json
 from pathlib import Path
+import re
 from typing import TYPE_CHECKING, Callable
 from urllib import request, error
 
@@ -19,7 +20,10 @@ if TYPE_CHECKING:
 DEFAULT_VL_PROVIDER = "ollama"
 DEFAULT_VL_MODEL = "qwen2.5vl:7b"
 DEFAULT_OLLAMA_URL = "http://localhost:11434/api/generate"
-DEFAULT_SUMMARY_PROMPT = "この画像でユーザーが何をしているかを日本語で1文で要約してください。"
+DEFAULT_SUMMARY_PROMPT = (
+    "この画像でユーザーが何をしているかを日本語で1文で要約し、検索用タグも付けてください。"
+    '必ずJSONだけで返してください。形式: {"summary":"日本語の要約","tags":["chatgpt","coding"]}'
+)
 
 
 class FrameSummarizerError(ValueError):
@@ -46,17 +50,25 @@ class FrameSummary:
     time_seconds: float
     image: str
     summary: str
+    tags: tuple[str, ...] = ()
 
-    def to_dict(self) -> dict[str, float | int | str]:
+    def to_dict(self) -> dict[str, float | int | str | list[str]]:
         return {
             "index": self.index,
             "time_seconds": self.time_seconds,
             "image": self.image,
             "summary": self.summary,
+            "tags": list(self.tags),
         }
 
 
-FrameSummaryFunction = Callable[[ExtractedFrame], str]
+@dataclass(frozen=True)
+class FrameSummaryContent:
+    summary: str
+    tags: tuple[str, ...] = ()
+
+
+FrameSummaryFunction = Callable[[ExtractedFrame], FrameSummaryContent | str]
 FrameSummaryProgress = Callable[[int, int, ExtractedFrame], None]
 
 
@@ -71,15 +83,16 @@ def summarize_frames(
     for position, frame in enumerate(sorted_frames, start=1):
         if progress is not None:
             progress(position, total_frames, frame)
-        summary = summarize_image(frame).strip()
-        if not summary:
+        content = _coerce_frame_summary_content(summarize_image(frame))
+        if not content.summary:
             raise FrameSummarizerError(f"空の要約が返されました: {frame.image}")
         summaries.append(
             FrameSummary(
                 index=frame.index,
                 time_seconds=frame.time_seconds,
                 image=frame.image,
-                summary=summary,
+                summary=content.summary,
+                tags=content.tags,
             )
         )
     return summaries
@@ -137,7 +150,7 @@ def summarize_image_with_ollama(
     model: str = DEFAULT_VL_MODEL,
     prompt: str = DEFAULT_SUMMARY_PROMPT,
     api_url: str = DEFAULT_OLLAMA_URL,
-) -> str:
+) -> FrameSummaryContent:
     try:
         image_bytes = Path(image_path).read_bytes()
     except FileNotFoundError as exc:
@@ -165,10 +178,51 @@ def summarize_image_with_ollama(
     except json.JSONDecodeError as exc:
         raise FrameSummarizerError("Ollama APIの応答JSONを読み取れません。") from exc
 
-    summary = response_payload.get("response")
+    response_text = response_payload.get("response")
+    if not isinstance(response_text, str) or not response_text.strip():
+        raise FrameSummarizerError("Ollama APIから要約文を取得できません。")
+    return parse_frame_summary_response(response_text)
+
+
+def parse_frame_summary_response(response_text: str) -> FrameSummaryContent:
+    text = response_text.strip()
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        return FrameSummaryContent(summary=text)
+
+    if not isinstance(payload, dict):
+        return FrameSummaryContent(summary=text)
+
+    summary = payload.get("summary")
     if not isinstance(summary, str) or not summary.strip():
         raise FrameSummarizerError("Ollama APIから要約文を取得できません。")
-    return summary.strip()
+
+    raw_tags = payload.get("tags", [])
+    if not isinstance(raw_tags, list):
+        raw_tags = []
+    return FrameSummaryContent(summary=summary.strip(), tags=normalize_tags(raw_tags))
+
+
+def normalize_tags(raw_tags: list[object]) -> tuple[str, ...]:
+    tags: list[str] = []
+    seen: set[str] = set()
+    for raw_tag in raw_tags:
+        if not isinstance(raw_tag, str):
+            continue
+        tag = re.sub(r"[^a-z0-9_]+", "_", raw_tag.strip().casefold().replace("-", "_"))
+        tag = re.sub(r"_+", "_", tag).strip("_")
+        if not tag or tag in seen:
+            continue
+        seen.add(tag)
+        tags.append(tag)
+    return tuple(tags)
+
+
+def _coerce_frame_summary_content(value: FrameSummaryContent | str) -> FrameSummaryContent:
+    if isinstance(value, FrameSummaryContent):
+        return FrameSummaryContent(summary=value.summary.strip(), tags=normalize_tags(list(value.tags)))
+    return FrameSummaryContent(summary=value.strip())
 
 
 def _utc_now_isoformat() -> str:
