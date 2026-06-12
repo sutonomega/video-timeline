@@ -210,7 +210,7 @@ def normalize_tags(raw_tags: list[object]) -> tuple[str, ...]:
     for raw_tag in raw_tags:
         if not isinstance(raw_tag, str):
             continue
-        tag = re.sub(r"[^a-z0-9_]+", "_", raw_tag.strip().casefold().replace("-", "_"))
+        tag = re.sub(r"[^a-z0-9_一-龯ぁ-んァ-ンー]+", "_", raw_tag.strip().casefold().replace("-", "_"))
         tag = re.sub(r"_+", "_", tag).strip("_")
         if not tag or tag in seen:
             continue

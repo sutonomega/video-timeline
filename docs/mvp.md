@@ -169,6 +169,15 @@ MVPのJSONは次の構造にする。
       "summary": "ChatGPTで動画タイムライン生成ツールの仕様を相談している",
       "tags": ["chatgpt", "planning"]
     }
+  ],
+  "timeline": [
+    {
+      "start_seconds": 120.0,
+      "end_seconds": 180.0,
+      "summary": "ChatGPTで動画タイムライン生成ツールの仕様を相談している",
+      "frame_indices": [0],
+      "tags": ["chatgpt", "planning"]
+    }
   ]
 }
 ```
@@ -191,6 +200,7 @@ MVPのJSONは次の構造にする。
 - `frame_summaries[].image`
 - `frame_summaries[].summary`
 - `frame_summaries[].tags`
+- `timeline[].tags`
 
 ## フレーム要約JSON生成仕様
 
@@ -201,8 +211,8 @@ MVPの既定値:
 - VLプロバイダー: `ollama`
 - VLモデル: `qwen2.5vl:7b`
 - フレーム抽出間隔: 10秒
-- タグ形式: 小文字英数字と`_`を基本にする
-- MVPでは英語系の検索タグだけを保存対象にし、日本語タグや記号だけのタグは破棄する
+- タグ形式: 小文字英数字、`_`、日本語を基本にする
+- 英語タグは小文字化し、空白や記号は`_`へ正規化する。日本語タグは検索やtimeline統合に使えるよう保存する
 
 責務:
 
