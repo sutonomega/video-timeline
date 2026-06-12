@@ -18,12 +18,14 @@ class EventDetectorTest(unittest.TestCase):
                 end_seconds=20.0,
                 summary="ChatGPTで仕様相談をしている",
                 frame_indices=[0, 1],
+                tags=[],
             ),
             TimelineEntry(
                 start_seconds=20.0,
                 end_seconds=35.0,
                 summary="VSCodeで実装している",
                 frame_indices=[2, 3],
+                tags=[],
             ),
         ]
 
@@ -61,12 +63,14 @@ class EventDetectorTest(unittest.TestCase):
                 end_seconds=35.0,
                 summary="VSCodeで実装している",
                 frame_indices=[2, 3],
+                tags=[],
             ),
             TimelineEntry(
                 start_seconds=0.0,
                 end_seconds=20.0,
                 summary="ChatGPTで仕様相談をしている",
                 frame_indices=[0, 1],
+                tags=[],
             ),
         ]
 
@@ -78,19 +82,19 @@ class EventDetectorTest(unittest.TestCase):
     def test_calculate_importance_score_uses_duration_with_bounds(self):
         self.assertEqual(
             calculate_importance_score(
-                TimelineEntry(start_seconds=0.0, end_seconds=3.0, summary="短い作業", frame_indices=[0])
+                TimelineEntry(start_seconds=0.0, end_seconds=3.0, summary="短い作業", frame_indices=[0], tags=[])
             ),
             0.1,
         )
         self.assertEqual(
             calculate_importance_score(
-                TimelineEntry(start_seconds=0.0, end_seconds=30.0, summary="通常の作業", frame_indices=[0])
+                TimelineEntry(start_seconds=0.0, end_seconds=30.0, summary="通常の作業", frame_indices=[0], tags=[])
             ),
             0.5,
         )
         self.assertEqual(
             calculate_importance_score(
-                TimelineEntry(start_seconds=0.0, end_seconds=120.0, summary="長い作業", frame_indices=[0])
+                TimelineEntry(start_seconds=0.0, end_seconds=120.0, summary="長い作業", frame_indices=[0], tags=[])
             ),
             1.0,
         )

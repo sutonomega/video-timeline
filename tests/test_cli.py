@@ -109,6 +109,7 @@ class CliTest(unittest.TestCase):
                 end_seconds=12.5,
                 summary="ChatGPTで仕様相談をしている",
                 frame_indices=[0],
+                tags=["chatgpt", "planning"],
             )
         ]
         events = [
@@ -177,6 +178,7 @@ class CliTest(unittest.TestCase):
                     "end_seconds": 12.5,
                     "summary": "ChatGPTで仕様相談をしている",
                     "frame_indices": [0],
+                    "tags": ["chatgpt", "planning"],
                 }
             ],
         )

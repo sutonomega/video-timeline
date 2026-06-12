@@ -76,11 +76,12 @@ CLIから使う場合は、`--frames-dir`をベースディレクトリとして
 - `frame_summaries`を時系列順に読み込む
 - 連続する同一`summary`を1つの区間にまとめる
 - 連続する近い`summary`を1つの区間にまとめる
+- 連続する近い`tags`を1つの区間にまとめる
 - 要約が変わった地点で区間を分ける
-- `start_seconds`、`end_seconds`、`summary`、`frame_indices`を持つ`timeline`を生成する
+- `start_seconds`、`end_seconds`、`summary`、`frame_indices`、`tags`を持つ`timeline`を生成する
 - 最後の区間の`end_seconds`は動画の`duration_seconds`を使う
 
-軽量な類似判定の最小実装では、正規化した文字列の完全一致に加えて、要約文のトークン集合の重なりで近さを判定する。代表summaryは区間先頭のsummaryを維持する。類似度の閾値は実データで調整する前提とし、embeddingやLLMによる高度な意味的統合は後続機能とする。
+軽量な類似判定の最小実装では、正規化した文字列の完全一致に加えて、要約文のトークン集合の重なりで近さを判定する。さらに、フレーム要約の`tags`集合の重なりが大きい場合も同一区間として扱う。代表summaryは区間先頭のsummaryを維持し、timelineの`tags`は区間内フレームのタグを出現順で重複なく統合する。類似度の閾値は実データで調整する前提とし、embeddingやLLMによる高度な意味的統合は後続機能とする。
 
 実動画での品質確認では、まず`frame_summaries`から`timeline`へのまとまり方を確認する。要約品質が低い場合、その上に乗るイベント候補や検索の品質も下がるため、イベント分類より先にフレーム要約とタイムライン区間の妥当性を評価する。
 

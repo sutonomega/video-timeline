@@ -47,6 +47,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`frame_summaries[].image`",
             "`frame_summaries[].summary`",
             "`frame_summaries[].tags`",
+            "`timeline[].tags`",
             "`<output-dir>/<video_stem>_<path_hash>/`",
             "`timeline.json`",
         ]
@@ -92,6 +93,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("連続する近い`summary`", architecture)
         self.assertIn("代表summary", architecture)
         self.assertIn("軽量な類似判定", architecture)
+        self.assertIn("連続する近い`tags`", architecture)
+        self.assertIn("timelineの`tags`", architecture)
         self.assertIn("閾値は実データで調整", architecture)
 
     def test_architecture_defines_per_video_frame_directory(self):
@@ -155,7 +158,7 @@ class DocsMvpContractTest(unittest.TestCase):
         roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
 
         self.assertIn("[x] フレーム要約にタグ付けを追加する（#34）", roadmap)
-        self.assertIn("[ ] タグを使ってtimeline区間を統合する（#35）", roadmap)
+        self.assertIn("[x] タグを使ってtimeline区間を統合する（#35）", roadmap)
 
     def test_quality_review_records_frame_summary_to_timeline_findings(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")

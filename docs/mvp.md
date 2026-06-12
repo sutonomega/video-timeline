@@ -169,6 +169,15 @@ MVPのJSONは次の構造にする。
       "summary": "ChatGPTで動画タイムライン生成ツールの仕様を相談している",
       "tags": ["chatgpt", "planning"]
     }
+  ],
+  "timeline": [
+    {
+      "start_seconds": 120.0,
+      "end_seconds": 180.0,
+      "summary": "ChatGPTで動画タイムライン生成ツールの仕様を相談している",
+      "frame_indices": [0],
+      "tags": ["chatgpt", "planning"]
+    }
   ]
 }
 ```
@@ -191,6 +200,7 @@ MVPのJSONは次の構造にする。
 - `frame_summaries[].image`
 - `frame_summaries[].summary`
 - `frame_summaries[].tags`
+- `timeline[].tags`
 
 ## フレーム要約JSON生成仕様
 
