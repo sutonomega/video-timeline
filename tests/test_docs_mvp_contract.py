@@ -12,10 +12,14 @@ class DocsMvpContractTest(unittest.TestCase):
         required_terms = [
             "PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json",
             "PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir timelines",
+            "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --output clip.mp4",
             "`input`",
             "`--output`",
             "`--input-dir`",
             "`--output-dir`",
+            "`clip timeline.json`",
+            "`clip --index`",
+            "`clip --padding-seconds`",
             "`--interval-seconds`",
             "`--frames-dir`",
             "`--vl-provider`",
@@ -114,6 +118,14 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("全件保持せず順次処理", architecture)
         self.assertIn("1本の動画で失敗しても残りの動画を続行", architecture)
 
+    def test_architecture_defines_video_clipper_contract(self):
+        architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+
+        self.assertIn("video_clipper", architecture)
+        self.assertIn("video.path", architecture)
+        self.assertIn("--padding-seconds", architecture)
+        self.assertIn("ffmpeg", architecture)
+
     def test_architecture_defines_frame_summary_tags(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
@@ -163,6 +175,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[x] フレーム要約にタグ付けを追加する（#34）", roadmap)
         self.assertIn("[x] タグを使ったtimeline統合ロジックを実装する（#35）", roadmap)
         self.assertIn("[x] 実録画でタグ統合品質を確認する（#43）", roadmap)
+        self.assertIn("[x] timeline区間から動画を切り出すCLIを追加する（#36）", roadmap)
 
     def test_quality_review_records_frame_summary_to_timeline_findings(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")

@@ -25,6 +25,7 @@ Main Modules
 - frame_summarizer
 - timeline_generator
 - event_detector
+- video_clipper
 
 ## video_loader
 
@@ -98,3 +99,14 @@ CLIから使う場合は、`--frames-dir`をベースディレクトリとして
 現時点では`timeline`と`events`は近い構造だが、後続の検索UIや重要度判定で`kind`を使えるように、イベント候補として別配列に分けて保存する。`coding`、`chat`、`browser`などの詳細分類、重要度判定、音声認識やシーン分割との統合は後続機能とする。
 
 軽量な重要度判定では、外部AIを使わず区間の長さから`importance_score`を計算する。現時点の値は実質的にはduration scoreだが、後続でLLMやイベント種別を加えて重要度として育てるため、出力名は`importance_score`のままにする。スコアは`0.0`から`1.0`の範囲に収める。
+
+## video_clipper
+
+責務:
+
+- `timeline.json`を読み込む
+- `video.path`から元動画を参照する
+- 指定された`timeline` indexの`start_seconds`と`end_seconds`を取得する
+- `--padding-seconds`を前後に足し、開始時刻は`0`未満にならないようにする
+- `ffmpeg`で指定区間をMP4として保存する
+- 存在しないindexや不正な区間はエラーにする

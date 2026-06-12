@@ -15,6 +15,7 @@ from .frame_summarizer import (
     summarize_image_with_ollama,
 )
 from .video_loader import VideoLoaderError, VideoMetadata, load_video_metadata
+from .video_clipper import VideoClipperError, clip_timeline_entry
 
 __all__ = [
     "AnalysisMetadata",
@@ -23,9 +24,11 @@ __all__ = [
     "FrameSummarizerError",
     "FrameSummary",
     "FrameSummaryContent",
+    "VideoClipperError",
     "VideoLoaderError",
     "VideoMetadata",
     "build_frame_summary_document",
+    "clip_timeline_entry",
     "extract_frames",
     "load_video_metadata",
     "normalize_tags",

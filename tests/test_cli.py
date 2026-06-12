@@ -206,6 +206,41 @@ class CliTest(unittest.TestCase):
 
         self.assertEqual(exit_code, 1)
 
+    def test_clip_cli_connects_timeline_json_to_video_clipper(self):
+        with (
+            patch("video_timeline.cli.clip_timeline_entry", return_value=Path("clip.mp4")) as clip,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(
+                [
+                    "clip",
+                    "timeline.json",
+                    "--index",
+                    "3",
+                    "--output",
+                    "clip.mp4",
+                    "--padding-seconds",
+                    "1.5",
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        clip.assert_called_once_with("timeline.json", index=3, output_path="clip.mp4", padding_seconds=1.5)
+        self.assertIn("wrote clip.mp4", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_clip_cli_returns_error_for_video_clipper_failure(self):
+        with (
+            patch("video_timeline.cli.clip_timeline_entry", side_effect=ValueError("failed")),
+            patch("sys.stdout", new_callable=io.StringIO),
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["clip", "timeline.json", "--index", "3", "--output", "clip.mp4"])
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("error: failed", stderr.getvalue())
+
     def test_batch_cli_processes_all_mp4s_and_reports_counts(self):
         first = Path("/tmp/videos/a/sample.mp4")
         second = Path("/tmp/videos/b/sample.mp4")

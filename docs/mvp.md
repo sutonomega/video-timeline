@@ -45,6 +45,12 @@ PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json
 PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir timelines
 ```
 
+生成済み `timeline.json` の指定区間を切り出す場合は `clip` サブコマンドを使う。
+
+```bash
+PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --output clip.mp4
+```
+
 引数:
 
 - `input`: 入力動画ファイルのパス
@@ -53,6 +59,10 @@ PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir
 - `--output-dir`: 一括解析結果の保存先ベースディレクトリ
 - `--interval-seconds`: フレーム抽出間隔。既定値は`10`
 - `--frames-dir`: 抽出フレームの保存先ベースディレクトリ。既定値は`frames`
+- `clip timeline.json`: `timeline` の指定区間を元動画から切り出す
+- `clip --index`: 切り出す `timeline` 配列の0始まりindex
+- `clip --output`: 切り出しMP4の保存先
+- `clip --padding-seconds`: 切り出し範囲の前後に足す余白秒数。既定値は`0`
 
 将来拡張する任意引数:
 
