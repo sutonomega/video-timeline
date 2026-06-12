@@ -11,8 +11,11 @@ class DocsMvpContractTest(unittest.TestCase):
 
         required_terms = [
             "PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json",
+            "PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir timelines",
             "`input`",
             "`--output`",
+            "`--input-dir`",
+            "`--output-dir`",
             "`--interval-seconds`",
             "`--frames-dir`",
             "`--vl-provider`",
@@ -43,6 +46,8 @@ class DocsMvpContractTest(unittest.TestCase):
             "`frame_summaries[].time_seconds`",
             "`frame_summaries[].image`",
             "`frame_summaries[].summary`",
+            "`<output-dir>/<video_stem>_<path_hash>/`",
+            "`timeline.json`",
         ]
 
         missing_terms = [term for term in required_terms if term not in text]
@@ -94,6 +99,14 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("<frames-dir>/<video_stem>_<path_hash>/", architecture)
         self.assertIn("同名動画", architecture)
 
+    def test_architecture_defines_batch_cli_contract(self):
+        architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+
+        self.assertIn("cli batch mode", architecture)
+        self.assertIn("<output-dir>/<video_stem>_<path_hash>/", architecture)
+        self.assertIn("timeline.json", architecture)
+        self.assertIn("1本の動画で失敗しても残りの動画を続行", architecture)
+
     def test_architecture_defines_event_detector_contract(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
@@ -123,7 +136,11 @@ class DocsMvpContractTest(unittest.TestCase):
         roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
 
         self.assertIn("[x] フレーム出力先を動画単位で分離する（#32）", roadmap)
-        self.assertIn("[ ] 複数動画を一括解析できるCLIを追加する（#33）", roadmap)
+
+    def test_roadmap_tracks_batch_cli(self):
+        roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
+
+        self.assertIn("[x] 複数動画を一括解析できるCLIを追加する（#33）", roadmap)
 
     def test_quality_review_records_frame_summary_to_timeline_findings(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
