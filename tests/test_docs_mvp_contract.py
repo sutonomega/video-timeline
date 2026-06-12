@@ -29,6 +29,8 @@ class DocsMvpContractTest(unittest.TestCase):
             "`frame_extractor`",
             "`frame_summarizer`",
             "`/api/generate`",
+            "`frames/<video_stem>/000010000.jpg`",
+            "`custom_frames/<video_stem>/`",
             "`index`",
             "`time_seconds`",
             "`image`",
@@ -86,6 +88,12 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("軽量な類似判定", architecture)
         self.assertIn("閾値は実データで調整", architecture)
 
+    def test_architecture_defines_per_video_frame_directory(self):
+        architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+
+        self.assertIn("<frames-dir>/<video_stem>/", architecture)
+        self.assertIn("複数動画を連続実行", architecture)
+
     def test_architecture_defines_event_detector_contract(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
@@ -110,6 +118,12 @@ class DocsMvpContractTest(unittest.TestCase):
 
         self.assertIn("[x] イベント候補に軽量な重要度スコアを追加する（#30）", roadmap)
         self.assertIn("[ ] LLMや分類を使ったイベント重要度判定", roadmap)
+
+    def test_roadmap_tracks_per_video_frame_directory(self):
+        roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
+
+        self.assertIn("[x] フレーム出力先を動画単位で分離する（#32）", roadmap)
+        self.assertIn("[ ] 複数動画を一括解析できるCLIを追加する（#33）", roadmap)
 
     def test_quality_review_records_frame_summary_to_timeline_findings(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")

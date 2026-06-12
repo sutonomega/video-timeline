@@ -10,7 +10,7 @@ from unittest.mock import ANY, patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from video_timeline.cli import FrameSummarizationProgress, format_duration, main
+from video_timeline.cli import FrameSummarizationProgress, build_run_frames_dir, format_duration, main
 from video_timeline.event_detector import EventCandidate
 from video_timeline.frame_extractor import ExtractedFrame
 from video_timeline.frame_summarizer import FrameSummary
@@ -41,6 +41,13 @@ class CliTest(unittest.TestCase):
         output = stdout.getvalue()
         self.assertIn("frame summarization started: 1/2 (0s, remaining: calculating)", output)
         self.assertIn("frame summarization started: 2/2 (10s, remaining: 30s)", output)
+
+    def test_build_run_frames_dir_appends_video_stem(self):
+        self.assertEqual(build_run_frames_dir("videos/demo.mp4", "frames"), Path("frames") / "demo")
+        self.assertEqual(
+            build_run_frames_dir("/tmp/input/video-a.mp4", "custom_frames"),
+            Path("custom_frames") / "video-a",
+        )
 
     def test_cli_connects_video_to_frame_summary_json(self):
         video = VideoMetadata(
@@ -106,7 +113,7 @@ class CliTest(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         load_video.assert_called_once_with("input.mp4")
-        extract.assert_called_once_with(video, frames_dir="custom_frames", interval_seconds=5.0)
+        extract.assert_called_once_with(video, frames_dir=Path("custom_frames") / "input", interval_seconds=5.0)
         summarize.assert_called_once_with(frames, model="qwen2.5vl:7b", progress=ANY)
         build_timeline.assert_called_once_with(summaries, video)
         detect_events.assert_called_once_with(timeline)

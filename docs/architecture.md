@@ -44,6 +44,8 @@ Main Modules
 - index、time_seconds、imageを持つ抽出結果の生成
 - 短い動画や端数秒を含む動画でも決定的に動く抽出制御
 
+CLIから使う場合は、`--frames-dir`をベースディレクトリとして扱い、動画ごとに`<frames-dir>/<video_stem>/`へ保存する。これにより、複数動画を連続実行してもフレーム画像が同じディレクトリに混ざらない。
+
 ## frame_summarizer
 
 責務:

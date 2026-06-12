@@ -44,7 +44,7 @@ PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json
 - `input`: 入力動画ファイルのパス
 - `--output`: 出力JSONファイルのパス
 - `--interval-seconds`: フレーム抽出間隔。既定値は`10`
-- `--frames-dir`: 抽出フレームの保存先。既定値は`frames`
+- `--frames-dir`: 抽出フレームの保存先ベースディレクトリ。既定値は`frames`
 
 将来拡張する任意引数:
 
@@ -116,7 +116,7 @@ MVPの既定値:
 - `time_seconds`
 - `image`
 
-`image`は保存したフレーム画像のパスとして扱う。ファイル名はミリ秒ベースの9桁連番にし、MVP CLI統合では、出力JSONから参照しやすいように`frames/000010000.jpg`のような相対パスを渡す。
+`image`は保存したフレーム画像のパスとして扱う。ファイル名はミリ秒ベースの9桁連番にする。CLIでは異なる動画のフレームが混ざらないよう、保存先を`frames/<video_stem>/000010000.jpg`のように動画ファイル名単位で分離する。`--frames-dir custom_frames`を指定した場合は、`custom_frames/<video_stem>/`を保存先にする。相対パスを指定した場合、出力JSONの`image`も相対パスになる。
 
 ## 処理仕様
 
