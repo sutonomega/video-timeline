@@ -301,10 +301,10 @@ class FrameSummarizerTest(unittest.TestCase):
         with self.assertRaisesRegex(FrameSummarizerError, "要約文"):
             parse_frame_summary_response(json.dumps({"tags": ["chatgpt"]}))
 
-    def test_normalize_tags_keeps_lowercase_alnum_underscore_tags(self):
+    def test_normalize_tags_keeps_lowercase_alnum_underscore_and_japanese_tags(self):
         self.assertEqual(
-            normalize_tags(["ChatGPT", "PR Review", "terminal-test", "日本語", "chatgpt", 123]),
-            ("chatgpt", "pr_review", "terminal_test"),
+            normalize_tags(["ChatGPT", "PR Review", "terminal-test", "日本語", "将棋 対局", "chatgpt", 123]),
+            ("chatgpt", "pr_review", "terminal_test", "日本語", "将棋_対局"),
         )
 
     def test_summarize_image_with_ollama_rejects_empty_response(self):
