@@ -152,6 +152,38 @@ class TimelineGeneratorTest(unittest.TestCase):
         self.assertEqual(timeline[1].frame_indices, [2])
         self.assertEqual(timeline[1].tags, ["terminal", "testing"])
 
+    def test_build_timeline_can_disable_tag_similarity_for_quality_review(self):
+        video = VideoMetadata(
+            path="/tmp/input.mp4",
+            duration_seconds=20.0,
+            fps=30.0,
+            frame_count=600,
+            width=1920,
+            height=1080,
+        )
+        summaries = [
+            FrameSummary(
+                index=0,
+                time_seconds=0.0,
+                image="frames/000000000.jpg",
+                summary="ChatGPTで仕様について話している",
+                tags=("chatgpt", "planning"),
+            ),
+            FrameSummary(
+                index=1,
+                time_seconds=10.0,
+                image="frames/000010000.jpg",
+                summary="要件メモを確認している",
+                tags=("chatgpt", "planning", "docs"),
+            ),
+        ]
+
+        with_tags = build_timeline(summaries, video)
+        without_tags = build_timeline(summaries, video, use_tag_similarity=False)
+
+        self.assertEqual([entry.frame_indices for entry in with_tags], [[0, 1]])
+        self.assertEqual([entry.frame_indices for entry in without_tags], [[0], [1]])
+
     def test_are_similar_summaries_keeps_different_work_separate(self):
         self.assertFalse(
             are_similar_summaries(
