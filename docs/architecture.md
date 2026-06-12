@@ -55,6 +55,17 @@ CLIから使う場合は、`--frames-dir`をベースディレクトリとして
 - video、analysis、frame_summariesを持つJSON構造の生成
 - UTF-8 JSONファイルへの保存
 
+## cli batch mode
+
+責務:
+
+- 入力ディレクトリ配下の`mp4`を再帰的に検出する
+- 検出した`mp4`を全件保持せず順次処理する
+- 動画ごとに`<output-dir>/<video_stem>_<path_hash>/`を作る
+- 各動画の`timeline.json`と`frames/`を同じ動画専用ディレクトリに保存する
+- 1本の動画で失敗しても残りの動画を続行する
+- 最後に成功件数と失敗件数を表示する
+
 ## timeline_generator
 
 責務:

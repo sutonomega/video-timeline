@@ -39,10 +39,18 @@ MVPで実装しないこと:
 PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json
 ```
 
+複数動画をまとめて解析する場合は、入力ディレクトリと出力ディレクトリを指定する。
+
+```bash
+PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir timelines
+```
+
 引数:
 
 - `input`: 入力動画ファイルのパス
 - `--output`: 出力JSONファイルのパス
+- `--input-dir`: 一括解析する入力ディレクトリ。配下の`mp4`を再帰的に検出する
+- `--output-dir`: 一括解析結果の保存先ベースディレクトリ
 - `--interval-seconds`: フレーム抽出間隔。既定値は`10`
 - `--frames-dir`: 抽出フレームの保存先ベースディレクトリ。既定値は`frames`
 
@@ -117,6 +125,8 @@ MVPの既定値:
 - `image`
 
 `image`は保存したフレーム画像のパスとして扱う。ファイル名はミリ秒ベースの9桁連番にする。CLIでは異なる動画のフレームが混ざらないよう、保存先を`frames/<video_stem>_<path_hash>/000010000.jpg`のように動画ファイル名と入力パスhashで分離する。`--frames-dir custom_frames`を指定した場合は、`custom_frames/<video_stem>_<path_hash>/`を保存先にする。相対パスを指定した場合、出力JSONの`image`も相対パスになる。`path_hash`は解決済み入力パスから作る短いhashで、`videos/a/sample.mp4`と`videos/b/sample.mp4`のような同名動画の衝突を避けるために使う。
+
+一括解析では動画ごとに`<output-dir>/<video_stem>_<path_hash>/`を作り、その中に`timeline.json`と`frames/`を保存する。1本の動画で失敗しても残りの動画は続行し、最後に成功件数と失敗件数を表示する。
 
 ## 処理仕様
 

@@ -10,7 +10,14 @@ from unittest.mock import ANY, patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from video_timeline.cli import FrameSummarizationProgress, build_run_frames_dir, format_duration, main
+from video_timeline.cli import (
+    FrameSummarizationProgress,
+    build_batch_video_dir,
+    build_run_frames_dir,
+    discover_mp4_files,
+    format_duration,
+    main,
+)
 from video_timeline.event_detector import EventCandidate
 from video_timeline.frame_extractor import ExtractedFrame
 from video_timeline.frame_summarizer import FrameSummary
@@ -56,6 +63,26 @@ class CliTest(unittest.TestCase):
         self.assertNotEqual(
             build_run_frames_dir("/tmp/videos/a/sample.mp4", "frames"),
             build_run_frames_dir("/tmp/videos/b/sample.mp4", "frames"),
+        )
+
+    def test_discover_mp4_files_recurses_without_collecting_non_mp4_files(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "b").mkdir()
+            (root / "a").mkdir()
+            first = root / "a" / "first.mp4"
+            second = root / "b" / "second.MP4"
+            ignored = root / "b" / "note.txt"
+            first.write_text("", encoding="utf-8")
+            second.write_text("", encoding="utf-8")
+            ignored.write_text("", encoding="utf-8")
+
+            self.assertCountEqual(list(discover_mp4_files(root)), [first, second])
+
+    def test_build_batch_video_dir_avoids_same_filename_collision(self):
+        self.assertNotEqual(
+            build_batch_video_dir("/tmp/videos/a/sample.mp4", "timelines"),
+            build_batch_video_dir("/tmp/videos/b/sample.mp4", "timelines"),
         )
 
     def test_cli_connects_video_to_frame_summary_json(self):
@@ -176,6 +203,72 @@ class CliTest(unittest.TestCase):
                 exit_code = main(["input.mp4", "--output", "timeline.json"])
 
         self.assertEqual(exit_code, 1)
+
+    def test_batch_cli_processes_all_mp4s_and_reports_counts(self):
+        first = Path("/tmp/videos/a/sample.mp4")
+        second = Path("/tmp/videos/b/sample.mp4")
+
+        with (
+            patch("video_timeline.cli.discover_mp4_files", return_value=[first, second]) as discover,
+            patch(
+                "video_timeline.cli.run_video",
+                side_effect=lambda _input, output, *_args, **_kwargs: Path(output),
+            ) as run_video,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(
+                [
+                    "--input-dir",
+                    "/tmp/videos",
+                    "--output-dir",
+                    "timelines",
+                    "--interval-seconds",
+                    "5",
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        discover.assert_called_once_with("/tmp/videos")
+        self.assertEqual(run_video.call_count, 2)
+        run_video.assert_any_call(
+            first,
+            build_batch_video_dir(first, "timelines") / "timeline.json",
+            build_batch_video_dir(first, "timelines") / "frames",
+            5.0,
+            isolate_frames=False,
+        )
+        run_video.assert_any_call(
+            second,
+            build_batch_video_dir(second, "timelines") / "timeline.json",
+            build_batch_video_dir(second, "timelines") / "frames",
+            5.0,
+            isolate_frames=False,
+        )
+        self.assertIn("batch complete: success=2 failure=0", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_batch_cli_continues_after_single_video_failure(self):
+        first = Path("/tmp/videos/a/sample.mp4")
+        second = Path("/tmp/videos/b/sample.mp4")
+
+        def run_video_side_effect(input_path, output_path, *_args, **_kwargs):
+            if input_path == first:
+                raise ValueError("failed")
+            return Path(output_path)
+
+        with (
+            patch("video_timeline.cli.discover_mp4_files", return_value=[first, second]),
+            patch("video_timeline.cli.run_video", side_effect=run_video_side_effect) as run_video,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["--input-dir", "/tmp/videos", "--output-dir", "timelines"])
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(run_video.call_count, 2)
+        self.assertIn("batch complete: success=1 failure=1", stdout.getvalue())
+        self.assertIn("batch video failed: /tmp/videos/a/sample.mp4: failed", stderr.getvalue())
 
 
 if __name__ == "__main__":

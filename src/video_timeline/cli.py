@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Iterator
 import hashlib
 from pathlib import Path
 import sys
@@ -64,10 +65,26 @@ def build_run_frames_dir(video_path: str | Path, frames_dir: str | Path) -> Path
     return Path(frames_dir) / f"{resolved_video_path.stem}_{path_hash}"
 
 
+def build_batch_video_dir(video_path: str | Path, output_dir: str | Path) -> Path:
+    return build_run_frames_dir(video_path, output_dir)
+
+
+def discover_mp4_files(input_dir: str | Path) -> Iterator[Path]:
+    directory = Path(input_dir)
+    if not directory.is_dir():
+        raise ValueError(f"入力ディレクトリが存在しません: {directory}")
+
+    for path in directory.rglob("*"):
+        if path.is_file() and path.suffix.lower() == ".mp4":
+            yield path
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generate frame summary JSON from a video.")
-    parser.add_argument("input", help="入力動画ファイルのパス")
-    parser.add_argument("--output", required=True, help="出力JSONファイルのパス")
+    parser.add_argument("input", nargs="?", help="入力動画ファイルのパス")
+    parser.add_argument("--output", help="出力JSONファイルのパス")
+    parser.add_argument("--input-dir", help="一括解析する入力ディレクトリ")
+    parser.add_argument("--output-dir", help="一括解析結果の保存先ベースディレクトリ")
     parser.add_argument(
         "--interval-seconds",
         type=float,
@@ -78,14 +95,22 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def run(args: argparse.Namespace) -> Path:
+def run_video(
+    input_path: str | Path,
+    output_path: str | Path,
+    frames_dir: str | Path,
+    interval_seconds: float,
+    *,
+    isolate_frames: bool = True,
+) -> Path:
     print_progress("動画メタデータ取得中")
-    video = load_video_metadata(args.input)
+    video = load_video_metadata(input_path)
     print_progress("フレーム抽出中")
+    actual_frames_dir = build_run_frames_dir(video.path, frames_dir) if isolate_frames else Path(frames_dir)
     frames = extract_frames(
         video,
-        frames_dir=build_run_frames_dir(video.path, args.frames_dir),
-        interval_seconds=args.interval_seconds,
+        frames_dir=actual_frames_dir,
+        interval_seconds=interval_seconds,
     )
     print_progress("フレーム要約中")
     frame_summaries = summarize_frames_with_ollama(
@@ -100,26 +125,76 @@ def run(args: argparse.Namespace) -> Path:
     print_progress("JSON保存中")
     document = build_frame_summary_document(
         video=video,
-        analysis=AnalysisMetadata(interval_seconds=args.interval_seconds),
+        analysis=AnalysisMetadata(interval_seconds=interval_seconds),
         frame_summaries=frame_summaries,
         timeline=timeline,
         events=events,
     )
-    output_path = Path(args.output)
-    save_frame_summary_json(document, output_path)
-    return output_path
+    path = Path(output_path)
+    save_frame_summary_json(document, path)
+    return path
+
+
+def run_batch(args: argparse.Namespace) -> tuple[int, int]:
+    if args.output_dir is None:
+        raise ValueError("--input-dirを使う場合は--output-dirが必要です")
+    if args.input is not None or args.output is not None:
+        raise ValueError("--input-dirを使う場合はinputと--outputは指定できません")
+
+    success_count = 0
+    failure_count = 0
+    processed_count = 0
+    for video_path in discover_mp4_files(args.input_dir):
+        processed_count += 1
+        video_dir = build_batch_video_dir(video_path, args.output_dir)
+        print_progress(f"batch video started: {video_path}")
+        try:
+            output_path = run_video(
+                video_path,
+                video_dir / "timeline.json",
+                video_dir / "frames",
+                args.interval_seconds,
+                isolate_frames=False,
+            )
+        except Exception as exc:
+            failure_count += 1
+            print(f"batch video failed: {video_path}: {exc}", file=sys.stderr)
+            continue
+
+        success_count += 1
+        print_progress(f"wrote {output_path}")
+
+    if processed_count == 0:
+        raise ValueError(f"mp4が見つかりません: {args.input_dir}")
+
+    return success_count, failure_count
+
+
+def run(args: argparse.Namespace) -> Path | tuple[int, int]:
+    if args.input_dir is not None:
+        return run_batch(args)
+    if args.input is None:
+        raise ValueError("inputまたは--input-dirが必要です")
+    if args.output is None:
+        raise ValueError("--outputが必要です")
+
+    return run_video(args.input, args.output, args.frames_dir, args.interval_seconds)
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
-        output_path = run(args)
+        result = run(args)
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    print(f"wrote {output_path}")
+    if isinstance(result, tuple):
+        success_count, failure_count = result
+        print(f"batch complete: success={success_count} failure={failure_count}")
+    else:
+        print(f"wrote {result}")
     return 0
 
 
