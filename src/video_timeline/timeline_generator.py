@@ -29,7 +29,11 @@ class TimelineEntry:
         }
 
 
-def build_timeline(frame_summaries: list[FrameSummary], video: VideoMetadata) -> list[TimelineEntry]:
+def build_timeline(
+    frame_summaries: list[FrameSummary],
+    video: VideoMetadata,
+    use_tag_similarity: bool = True,
+) -> list[TimelineEntry]:
     sorted_summaries = sorted(frame_summaries, key=lambda item: (item.time_seconds, item.index))
     if not sorted_summaries:
         return []
@@ -43,7 +47,9 @@ def build_timeline(frame_summaries: list[FrameSummary], video: VideoMetadata) ->
 
     for summary in sorted_summaries[1:]:
         normalized_summary = _normalize_summary(summary.summary)
-        if are_similar_summaries(current_summary, normalized_summary) or are_similar_tags(current_tags, list(summary.tags)):
+        if are_similar_summaries(current_summary, normalized_summary) or (
+            use_tag_similarity and are_similar_tags(current_tags, list(summary.tags))
+        ):
             current_frame_indices.append(summary.index)
             current_tags = _merge_tags(current_tags, summary.tags)
             continue

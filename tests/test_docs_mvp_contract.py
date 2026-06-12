@@ -162,7 +162,7 @@ class DocsMvpContractTest(unittest.TestCase):
 
         self.assertIn("[x] フレーム要約にタグ付けを追加する（#34）", roadmap)
         self.assertIn("[x] タグを使ったtimeline統合ロジックを実装する（#35）", roadmap)
-        self.assertIn("[ ] 実録画でタグ統合品質を確認する（#43）", roadmap)
+        self.assertIn("[x] 実録画でタグ統合品質を確認する（#43）", roadmap)
 
     def test_quality_review_records_frame_summary_to_timeline_findings(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -193,6 +193,17 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("browser_docs_pr.mp4", quality_review)
         self.assertIn("repeated_chat_then_test.mp4", quality_review)
         self.assertIn("閾値 `0.6` は、今回の3本では維持でよい。", quality_review)
+
+    def test_quality_review_records_tag_grouping_comparison(self):
+        quality_review = (ROOT / "docs" / "quality_review.md").read_text(encoding="utf-8")
+
+        self.assertIn("TAG_SIMILARITY_THRESHOLD = 0.5", quality_review)
+        self.assertIn("use_tag_similarity=False", quality_review)
+        self.assertIn("use_tag_similarity=True", quality_review)
+        self.assertIn("タグ統合なし", quality_review)
+        self.assertIn("タグ統合あり", quality_review)
+        self.assertIn("過統合", quality_review)
+        self.assertIn("実際のOBS録画では引き続き確認が必要", quality_review)
 
 
 if __name__ == "__main__":

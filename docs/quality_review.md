@@ -174,3 +174,61 @@ After:
 
 - 実際の画面録画で、エディタ操作やブラウザ操作が長く続く場合の統合具合を見る。
 - 閾値を設定値化するかは、実録画で過統合・過分割が見えてから判断する。
+
+## 2026-06-12 タグ統合品質の比較
+
+Issue #43 の確認として、Issue #20 / #28 と同じ3本の画面録画風検証動画を再生成し、Ollama `qwen2.5vl:7b` で `summary` と `tags` を生成した。生成物は `/tmp/video-timeline-quality` に置き、リポジトリにはコミットしない。
+
+今回の比較では、同じ `frame_summaries` から次の2種類の `timeline` を生成した。
+
+- タグ統合なし: `build_timeline(..., use_tag_similarity=False)`
+- タグ統合あり: `build_timeline(..., use_tag_similarity=True)`
+
+タグ類似統合の閾値:
+
+```text
+TAG_SIMILARITY_THRESHOLD = 0.5
+```
+
+比較結果:
+
+| 検証動画 | タグ統合なし | タグ統合あり | 判定 |
+| --- | ---: | ---: | --- |
+| `workflow_chat_coding.mp4` | 3区間 | 3区間 | 過統合なし |
+| `browser_docs_pr.mp4` | 3区間 | 3区間 | 過統合なし |
+| `repeated_chat_then_test.mp4` | 3区間 | 3区間 | 過統合なし。ただし過分割改善もなし |
+
+`workflow_chat_coding.mp4` では、ChatGPT計画、VSCode実装、Terminalテストが別区間のままだった。タグはそれぞれ `chatgpt/video_production`、`vscode/python`、`pytest/terminal` となり、期待どおり結合されなかった。
+
+`browser_docs_pr.mp4` では、GitHubレビュー、README編集、PR作成が別区間のままだった。先頭と末尾に `github` が含まれたが、連続していないため結合されなかった。
+
+`repeated_chat_then_test.mp4` では、最初の2フレームがどちらも `chatgpt` を含んだが、Jaccard類似度は `1/4 = 0.25` で閾値 `0.5` 未満だったため結合されなかった。3フレーム目はTerminalテスト画面にもかかわらず `chatgpt` タグが混じったが、`chatgpt/coding` として扱われ、前区間とは結合されなかった。
+
+代表的な `frame_summaries`:
+
+```json
+[
+  {
+    "time_seconds": 0.0,
+    "summary": "ChatGPTを使用してビデオのタイムラインを計画している。",
+    "tags": ["chatgpt", "video_production"]
+  },
+  {
+    "time_seconds": 10.0,
+    "summary": "ChatGPTを使用して計画書を作成するための要件とタグを設定している。",
+    "tags": ["chatgpt", "planning_requirements", "tags"]
+  },
+  {
+    "time_seconds": 20.0,
+    "summary": "ターミナルでpytestテストを実行しているユーザーがいます。",
+    "tags": ["chatgpt", "coding"]
+  }
+]
+```
+
+判定:
+
+- 閾値 `0.5` は、今回の3本では明確な過統合を起こさなかった。
+- 一方で、`chatgpt` だけが共通する程度では過分割改善につながらなかった。
+- タグ統合は維持してよいが、過分割改善を狙うには `planning` 系タグの揺れを減らすプロンプト改善や、主要タグと補助タグを分ける設計が必要になる可能性がある。
+- 今回は画面録画風の検証動画であり、実際のOBS録画では引き続き確認が必要。
