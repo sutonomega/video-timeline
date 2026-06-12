@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 from pathlib import Path
 import sys
 import time
@@ -57,6 +58,12 @@ def format_duration(seconds: int) -> str:
     return f"{hours}h {remaining_minutes}m {remaining_seconds}s"
 
 
+def build_run_frames_dir(video_path: str | Path, frames_dir: str | Path) -> Path:
+    resolved_video_path = Path(video_path).resolve(strict=False)
+    path_hash = hashlib.sha256(str(resolved_video_path).encode("utf-8")).hexdigest()[:12]
+    return Path(frames_dir) / f"{resolved_video_path.stem}_{path_hash}"
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generate frame summary JSON from a video.")
     parser.add_argument("input", help="入力動画ファイルのパス")
@@ -75,7 +82,11 @@ def run(args: argparse.Namespace) -> Path:
     print_progress("動画メタデータ取得中")
     video = load_video_metadata(args.input)
     print_progress("フレーム抽出中")
-    frames = extract_frames(video, frames_dir=args.frames_dir, interval_seconds=args.interval_seconds)
+    frames = extract_frames(
+        video,
+        frames_dir=build_run_frames_dir(video.path, args.frames_dir),
+        interval_seconds=args.interval_seconds,
+    )
     print_progress("フレーム要約中")
     frame_summaries = summarize_frames_with_ollama(
         frames,

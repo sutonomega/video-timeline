@@ -44,6 +44,8 @@ Main Modules
 - index、time_seconds、imageを持つ抽出結果の生成
 - 短い動画や端数秒を含む動画でも決定的に動く抽出制御
 
+CLIから使う場合は、`--frames-dir`をベースディレクトリとして扱い、動画ごとに`<frames-dir>/<video_stem>_<path_hash>/`へ保存する。`path_hash`は解決済み入力パスから作る短いhashで、`videos/a/sample.mp4`と`videos/b/sample.mp4`のような同名動画を連続実行してもフレーム画像が同じディレクトリに混ざらないようにする。
+
 ## frame_summarizer
 
 責務:
