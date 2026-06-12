@@ -42,11 +42,20 @@ class CliTest(unittest.TestCase):
         self.assertIn("frame summarization started: 1/2 (0s, remaining: calculating)", output)
         self.assertIn("frame summarization started: 2/2 (10s, remaining: 30s)", output)
 
-    def test_build_run_frames_dir_appends_video_stem(self):
-        self.assertEqual(build_run_frames_dir("videos/demo.mp4", "frames"), Path("frames") / "demo")
+    def test_build_run_frames_dir_appends_video_stem_and_path_hash(self):
+        run_dir = build_run_frames_dir("videos/demo.mp4", "frames")
+
+        self.assertEqual(run_dir.parent, Path("frames"))
+        self.assertRegex(run_dir.name, r"^demo_[0-9a-f]{12}$")
         self.assertEqual(
-            build_run_frames_dir("/tmp/input/video-a.mp4", "custom_frames"),
-            Path("custom_frames") / "video-a",
+            build_run_frames_dir("videos/demo.mp4", "frames"),
+            run_dir,
+        )
+
+    def test_build_run_frames_dir_avoids_same_filename_collision(self):
+        self.assertNotEqual(
+            build_run_frames_dir("/tmp/videos/a/sample.mp4", "frames"),
+            build_run_frames_dir("/tmp/videos/b/sample.mp4", "frames"),
         )
 
     def test_cli_connects_video_to_frame_summary_json(self):
@@ -113,7 +122,11 @@ class CliTest(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         load_video.assert_called_once_with("input.mp4")
-        extract.assert_called_once_with(video, frames_dir=Path("custom_frames") / "input", interval_seconds=5.0)
+        extract.assert_called_once_with(
+            video,
+            frames_dir=build_run_frames_dir(video.path, "custom_frames"),
+            interval_seconds=5.0,
+        )
         summarize.assert_called_once_with(frames, model="qwen2.5vl:7b", progress=ANY)
         build_timeline.assert_called_once_with(summaries, video)
         detect_events.assert_called_once_with(timeline)

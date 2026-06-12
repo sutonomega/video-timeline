@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 from pathlib import Path
 import sys
 import time
@@ -58,7 +59,9 @@ def format_duration(seconds: int) -> str:
 
 
 def build_run_frames_dir(video_path: str | Path, frames_dir: str | Path) -> Path:
-    return Path(frames_dir) / Path(video_path).stem
+    resolved_video_path = Path(video_path).resolve(strict=False)
+    path_hash = hashlib.sha256(str(resolved_video_path).encode("utf-8")).hexdigest()[:12]
+    return Path(frames_dir) / f"{resolved_video_path.stem}_{path_hash}"
 
 
 def build_parser() -> argparse.ArgumentParser:

@@ -29,8 +29,8 @@ class DocsMvpContractTest(unittest.TestCase):
             "`frame_extractor`",
             "`frame_summarizer`",
             "`/api/generate`",
-            "`frames/<video_stem>/000010000.jpg`",
-            "`custom_frames/<video_stem>/`",
+            "`frames/<video_stem>_<path_hash>/000010000.jpg`",
+            "`custom_frames/<video_stem>_<path_hash>/`",
             "`index`",
             "`time_seconds`",
             "`image`",
@@ -91,8 +91,8 @@ class DocsMvpContractTest(unittest.TestCase):
     def test_architecture_defines_per_video_frame_directory(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
-        self.assertIn("<frames-dir>/<video_stem>/", architecture)
-        self.assertIn("複数動画を連続実行", architecture)
+        self.assertIn("<frames-dir>/<video_stem>_<path_hash>/", architecture)
+        self.assertIn("同名動画", architecture)
 
     def test_architecture_defines_event_detector_contract(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")

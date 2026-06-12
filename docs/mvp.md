@@ -116,7 +116,7 @@ MVPの既定値:
 - `time_seconds`
 - `image`
 
-`image`は保存したフレーム画像のパスとして扱う。ファイル名はミリ秒ベースの9桁連番にする。CLIでは異なる動画のフレームが混ざらないよう、保存先を`frames/<video_stem>/000010000.jpg`のように動画ファイル名単位で分離する。`--frames-dir custom_frames`を指定した場合は、`custom_frames/<video_stem>/`を保存先にする。相対パスを指定した場合、出力JSONの`image`も相対パスになる。
+`image`は保存したフレーム画像のパスとして扱う。ファイル名はミリ秒ベースの9桁連番にする。CLIでは異なる動画のフレームが混ざらないよう、保存先を`frames/<video_stem>_<path_hash>/000010000.jpg`のように動画ファイル名と入力パスhashで分離する。`--frames-dir custom_frames`を指定した場合は、`custom_frames/<video_stem>_<path_hash>/`を保存先にする。相対パスを指定した場合、出力JSONの`image`も相対パスになる。`path_hash`は解決済み入力パスから作る短いhashで、`videos/a/sample.mp4`と`videos/b/sample.mp4`のような同名動画の衝突を避けるために使う。
 
 ## 処理仕様
 
