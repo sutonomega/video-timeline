@@ -297,6 +297,10 @@ class FrameSummarizerTest(unittest.TestCase):
         self.assertEqual(content.summary, "ChatGPTで仕様相談をしている")
         self.assertEqual(content.tags, ())
 
+    def test_parse_frame_summary_response_rejects_tags_without_summary(self):
+        with self.assertRaisesRegex(FrameSummarizerError, "要約文"):
+            parse_frame_summary_response(json.dumps({"tags": ["chatgpt"]}))
+
     def test_normalize_tags_keeps_lowercase_alnum_underscore_tags(self):
         self.assertEqual(
             normalize_tags(["ChatGPT", "PR Review", "terminal-test", "日本語", "chatgpt", 123]),

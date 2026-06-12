@@ -114,6 +114,7 @@ class DocsMvpContractTest(unittest.TestCase):
 
         self.assertIn("フレームごとの検索用タグ", architecture)
         self.assertIn("小文字英数字", architecture)
+        self.assertIn("日本語タグ", architecture)
 
     def test_architecture_defines_event_detector_contract(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
