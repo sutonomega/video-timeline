@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Iterator
 import hashlib
 from pathlib import Path
 import sys
@@ -68,15 +69,14 @@ def build_batch_video_dir(video_path: str | Path, output_dir: str | Path) -> Pat
     return build_run_frames_dir(video_path, output_dir)
 
 
-def discover_mp4_files(input_dir: str | Path) -> list[Path]:
+def discover_mp4_files(input_dir: str | Path) -> Iterator[Path]:
     directory = Path(input_dir)
     if not directory.is_dir():
         raise ValueError(f"入力ディレクトリが存在しません: {directory}")
 
-    return sorted(
-        (path for path in directory.rglob("*") if path.is_file() and path.suffix.lower() == ".mp4"),
-        key=lambda path: str(path),
-    )
+    for path in directory.rglob("*"):
+        if path.is_file() and path.suffix.lower() == ".mp4":
+            yield path
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -141,13 +141,11 @@ def run_batch(args: argparse.Namespace) -> tuple[int, int]:
     if args.input is not None or args.output is not None:
         raise ValueError("--input-dirを使う場合はinputと--outputは指定できません")
 
-    videos = discover_mp4_files(args.input_dir)
-    if not videos:
-        raise ValueError(f"mp4が見つかりません: {args.input_dir}")
-
     success_count = 0
     failure_count = 0
-    for video_path in videos:
+    processed_count = 0
+    for video_path in discover_mp4_files(args.input_dir):
+        processed_count += 1
         video_dir = build_batch_video_dir(video_path, args.output_dir)
         print_progress(f"batch video started: {video_path}")
         try:
@@ -165,6 +163,9 @@ def run_batch(args: argparse.Namespace) -> tuple[int, int]:
 
         success_count += 1
         print_progress(f"wrote {output_path}")
+
+    if processed_count == 0:
+        raise ValueError(f"mp4が見つかりません: {args.input_dir}")
 
     return success_count, failure_count
 

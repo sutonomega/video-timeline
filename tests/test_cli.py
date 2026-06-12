@@ -65,7 +65,7 @@ class CliTest(unittest.TestCase):
             build_run_frames_dir("/tmp/videos/b/sample.mp4", "frames"),
         )
 
-    def test_discover_mp4_files_recurses_and_sorts(self):
+    def test_discover_mp4_files_recurses_without_collecting_non_mp4_files(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "b").mkdir()
@@ -77,7 +77,7 @@ class CliTest(unittest.TestCase):
             second.write_text("", encoding="utf-8")
             ignored.write_text("", encoding="utf-8")
 
-            self.assertEqual(discover_mp4_files(root), [first, second])
+            self.assertCountEqual(list(discover_mp4_files(root)), [first, second])
 
     def test_build_batch_video_dir_avoids_same_filename_collision(self):
         self.assertNotEqual(

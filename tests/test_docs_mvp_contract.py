@@ -105,6 +105,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("cli batch mode", architecture)
         self.assertIn("<output-dir>/<video_stem>_<path_hash>/", architecture)
         self.assertIn("timeline.json", architecture)
+        self.assertIn("全件保持せず順次処理", architecture)
         self.assertIn("1本の動画で失敗しても残りの動画を続行", architecture)
 
     def test_architecture_defines_event_detector_contract(self):
