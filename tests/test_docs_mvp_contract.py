@@ -46,6 +46,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`frame_summaries[].time_seconds`",
             "`frame_summaries[].image`",
             "`frame_summaries[].summary`",
+            "`frame_summaries[].tags`",
             "`<output-dir>/<video_stem>_<path_hash>/`",
             "`timeline.json`",
         ]
@@ -108,6 +109,13 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("全件保持せず順次処理", architecture)
         self.assertIn("1本の動画で失敗しても残りの動画を続行", architecture)
 
+    def test_architecture_defines_frame_summary_tags(self):
+        architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+
+        self.assertIn("フレームごとの検索用タグ", architecture)
+        self.assertIn("小文字英数字", architecture)
+        self.assertIn("日本語タグ", architecture)
+
     def test_architecture_defines_event_detector_contract(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
@@ -142,6 +150,12 @@ class DocsMvpContractTest(unittest.TestCase):
         roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
 
         self.assertIn("[x] 複数動画を一括解析できるCLIを追加する（#33）", roadmap)
+
+    def test_roadmap_tracks_frame_summary_tags(self):
+        roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
+
+        self.assertIn("[x] フレーム要約にタグ付けを追加する（#34）", roadmap)
+        self.assertIn("[ ] タグを使ってtimeline区間を統合する（#35）", roadmap)
 
     def test_quality_review_records_frame_summary_to_timeline_findings(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")

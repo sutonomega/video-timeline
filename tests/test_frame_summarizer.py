@@ -16,7 +16,10 @@ from video_timeline.frame_summarizer import (
     DEFAULT_VL_PROVIDER,
     FrameSummarizerError,
     FrameSummary,
+    FrameSummaryContent,
     build_frame_summary_document,
+    normalize_tags,
+    parse_frame_summary_response,
     save_frame_summary_json,
     summarize_frames,
     summarize_frames_with_ollama,
@@ -33,7 +36,13 @@ class FrameSummarizerTest(unittest.TestCase):
             ExtractedFrame(index=0, time_seconds=0.0, image="frames/000000000.jpg"),
         ]
 
-        summaries = summarize_frames(frames, lambda frame: f"{frame.time_seconds:g}秒の画面")
+        summaries = summarize_frames(
+            frames,
+            lambda frame: FrameSummaryContent(
+                summary=f"{frame.time_seconds:g}秒の画面",
+                tags=("ChatGPT", "PR Review"),
+            ),
+        )
 
         self.assertEqual([summary.time_seconds for summary in summaries], [0.0, 10.0])
         self.assertEqual(
@@ -44,12 +53,14 @@ class FrameSummarizerTest(unittest.TestCase):
                     "time_seconds": 0.0,
                     "image": "frames/000000000.jpg",
                     "summary": "0秒の画面",
+                    "tags": ["chatgpt", "pr_review"],
                 },
                 {
                     "index": 1,
                     "time_seconds": 10.0,
                     "image": "frames/000010000.jpg",
                     "summary": "10秒の画面",
+                    "tags": ["chatgpt", "pr_review"],
                 },
             ],
         )
@@ -82,10 +93,11 @@ class FrameSummarizerTest(unittest.TestCase):
             summaries = summarize_frames_with_ollama(frames, model="qwen2.5vl:7b", api_url="http://ollama/api/generate")
 
         self.assertEqual(summaries[0].summary, "仕様相談をしている")
+        self.assertEqual(summaries[0].tags, ())
         summarize.assert_called_once_with(
             "frames/000000000.jpg",
             model="qwen2.5vl:7b",
-            prompt="この画像でユーザーが何をしているかを日本語で1文で要約してください。",
+            prompt='この画像でユーザーが何をしているかを日本語で1文で要約し、検索用タグも付けてください。必ずJSONだけで返してください。形式: {"summary":"日本語の要約","tags":["chatgpt","coding"]}',
             api_url="http://ollama/api/generate",
         )
 
@@ -114,7 +126,13 @@ class FrameSummarizerTest(unittest.TestCase):
         )
         analysis = AnalysisMetadata(interval_seconds=10.0)
         frame_summaries = [
-            FrameSummary(index=0, time_seconds=0.0, image="frames/000000000.jpg", summary="仕様相談をしている")
+            FrameSummary(
+                index=0,
+                time_seconds=0.0,
+                image="frames/000000000.jpg",
+                summary="仕様相談をしている",
+                tags=("chatgpt", "planning"),
+            )
         ]
 
         document = build_frame_summary_document(
@@ -136,6 +154,7 @@ class FrameSummarizerTest(unittest.TestCase):
             },
         )
         self.assertEqual(document["frame_summaries"][0]["summary"], "仕様相談をしている")
+        self.assertEqual(document["frame_summaries"][0]["tags"], ["chatgpt", "planning"])
 
     def test_build_frame_summary_document_includes_timeline_when_given(self):
         class Timeline:
@@ -236,7 +255,7 @@ class FrameSummarizerTest(unittest.TestCase):
 
         self.assertEqual(saved["frame_summaries"][0]["summary"], "日本語の要約")
 
-    def test_summarize_image_with_ollama_posts_image_and_returns_response(self):
+    def test_summarize_image_with_ollama_posts_image_and_returns_response_json(self):
         class FakeResponse:
             def __enter__(self):
                 return self
@@ -245,22 +264,48 @@ class FrameSummarizerTest(unittest.TestCase):
                 return False
 
             def read(self):
-                return json.dumps({"response": "ChatGPTで仕様相談をしている"}).encode("utf-8")
+                return json.dumps(
+                    {
+                        "response": json.dumps(
+                            {
+                                "summary": "ChatGPTで仕様相談をしている",
+                                "tags": ["ChatGPT", "PR Review", "chatgpt"],
+                            }
+                        )
+                    }
+                ).encode("utf-8")
 
         with TemporaryDirectory() as directory:
             image_path = Path(directory) / "frame.jpg"
             image_path.write_bytes(b"image-bytes")
 
             with patch("video_timeline.frame_summarizer.request.urlopen", return_value=FakeResponse()) as urlopen:
-                summary = summarize_image_with_ollama(image_path, model="qwen2.5vl:7b", api_url="http://ollama/api/generate")
+                content = summarize_image_with_ollama(image_path, model="qwen2.5vl:7b", api_url="http://ollama/api/generate")
 
-        self.assertEqual(summary, "ChatGPTで仕様相談をしている")
+        self.assertEqual(content.summary, "ChatGPTで仕様相談をしている")
+        self.assertEqual(content.tags, ("chatgpt", "pr_review"))
         http_request = urlopen.call_args.args[0]
         self.assertEqual(http_request.full_url, "http://ollama/api/generate")
         payload = json.loads(http_request.data.decode("utf-8"))
         self.assertEqual(payload["model"], "qwen2.5vl:7b")
         self.assertFalse(payload["stream"])
         self.assertEqual(len(payload["images"]), 1)
+
+    def test_parse_frame_summary_response_falls_back_to_plain_text(self):
+        content = parse_frame_summary_response("ChatGPTで仕様相談をしている")
+
+        self.assertEqual(content.summary, "ChatGPTで仕様相談をしている")
+        self.assertEqual(content.tags, ())
+
+    def test_parse_frame_summary_response_rejects_tags_without_summary(self):
+        with self.assertRaisesRegex(FrameSummarizerError, "要約文"):
+            parse_frame_summary_response(json.dumps({"tags": ["chatgpt"]}))
+
+    def test_normalize_tags_keeps_lowercase_alnum_underscore_tags(self):
+        self.assertEqual(
+            normalize_tags(["ChatGPT", "PR Review", "terminal-test", "日本語", "chatgpt", 123]),
+            ("chatgpt", "pr_review", "terminal_test"),
+        )
 
     def test_summarize_image_with_ollama_rejects_empty_response(self):
         class FakeResponse:
