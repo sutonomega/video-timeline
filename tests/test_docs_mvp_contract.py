@@ -185,6 +185,9 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[ ] 動画とフレーム画像の保存先を外部ストレージ対応にする（#37）", roadmap)
         self.assertIn("[ ] サーバー上でtimeline区間の動画切り出しを実行できるようにする（#38）", roadmap)
         self.assertIn("[ ] VLタグを事前定義タグとprimary_tagへ寄せる（#48）", roadmap)
+        self.assertIn("[ ] timeline検索CLIを追加する（#49）", roadmap)
+        self.assertIn("[ ] タグ別クリップ生成CLIを追加する（#50）", roadmap)
+        self.assertIn("[ ] タイムラインHTML出力CLIを追加する（#51）", roadmap)
 
     def test_quality_review_records_frame_summary_to_timeline_findings(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
