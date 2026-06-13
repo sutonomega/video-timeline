@@ -20,6 +20,8 @@ class DocsMvpContractTest(unittest.TestCase):
             "`clip timeline.json`",
             "`clip --index`",
             "`clip --padding-seconds`",
+            "`ffmpeg -c copy`",
+            "`--accurate`",
             "`--interval-seconds`",
             "`--frames-dir`",
             "`--vl-provider`",
@@ -125,6 +127,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("video.path", architecture)
         self.assertIn("--padding-seconds", architecture)
         self.assertIn("ffmpeg", architecture)
+        self.assertIn("キーフレーム単位", architecture)
+        self.assertIn("複数index", architecture)
 
     def test_architecture_defines_frame_summary_tags(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
@@ -176,6 +180,11 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[x] タグを使ったtimeline統合ロジックを実装する（#35）", roadmap)
         self.assertIn("[x] 実録画でタグ統合品質を確認する（#43）", roadmap)
         self.assertIn("[x] timeline区間から動画を切り出すCLIを追加する（#36）", roadmap)
+        self.assertIn("[ ] accurateなtimeline切り出しモードを追加する（#46）", roadmap)
+        self.assertIn("[ ] timeline index範囲をまとめて切り出せるようにする（#47）", roadmap)
+        self.assertIn("[ ] 動画とフレーム画像の保存先を外部ストレージ対応にする（#37）", roadmap)
+        self.assertIn("[ ] サーバー上でtimeline区間の動画切り出しを実行できるようにする（#38）", roadmap)
+        self.assertIn("[ ] VLタグを事前定義タグとprimary_tagへ寄せる（#48）", roadmap)
 
     def test_quality_review_records_frame_summary_to_timeline_findings(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")

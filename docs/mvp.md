@@ -64,6 +64,8 @@ PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --outp
 - `clip --output`: 切り出しMP4の保存先
 - `clip --padding-seconds`: 切り出し範囲の前後に足す余白秒数。既定値は`0`
 
+`clip` はMVPでは高速な `ffmpeg -c copy` で切り出す。キーフレーム位置の影響で開始位置が指定秒から少しずれる可能性があるため、厳密な切り出しが必要な場合の `--accurate` は後続機能とする。
+
 将来拡張する任意引数:
 
 - `--vl-provider`: フレーム要約に使うVLプロバイダー。MVP後に切り替え可能にする
