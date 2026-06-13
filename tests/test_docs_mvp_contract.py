@@ -13,12 +13,15 @@ class DocsMvpContractTest(unittest.TestCase):
             "PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json",
             "PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir timelines",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --output clip.mp4",
+            "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --start-index 3 --end-index 7 --output clips",
             "`input`",
             "`--output`",
             "`--input-dir`",
             "`--output-dir`",
             "`clip timeline.json`",
             "`clip --index`",
+            "`clip --start-index`",
+            "`clip --end-index`",
             "`clip --padding-seconds`",
             "`clip --accurate`",
             "`clip --crf`",
@@ -61,6 +64,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`timeline[].tags`",
             "`<output-dir>/<video_stem>_<path_hash>/`",
             "`timeline.json`",
+            "`timeline_000003.mp4`",
         ]
 
         missing_terms = [term for term in required_terms if term not in text]
@@ -135,6 +139,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("キーフレーム単位", architecture)
         self.assertIn("--crf 18", architecture)
         self.assertIn("--preset veryfast", architecture)
+        self.assertIn("--start-index", architecture)
+        self.assertIn("timeline_000003.mp4", architecture)
         self.assertIn("複数index", architecture)
 
     def test_architecture_defines_frame_summary_tags(self):
@@ -189,7 +195,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[x] timeline区間から動画を切り出すCLIを追加する（#36）", roadmap)
         self.assertIn("[x] accurateなtimeline切り出しモードを追加する（#46）", roadmap)
         self.assertIn("[x] accurate切り出しの画質と速度を指定できるようにする（#53）", roadmap)
-        self.assertIn("[ ] timeline index範囲をまとめて切り出せるようにする（#47）", roadmap)
+        self.assertIn("[x] timeline index範囲をまとめて切り出せるようにする（#47）", roadmap)
         self.assertIn("[ ] 動画とフレーム画像の保存先を外部ストレージ対応にする（#37）", roadmap)
         self.assertIn("[ ] サーバー上でtimeline区間の動画切り出しを実行できるようにする（#38）", roadmap)
         self.assertIn("[ ] VLタグを事前定義タグとprimary_tagへ寄せる（#48）", roadmap)

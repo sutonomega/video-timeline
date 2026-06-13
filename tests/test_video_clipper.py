@@ -9,7 +9,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from video_timeline.video_clipper import VideoClipperError, clip_timeline_entry
+from video_timeline.video_clipper import VideoClipperError, clip_timeline_entry, clip_timeline_entry_range
 
 
 class VideoClipperTest(unittest.TestCase):
@@ -154,6 +154,108 @@ class VideoClipperTest(unittest.TestCase):
                     accurate=True,
                     preset="quick",
                 )
+
+    def test_clip_timeline_entry_range_clips_each_selected_index(self):
+        document = {
+            "video": {"path": "/tmp/source.mp4"},
+            "timeline": [
+                {"start_seconds": 0.0, "end_seconds": 5.0},
+                {"start_seconds": 10.0, "end_seconds": 20.0},
+                {"start_seconds": 30.0, "end_seconds": 45.0},
+            ],
+        }
+
+        with TemporaryDirectory() as directory:
+            timeline_path = Path(directory) / "timeline.json"
+            output_dir = Path(directory) / "clips"
+            timeline_path.write_text(json.dumps(document), encoding="utf-8")
+
+            with patch("video_timeline.video_clipper.subprocess.run") as run:
+                results = clip_timeline_entry_range(
+                    timeline_path,
+                    start_index=1,
+                    end_index=2,
+                    output_dir=output_dir,
+                    padding_seconds=1.0,
+                )
+
+        self.assertEqual(
+            results,
+            [
+                output_dir / "timeline_000001.mp4",
+                output_dir / "timeline_000002.mp4",
+            ],
+        )
+        self.assertEqual(run.call_count, 2)
+        self.assertEqual(
+            run.call_args_list[0].args[0],
+            [
+                "ffmpeg",
+                "-y",
+                "-ss",
+                "9",
+                "-i",
+                "/tmp/source.mp4",
+                "-t",
+                "12",
+                "-c",
+                "copy",
+                str(output_dir / "timeline_000001.mp4"),
+            ],
+        )
+        self.assertEqual(
+            run.call_args_list[1].args[0],
+            [
+                "ffmpeg",
+                "-y",
+                "-ss",
+                "29",
+                "-i",
+                "/tmp/source.mp4",
+                "-t",
+                "17",
+                "-c",
+                "copy",
+                str(output_dir / "timeline_000002.mp4"),
+            ],
+        )
+
+    def test_clip_timeline_entry_range_rejects_invalid_range_before_running_ffmpeg(self):
+        document = {
+            "video": {"path": "/tmp/source.mp4"},
+            "timeline": [{"start_seconds": 0.0, "end_seconds": 5.0}],
+        }
+
+        with TemporaryDirectory() as directory:
+            timeline_path = Path(directory) / "timeline.json"
+            timeline_path.write_text(json.dumps(document), encoding="utf-8")
+
+            with patch("video_timeline.video_clipper.subprocess.run") as run:
+                with self.assertRaisesRegex(VideoClipperError, "--end-index"):
+                    clip_timeline_entry_range(timeline_path, start_index=2, end_index=1, output_dir=directory)
+                with self.assertRaisesRegex(VideoClipperError, "timeline index"):
+                    clip_timeline_entry_range(timeline_path, start_index=0, end_index=2, output_dir=directory)
+
+        run.assert_not_called()
+
+    def test_clip_timeline_entry_range_rejects_invalid_entry_before_running_ffmpeg(self):
+        document = {
+            "video": {"path": "/tmp/source.mp4"},
+            "timeline": [
+                {"start_seconds": 0.0, "end_seconds": 5.0},
+                {"start_seconds": 10.0, "end_seconds": 10.0},
+            ],
+        }
+
+        with TemporaryDirectory() as directory:
+            timeline_path = Path(directory) / "timeline.json"
+            timeline_path.write_text(json.dumps(document), encoding="utf-8")
+
+            with patch("video_timeline.video_clipper.subprocess.run") as run:
+                with self.assertRaisesRegex(VideoClipperError, "範囲"):
+                    clip_timeline_entry_range(timeline_path, start_index=0, end_index=1, output_dir=directory)
+
+        run.assert_not_called()
 
     def test_clip_timeline_entry_clamps_padding_start_to_zero(self):
         document = {

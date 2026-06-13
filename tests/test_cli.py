@@ -243,6 +243,77 @@ class CliTest(unittest.TestCase):
         self.assertIn("wrote clip.mp4", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
 
+    def test_clip_cli_connects_index_range_to_video_clipper(self):
+        with (
+            patch(
+                "video_timeline.cli.clip_timeline_entry_range",
+                return_value=[Path("clips/timeline_000003.mp4"), Path("clips/timeline_000004.mp4")],
+            ) as clip_range,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(
+                [
+                    "clip",
+                    "timeline.json",
+                    "--start-index",
+                    "3",
+                    "--end-index",
+                    "4",
+                    "--output",
+                    "clips",
+                    "--padding-seconds",
+                    "1.5",
+                    "--accurate",
+                    "--crf",
+                    "20",
+                    "--preset",
+                    "fast",
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        clip_range.assert_called_once_with(
+            "timeline.json",
+            start_index=3,
+            end_index=4,
+            output_dir="clips",
+            padding_seconds=1.5,
+            accurate=True,
+            crf=20,
+            preset="fast",
+        )
+        self.assertIn("wrote clips/timeline_000003.mp4", stdout.getvalue())
+        self.assertIn("wrote clips/timeline_000004.mp4", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_clip_cli_rejects_mixed_single_and_range_index(self):
+        with (
+            patch("video_timeline.cli.clip_timeline_entry") as clip,
+            patch("video_timeline.cli.clip_timeline_entry_range") as clip_range,
+            patch("sys.stdout", new_callable=io.StringIO),
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(
+                [
+                    "clip",
+                    "timeline.json",
+                    "--index",
+                    "3",
+                    "--start-index",
+                    "3",
+                    "--end-index",
+                    "4",
+                    "--output",
+                    "clips",
+                ]
+            )
+
+        self.assertEqual(exit_code, 1)
+        clip.assert_not_called()
+        clip_range.assert_not_called()
+        self.assertIn("--index", stderr.getvalue())
+
     def test_clip_cli_returns_error_for_video_clipper_failure(self):
         with (
             patch("video_timeline.cli.clip_timeline_entry", side_effect=ValueError("failed")),

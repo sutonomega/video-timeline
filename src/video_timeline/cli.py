@@ -17,7 +17,7 @@ from .frame_summarizer import (
     summarize_frames_with_ollama,
 )
 from .timeline_generator import build_timeline
-from .video_clipper import clip_timeline_entry
+from .video_clipper import clip_timeline_entry, clip_timeline_entry_range
 from .video_loader import load_video_metadata
 
 
@@ -99,8 +99,10 @@ def build_parser() -> argparse.ArgumentParser:
 def build_clip_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Clip a timeline segment from a video.")
     parser.add_argument("timeline_json", help="timeline JSONファイルのパス")
-    parser.add_argument("--index", type=int, required=True, help="切り出すtimeline index")
-    parser.add_argument("--output", required=True, help="切り出しMP4の保存先")
+    parser.add_argument("--index", type=int, help="切り出すtimeline index")
+    parser.add_argument("--start-index", type=int, help="連続切り出しの開始timeline index")
+    parser.add_argument("--end-index", type=int, help="連続切り出しの終了timeline index")
+    parser.add_argument("--output", required=True, help="切り出しMP4の保存先、または範囲切り出しの出力ディレクトリ")
     parser.add_argument(
         "--padding-seconds",
         type=float,
@@ -122,6 +124,37 @@ def build_clip_parser() -> argparse.ArgumentParser:
         help="--accurate時のx264エンコード速度。既定値はveryfast",
     )
     return parser
+
+
+def run_clip(args: argparse.Namespace) -> Path | list[Path]:
+    has_single_index = args.index is not None
+    has_range = args.start_index is not None or args.end_index is not None
+    if has_single_index == has_range:
+        raise ValueError("--index または --start-index/--end-index のどちらかを指定してください")
+    if has_range and (args.start_index is None or args.end_index is None):
+        raise ValueError("--start-indexと--end-indexは両方指定してください")
+
+    if has_single_index:
+        return clip_timeline_entry(
+            args.timeline_json,
+            index=args.index,
+            output_path=args.output,
+            padding_seconds=args.padding_seconds,
+            accurate=args.accurate,
+            crf=args.crf,
+            preset=args.preset,
+        )
+
+    return clip_timeline_entry_range(
+        args.timeline_json,
+        start_index=args.start_index,
+        end_index=args.end_index,
+        output_dir=args.output,
+        padding_seconds=args.padding_seconds,
+        accurate=args.accurate,
+        crf=args.crf,
+        preset=args.preset,
+    )
 
 
 def run_video(
@@ -217,20 +250,16 @@ def main(argv: list[str] | None = None) -> int:
         parser = build_clip_parser()
         args = parser.parse_args(argv[1:])
         try:
-            output_path = clip_timeline_entry(
-                args.timeline_json,
-                index=args.index,
-                output_path=args.output,
-                padding_seconds=args.padding_seconds,
-                accurate=args.accurate,
-                crf=args.crf,
-                preset=args.preset,
-            )
+            output_path = run_clip(args)
         except Exception as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 1
 
-        print(f"wrote {output_path}")
+        if isinstance(output_path, list):
+            for path in output_path:
+                print(f"wrote {path}")
+        else:
+            print(f"wrote {output_path}")
         return 0
 
     parser = build_parser()
