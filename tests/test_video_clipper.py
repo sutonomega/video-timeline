@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+import subprocess
 import sys
 from tempfile import TemporaryDirectory
 import unittest
@@ -256,6 +257,31 @@ class VideoClipperTest(unittest.TestCase):
                     clip_timeline_entry_range(timeline_path, start_index=0, end_index=1, output_dir=directory)
 
         run.assert_not_called()
+
+    def test_clip_timeline_entry_range_reports_failed_ffmpeg_index(self):
+        document = {
+            "video": {"path": "/tmp/source.mp4"},
+            "timeline": [
+                {"start_seconds": 0.0, "end_seconds": 5.0},
+                {"start_seconds": 10.0, "end_seconds": 20.0},
+            ],
+        }
+
+        with TemporaryDirectory() as directory:
+            timeline_path = Path(directory) / "timeline.json"
+            timeline_path.write_text(json.dumps(document), encoding="utf-8")
+
+            with patch(
+                "video_timeline.video_clipper.subprocess.run",
+                side_effect=[
+                    None,
+                    subprocess.CalledProcessError(1, ["ffmpeg"], stderr="failed"),
+                ],
+            ) as run:
+                with self.assertRaisesRegex(VideoClipperError, "timeline index 1"):
+                    clip_timeline_entry_range(timeline_path, start_index=0, end_index=1, output_dir=directory)
+
+        self.assertEqual(run.call_count, 2)
 
     def test_clip_timeline_entry_clamps_padding_start_to_zero(self):
         document = {

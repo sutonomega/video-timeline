@@ -91,15 +91,18 @@ def clip_timeline_entry_range(
     outputs = []
     for index, start_seconds, duration_seconds in clip_ranges:
         output = output_directory / _build_range_clip_filename(index)
-        _run_ffmpeg_clip(
-            video_path,
-            start_seconds,
-            duration_seconds,
-            output,
-            accurate=accurate,
-            crf=actual_crf,
-            preset=actual_preset,
-        )
+        try:
+            _run_ffmpeg_clip(
+                video_path,
+                start_seconds,
+                duration_seconds,
+                output,
+                accurate=accurate,
+                crf=actual_crf,
+                preset=actual_preset,
+            )
+        except VideoClipperError as exc:
+            raise VideoClipperError(f"timeline index {index} の切り出しに失敗しました: {exc}") from exc
         outputs.append(output)
 
     return outputs

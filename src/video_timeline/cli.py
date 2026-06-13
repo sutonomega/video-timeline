@@ -129,7 +129,9 @@ def build_clip_parser() -> argparse.ArgumentParser:
 def run_clip(args: argparse.Namespace) -> Path | list[Path]:
     has_single_index = args.index is not None
     has_range = args.start_index is not None or args.end_index is not None
-    if has_single_index == has_range:
+    if has_single_index and has_range:
+        raise ValueError("--indexと--start-index/--end-indexは同時に指定できません")
+    if not has_single_index and not has_range:
         raise ValueError("--index または --start-index/--end-index のどちらかを指定してください")
     if has_range and (args.start_index is None or args.end_index is None):
         raise ValueError("--start-indexと--end-indexは両方指定してください")

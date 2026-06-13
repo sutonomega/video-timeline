@@ -312,7 +312,21 @@ class CliTest(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         clip.assert_not_called()
         clip_range.assert_not_called()
-        self.assertIn("--index", stderr.getvalue())
+        self.assertIn("--indexと--start-index/--end-indexは同時に指定できません", stderr.getvalue())
+
+    def test_clip_cli_rejects_missing_index_selection(self):
+        with (
+            patch("video_timeline.cli.clip_timeline_entry") as clip,
+            patch("video_timeline.cli.clip_timeline_entry_range") as clip_range,
+            patch("sys.stdout", new_callable=io.StringIO),
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["clip", "timeline.json", "--output", "clips"])
+
+        self.assertEqual(exit_code, 1)
+        clip.assert_not_called()
+        clip_range.assert_not_called()
+        self.assertIn("--index または --start-index/--end-index のどちらかを指定してください", stderr.getvalue())
 
     def test_clip_cli_returns_error_for_video_clipper_failure(self):
         with (
