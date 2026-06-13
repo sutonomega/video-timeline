@@ -223,6 +223,10 @@ class CliTest(unittest.TestCase):
                     "--padding-seconds",
                     "1.5",
                     "--accurate",
+                    "--crf",
+                    "20",
+                    "--preset",
+                    "fast",
                 ]
             )
 
@@ -233,6 +237,8 @@ class CliTest(unittest.TestCase):
             output_path="clip.mp4",
             padding_seconds=1.5,
             accurate=True,
+            crf=20,
+            preset="fast",
         )
         self.assertIn("wrote clip.mp4", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")

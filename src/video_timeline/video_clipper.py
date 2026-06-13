@@ -9,17 +9,38 @@ class VideoClipperError(ValueError):
     pass
 
 
+DEFAULT_ACCURATE_CRF = 18
+DEFAULT_ACCURATE_PRESET = "veryfast"
+ALLOWED_ACCURATE_PRESETS = {
+    "ultrafast",
+    "superfast",
+    "veryfast",
+    "faster",
+    "fast",
+    "medium",
+    "slow",
+    "slower",
+    "veryslow",
+    "placebo",
+}
+
+
 def clip_timeline_entry(
     timeline_json_path: str | Path,
     index: int,
     output_path: str | Path,
     padding_seconds: float = 0.0,
     accurate: bool = False,
+    crf: int | None = None,
+    preset: str | None = None,
 ) -> Path:
     if index < 0:
         raise VideoClipperError("timeline indexは0以上で指定してください。")
     if padding_seconds < 0:
         raise VideoClipperError("--padding-secondsは0以上で指定してください。")
+    if not accurate and (crf is not None or preset is not None):
+        raise VideoClipperError("--crf/--presetは--accurate指定時だけ使えます。")
+    actual_crf, actual_preset = _build_accurate_encoding_options(crf, preset)
 
     document = load_timeline_document(timeline_json_path)
     video_path = _read_video_path(document)
@@ -28,7 +49,15 @@ def clip_timeline_entry(
 
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    _run_ffmpeg_clip(video_path, start_seconds, duration_seconds, output, accurate=accurate)
+    _run_ffmpeg_clip(
+        video_path,
+        start_seconds,
+        duration_seconds,
+        output,
+        accurate=accurate,
+        crf=actual_crf,
+        preset=actual_preset,
+    )
     return output
 
 
@@ -78,12 +107,26 @@ def _build_clip_range(timeline_entry: dict, padding_seconds: float) -> tuple[flo
     return padded_start, padded_end - padded_start
 
 
+def _build_accurate_encoding_options(crf: int | None, preset: str | None) -> tuple[int, str]:
+    actual_crf = DEFAULT_ACCURATE_CRF if crf is None else crf
+    actual_preset = DEFAULT_ACCURATE_PRESET if preset is None else preset
+
+    if actual_crf < 0 or actual_crf > 51:
+        raise VideoClipperError("--crfは0から51の範囲で指定してください。")
+    if actual_preset not in ALLOWED_ACCURATE_PRESETS:
+        raise VideoClipperError("--presetに対応していない値が指定されました。")
+
+    return actual_crf, actual_preset
+
+
 def _run_ffmpeg_clip(
     video_path: str,
     start_seconds: float,
     duration_seconds: float,
     output_path: Path,
     accurate: bool = False,
+    crf: int = DEFAULT_ACCURATE_CRF,
+    preset: str = DEFAULT_ACCURATE_PRESET,
 ) -> None:
     if accurate:
         command = [
@@ -97,6 +140,10 @@ def _run_ffmpeg_clip(
             f"{duration_seconds:g}",
             "-c:v",
             "libx264",
+            "-crf",
+            str(crf),
+            "-preset",
+            preset,
             "-c:a",
             "aac",
             str(output_path),

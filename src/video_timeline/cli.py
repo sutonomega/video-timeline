@@ -112,6 +112,15 @@ def build_clip_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="再エンコードして開始位置の正確さを優先する",
     )
+    parser.add_argument(
+        "--crf",
+        type=int,
+        help="--accurate時のx264画質。既定値は18",
+    )
+    parser.add_argument(
+        "--preset",
+        help="--accurate時のx264エンコード速度。既定値はveryfast",
+    )
     return parser
 
 
@@ -214,6 +223,8 @@ def main(argv: list[str] | None = None) -> int:
                 output_path=args.output,
                 padding_seconds=args.padding_seconds,
                 accurate=args.accurate,
+                crf=args.crf,
+                preset=args.preset,
             )
         except Exception as exc:
             print(f"error: {exc}", file=sys.stderr)
