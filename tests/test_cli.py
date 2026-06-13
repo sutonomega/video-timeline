@@ -339,6 +339,45 @@ class CliTest(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertIn("error: failed", stderr.getvalue())
 
+    def test_search_cli_prints_matching_timeline_lines(self):
+        with (
+            patch("video_timeline.cli.run_search", return_value=["3  01:20-04:10  ChatGPTで仕様相談"]) as search,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["search", "timeline.json", "chatgpt"])
+
+        self.assertEqual(exit_code, 0)
+        search.assert_called_once()
+        args = search.call_args.args[0]
+        self.assertEqual(args.timeline_json, "timeline.json")
+        self.assertEqual(args.query, "chatgpt")
+        self.assertIn("3  01:20-04:10  ChatGPTで仕様相談", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_search_cli_prints_no_matches_for_empty_result(self):
+        with (
+            patch("video_timeline.cli.run_search", return_value=[]),
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["search", "timeline.json", "missing"])
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("no matches", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_search_cli_returns_error_for_search_failure(self):
+        with (
+            patch("video_timeline.cli.run_search", side_effect=ValueError("failed")),
+            patch("sys.stdout", new_callable=io.StringIO),
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["search", "timeline.json", "chatgpt"])
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("error: failed", stderr.getvalue())
+
     def test_batch_cli_processes_all_mp4s_and_reports_counts(self):
         first = Path("/tmp/videos/a/sample.mp4")
         second = Path("/tmp/videos/b/sample.mp4")

@@ -14,6 +14,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir timelines",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --output clip.mp4",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --start-index 3 --end-index 7 --output clips",
+            "PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt",
             "`input`",
             "`--output`",
             "`--input-dir`",
@@ -26,6 +27,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`clip --accurate`",
             "`clip --crf`",
             "`clip --preset`",
+            "`search timeline.json query`",
             "`ffmpeg -c copy`",
             "`--accurate`",
             "`--crf`",
@@ -65,6 +67,9 @@ class DocsMvpContractTest(unittest.TestCase):
             "`<output-dir>/<video_stem>_<path_hash>/`",
             "`timeline.json`",
             "`timeline_000003.mp4`",
+            "`timeline[].summary`",
+            "`events[].kind`",
+            "`no matches`",
         ]
 
         missing_terms = [term for term in required_terms if term not in text]
@@ -143,6 +148,16 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("timeline_000003.mp4", architecture)
         self.assertIn("複数index", architecture)
 
+    def test_architecture_defines_timeline_searcher_contract(self):
+        architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+
+        self.assertIn("timeline_searcher", architecture)
+        self.assertIn("timeline[].summary", architecture)
+        self.assertIn("timeline[].tags", architecture)
+        self.assertIn("events[].kind", architecture)
+        self.assertIn("no matches", architecture)
+        self.assertIn("01:20-04:10", architecture)
+
     def test_architecture_defines_frame_summary_tags(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
@@ -199,7 +214,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[ ] 動画とフレーム画像の保存先を外部ストレージ対応にする（#37）", roadmap)
         self.assertIn("[ ] サーバー上でtimeline区間の動画切り出しを実行できるようにする（#38）", roadmap)
         self.assertIn("[ ] VLタグを事前定義タグとprimary_tagへ寄せる（#48）", roadmap)
-        self.assertIn("[ ] timeline検索CLIを追加する（#49）", roadmap)
+        self.assertIn("[x] timeline検索CLIを追加する（#49）", roadmap)
         self.assertIn("[ ] タグ別クリップ生成CLIを追加する（#50）", roadmap)
         self.assertIn("[ ] タイムラインHTML出力CLIを追加する（#51）", roadmap)
 

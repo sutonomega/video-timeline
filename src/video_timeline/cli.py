@@ -17,6 +17,7 @@ from .frame_summarizer import (
     summarize_frames_with_ollama,
 )
 from .timeline_generator import build_timeline
+from .timeline_searcher import format_search_result, search_timeline_file
 from .video_clipper import clip_timeline_entry, clip_timeline_entry_range
 from .video_loader import load_video_metadata
 
@@ -126,6 +127,13 @@ def build_clip_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def build_search_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Search timeline segments.")
+    parser.add_argument("timeline_json", help="timeline JSONファイルのパス")
+    parser.add_argument("query", help="検索キーワード")
+    return parser
+
+
 def run_clip(args: argparse.Namespace) -> Path | list[Path]:
     has_single_index = args.index is not None
     has_range = args.start_index is not None or args.end_index is not None
@@ -157,6 +165,10 @@ def run_clip(args: argparse.Namespace) -> Path | list[Path]:
         crf=args.crf,
         preset=args.preset,
     )
+
+
+def run_search(args: argparse.Namespace) -> list[str]:
+    return [format_search_result(result) for result in search_timeline_file(args.timeline_json, args.query)]
 
 
 def run_video(
@@ -248,6 +260,22 @@ def run(args: argparse.Namespace) -> Path | tuple[int, int]:
 def main(argv: list[str] | None = None) -> int:
     if argv is None:
         argv = sys.argv[1:]
+    if argv and argv[0] == "search":
+        parser = build_search_parser()
+        args = parser.parse_args(argv[1:])
+        try:
+            lines = run_search(args)
+        except Exception as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+
+        if not lines:
+            print("no matches")
+        else:
+            for line in lines:
+                print(line)
+        return 0
+
     if argv and argv[0] == "clip":
         parser = build_clip_parser()
         args = parser.parse_args(argv[1:])

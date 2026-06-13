@@ -26,6 +26,7 @@ Main Modules
 - timeline_generator
 - event_detector
 - video_clipper
+- timeline_searcher
 
 ## video_loader
 
@@ -115,3 +116,16 @@ CLIから使う場合は、`--frames-dir`をベースディレクトリとして
 - 存在しないindexや不正な区間はエラーにする
 
 既定の切り出しは高速化を優先し、`ffmpeg -c copy`を使う。これはキーフレーム単位の切り出しになるため、開始位置が指定秒から少しずれる可能性がある。`--accurate`ではcopyを使わず再エンコードし、処理時間より開始位置の正確さを優先する。再エンコード時の既定値は`--crf 18`、`--preset veryfast`とする。`--crf`と`--preset`はcopy切り出しでは指定できない。複数indexの連番切り出しでは、`--output`を出力ディレクトリとして扱い、`timeline_000003.mp4`のように`timeline_<index6桁>.mp4`を保存する。サーバー保存先からの動画解決は後続機能とする。
+
+## timeline_searcher
+
+責務:
+
+- `timeline.json`を読み込む
+- `timeline[].summary`と`timeline[].tags`を検索対象にする
+- `events[].timeline_index`で対応するイベントを引き、`events[].kind`と`events[].summary`を検索対象に加える
+- 大文字小文字を区別せずqueryを部分一致検索する
+- マッチしたtimeline index、時刻範囲、summaryを表示用に整形する
+- 空結果はエラーにせず、CLI側で`no matches`として表示する
+
+検索CLIはブラウザUIやタグ別clip生成の前段階として扱う。検索結果の時刻表記は`MM:SS`または`HH:MM:SS`に整形し、`3  01:20-04:10  ChatGPTで仕様相談`のように1行で確認できる形にする。
