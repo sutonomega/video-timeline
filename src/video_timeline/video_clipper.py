@@ -14,6 +14,7 @@ def clip_timeline_entry(
     index: int,
     output_path: str | Path,
     padding_seconds: float = 0.0,
+    accurate: bool = False,
 ) -> Path:
     if index < 0:
         raise VideoClipperError("timeline indexは0以上で指定してください。")
@@ -27,7 +28,7 @@ def clip_timeline_entry(
 
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    _run_ffmpeg_clip(video_path, start_seconds, duration_seconds, output)
+    _run_ffmpeg_clip(video_path, start_seconds, duration_seconds, output, accurate=accurate)
     return output
 
 
@@ -77,20 +78,43 @@ def _build_clip_range(timeline_entry: dict, padding_seconds: float) -> tuple[flo
     return padded_start, padded_end - padded_start
 
 
-def _run_ffmpeg_clip(video_path: str, start_seconds: float, duration_seconds: float, output_path: Path) -> None:
-    command = [
-        "ffmpeg",
-        "-y",
-        "-ss",
-        f"{start_seconds:g}",
-        "-i",
-        video_path,
-        "-t",
-        f"{duration_seconds:g}",
-        "-c",
-        "copy",
-        str(output_path),
-    ]
+def _run_ffmpeg_clip(
+    video_path: str,
+    start_seconds: float,
+    duration_seconds: float,
+    output_path: Path,
+    accurate: bool = False,
+) -> None:
+    if accurate:
+        command = [
+            "ffmpeg",
+            "-y",
+            "-i",
+            video_path,
+            "-ss",
+            f"{start_seconds:g}",
+            "-t",
+            f"{duration_seconds:g}",
+            "-c:v",
+            "libx264",
+            "-c:a",
+            "aac",
+            str(output_path),
+        ]
+    else:
+        command = [
+            "ffmpeg",
+            "-y",
+            "-ss",
+            f"{start_seconds:g}",
+            "-i",
+            video_path,
+            "-t",
+            f"{duration_seconds:g}",
+            "-c",
+            "copy",
+            str(output_path),
+        ]
     try:
         subprocess.run(command, check=True, capture_output=True, text=True)
     except FileNotFoundError as exc:

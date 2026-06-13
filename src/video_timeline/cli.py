@@ -107,6 +107,11 @@ def build_clip_parser() -> argparse.ArgumentParser:
         default=0.0,
         help="切り出し範囲の前後に足す余白秒数。既定値は0秒",
     )
+    parser.add_argument(
+        "--accurate",
+        action="store_true",
+        help="再エンコードして開始位置の正確さを優先する",
+    )
     return parser
 
 
@@ -208,6 +213,7 @@ def main(argv: list[str] | None = None) -> int:
                 index=args.index,
                 output_path=args.output,
                 padding_seconds=args.padding_seconds,
+                accurate=args.accurate,
             )
         except Exception as exc:
             print(f"error: {exc}", file=sys.stderr)
