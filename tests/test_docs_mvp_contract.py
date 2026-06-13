@@ -12,10 +12,16 @@ class DocsMvpContractTest(unittest.TestCase):
         required_terms = [
             "PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json",
             "PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir timelines",
+            "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --output clip.mp4",
             "`input`",
             "`--output`",
             "`--input-dir`",
             "`--output-dir`",
+            "`clip timeline.json`",
+            "`clip --index`",
+            "`clip --padding-seconds`",
+            "`ffmpeg -c copy`",
+            "`--accurate`",
             "`--interval-seconds`",
             "`--frames-dir`",
             "`--vl-provider`",
@@ -114,6 +120,16 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("全件保持せず順次処理", architecture)
         self.assertIn("1本の動画で失敗しても残りの動画を続行", architecture)
 
+    def test_architecture_defines_video_clipper_contract(self):
+        architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+
+        self.assertIn("video_clipper", architecture)
+        self.assertIn("video.path", architecture)
+        self.assertIn("--padding-seconds", architecture)
+        self.assertIn("ffmpeg", architecture)
+        self.assertIn("キーフレーム単位", architecture)
+        self.assertIn("複数index", architecture)
+
     def test_architecture_defines_frame_summary_tags(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
@@ -163,6 +179,15 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[x] フレーム要約にタグ付けを追加する（#34）", roadmap)
         self.assertIn("[x] タグを使ったtimeline統合ロジックを実装する（#35）", roadmap)
         self.assertIn("[x] 実録画でタグ統合品質を確認する（#43）", roadmap)
+        self.assertIn("[x] timeline区間から動画を切り出すCLIを追加する（#36）", roadmap)
+        self.assertIn("[ ] accurateなtimeline切り出しモードを追加する（#46）", roadmap)
+        self.assertIn("[ ] timeline index範囲をまとめて切り出せるようにする（#47）", roadmap)
+        self.assertIn("[ ] 動画とフレーム画像の保存先を外部ストレージ対応にする（#37）", roadmap)
+        self.assertIn("[ ] サーバー上でtimeline区間の動画切り出しを実行できるようにする（#38）", roadmap)
+        self.assertIn("[ ] VLタグを事前定義タグとprimary_tagへ寄せる（#48）", roadmap)
+        self.assertIn("[ ] timeline検索CLIを追加する（#49）", roadmap)
+        self.assertIn("[ ] タグ別クリップ生成CLIを追加する（#50）", roadmap)
+        self.assertIn("[ ] タイムラインHTML出力CLIを追加する（#51）", roadmap)
 
     def test_quality_review_records_frame_summary_to_timeline_findings(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
