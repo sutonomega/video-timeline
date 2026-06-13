@@ -40,7 +40,11 @@ def clip_timeline_entry(
         raise VideoClipperError("--padding-secondsは0以上で指定してください。")
     if not accurate and (crf is not None or preset is not None):
         raise VideoClipperError("--crf/--presetは--accurate指定時だけ使えます。")
-    actual_crf, actual_preset = _build_accurate_encoding_options(crf, preset)
+    if accurate:
+        actual_crf, actual_preset = _build_accurate_encoding_options(crf, preset)
+    else:
+        actual_crf = DEFAULT_ACCURATE_CRF
+        actual_preset = DEFAULT_ACCURATE_PRESET
 
     document = load_timeline_document(timeline_json_path)
     video_path = _read_video_path(document)
