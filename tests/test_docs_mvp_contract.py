@@ -69,6 +69,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`timeline_000003.mp4`",
             "`timeline[].summary`",
             "`events[].kind`",
+            "`events[].tags`",
             "`no matches`",
         ]
 
@@ -155,6 +156,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("timeline[].summary", architecture)
         self.assertIn("timeline[].tags", architecture)
         self.assertIn("events[].kind", architecture)
+        self.assertIn("events[].tags", architecture)
+        self.assertIn("切り捨て", architecture)
         self.assertIn("no matches", architecture)
         self.assertIn("01:20-04:10", architecture)
 

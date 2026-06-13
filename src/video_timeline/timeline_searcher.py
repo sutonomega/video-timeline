@@ -61,7 +61,7 @@ def format_search_result(result: TimelineSearchResult) -> str:
 
 
 def format_timestamp(seconds: float) -> str:
-    total_seconds = round(seconds)
+    total_seconds = int(seconds)
     hours, remainder = divmod(total_seconds, 3600)
     minutes, remaining_seconds = divmod(remainder, 60)
     if hours:
@@ -112,6 +112,9 @@ def _event_search_values(event: dict) -> list[str]:
     summary = event.get("summary")
     if isinstance(summary, str):
         values.append(summary)
+    tags = event.get("tags", [])
+    if isinstance(tags, list):
+        values.extend(tag for tag in tags if isinstance(tag, str))
     return values
 
 

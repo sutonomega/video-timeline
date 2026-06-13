@@ -123,9 +123,9 @@ CLIから使う場合は、`--frames-dir`をベースディレクトリとして
 
 - `timeline.json`を読み込む
 - `timeline[].summary`と`timeline[].tags`を検索対象にする
-- `events[].timeline_index`で対応するイベントを引き、`events[].kind`と`events[].summary`を検索対象に加える
+- `events[].timeline_index`で対応するイベントを引き、`events[].kind`、`events[].summary`、`events[].tags`を検索対象に加える
 - 大文字小文字を区別せずqueryを部分一致検索する
 - マッチしたtimeline index、時刻範囲、summaryを表示用に整形する
 - 空結果はエラーにせず、CLI側で`no matches`として表示する
 
-検索CLIはブラウザUIやタグ別clip生成の前段階として扱う。検索結果の時刻表記は`MM:SS`または`HH:MM:SS`に整形し、`3  01:20-04:10  ChatGPTで仕様相談`のように1行で確認できる形にする。
+検索CLIはブラウザUIやタグ別clip生成の前段階として扱う。検索結果の時刻表記は小数秒を切り捨て、`MM:SS`または`HH:MM:SS`に整形し、`3  01:20-04:10  ChatGPTで仕様相談`のように1行で確認できる形にする。

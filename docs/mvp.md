@@ -86,7 +86,7 @@ PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt
 
 範囲切り出しでは、出力ディレクトリに `timeline_000003.mp4` のような `timeline_<index6桁>.mp4` を保存する。存在しないindex、または `--start-index` が `--end-index` より大きい範囲はエラーにする。
 
-`search` は `timeline[].summary`、`timeline[].tags`、対応する `events[].kind`、`events[].summary` を大文字小文字を区別せず検索する。結果は `3  01:20-04:10  ChatGPTで仕様相談` のように、timeline index、時刻範囲、summaryを1行ずつ表示する。空結果はエラーにせず `no matches` を表示する。存在しないファイルや不正なJSONはエラーにする。
+`search` は `timeline[].summary`、`timeline[].tags`、対応する `events[].kind`、`events[].summary`、`events[].tags` を大文字小文字を区別せず検索する。結果は `3  01:20-04:10  ChatGPTで仕様相談` のように、timeline index、時刻範囲、summaryを1行ずつ表示する。小数秒は切り捨てて表示する。空結果はエラーにせず `no matches` を表示する。存在しないファイルや不正なJSONはエラーにする。
 
 将来拡張する任意引数:
 

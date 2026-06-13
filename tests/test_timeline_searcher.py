@@ -43,7 +43,7 @@ class TimelineSearcherTest(unittest.TestCase):
             ],
             "events": [
                 {"timeline_index": 1, "kind": "coding", "summary": "Python実装"},
-                {"timeline_index": 2, "kind": "review", "summary": "pull request review"},
+                {"timeline_index": 2, "kind": "review", "summary": "pull request review", "tags": ["pull_request"]},
             ],
         }
 
@@ -57,6 +57,10 @@ class TimelineSearcherTest(unittest.TestCase):
         )
         self.assertEqual(
             search_timeline_document(document, "review"),
+            [TimelineSearchResult(2, 420.0, 480.0, "GitHubでPR確認")],
+        )
+        self.assertEqual(
+            search_timeline_document(document, "pull_request"),
             [TimelineSearchResult(2, 420.0, 480.0, "GitHubでPR確認")],
         )
 
@@ -96,7 +100,8 @@ class TimelineSearcherTest(unittest.TestCase):
         self.assertEqual(format_search_result(result), "3  01:20-04:10  ChatGPTで仕様相談")
 
     def test_format_timestamp_uses_hours_when_needed(self):
-        self.assertEqual(format_timestamp(59.4), "00:59")
+        self.assertEqual(format_timestamp(59.9), "00:59")
+        self.assertEqual(format_timestamp(79.9), "01:19")
         self.assertEqual(format_timestamp(3661.0), "01:01:01")
 
 
