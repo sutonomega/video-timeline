@@ -38,13 +38,7 @@ def clip_timeline_entry(
         raise VideoClipperError("timeline indexは0以上で指定してください。")
     if padding_seconds < 0:
         raise VideoClipperError("--padding-secondsは0以上で指定してください。")
-    if not accurate and (crf is not None or preset is not None):
-        raise VideoClipperError("--crf/--presetは--accurate指定時だけ使えます。")
-    if accurate:
-        actual_crf, actual_preset = _build_accurate_encoding_options(crf, preset)
-    else:
-        actual_crf = DEFAULT_ACCURATE_CRF
-        actual_preset = DEFAULT_ACCURATE_PRESET
+    actual_crf, actual_preset = _resolve_encoding_options(accurate, crf, preset)
 
     document = load_timeline_document(timeline_json_path)
     video_path = _read_video_path(document)
@@ -63,6 +57,55 @@ def clip_timeline_entry(
         preset=actual_preset,
     )
     return output
+
+
+def clip_timeline_entry_range(
+    timeline_json_path: str | Path,
+    start_index: int,
+    end_index: int,
+    output_dir: str | Path,
+    padding_seconds: float = 0.0,
+    accurate: bool = False,
+    crf: int | None = None,
+    preset: str | None = None,
+) -> list[Path]:
+    if start_index < 0 or end_index < 0:
+        raise VideoClipperError("timeline indexは0以上で指定してください。")
+    if end_index < start_index:
+        raise VideoClipperError("--end-indexは--start-index以上で指定してください。")
+    if padding_seconds < 0:
+        raise VideoClipperError("--padding-secondsは0以上で指定してください。")
+    actual_crf, actual_preset = _resolve_encoding_options(accurate, crf, preset)
+
+    document = load_timeline_document(timeline_json_path)
+    video_path = _read_video_path(document)
+    _validate_timeline_range(document, start_index, end_index)
+
+    clip_ranges = []
+    for index in range(start_index, end_index + 1):
+        timeline_entry = _read_timeline_entry(document, index)
+        clip_ranges.append((index, *_build_clip_range(timeline_entry, padding_seconds)))
+
+    output_directory = Path(output_dir)
+    output_directory.mkdir(parents=True, exist_ok=True)
+    outputs = []
+    for index, start_seconds, duration_seconds in clip_ranges:
+        output = output_directory / _build_range_clip_filename(index)
+        try:
+            _run_ffmpeg_clip(
+                video_path,
+                start_seconds,
+                duration_seconds,
+                output,
+                accurate=accurate,
+                crf=actual_crf,
+                preset=actual_preset,
+            )
+        except VideoClipperError as exc:
+            raise VideoClipperError(f"timeline index {index} の切り出しに失敗しました: {exc}") from exc
+        outputs.append(output)
+
+    return outputs
 
 
 def load_timeline_document(timeline_json_path: str | Path) -> dict:
@@ -98,6 +141,16 @@ def _read_timeline_entry(document: dict, index: int) -> dict:
     return entry
 
 
+def _validate_timeline_range(document: dict, start_index: int, end_index: int) -> None:
+    timeline = document.get("timeline")
+    if not isinstance(timeline, list):
+        raise VideoClipperError("timeline JSONにtimelineがありません。")
+    if start_index >= len(timeline):
+        raise VideoClipperError(f"timeline indexが存在しません: {start_index}")
+    if end_index >= len(timeline):
+        raise VideoClipperError(f"timeline indexが存在しません: {end_index}")
+
+
 def _build_clip_range(timeline_entry: dict, padding_seconds: float) -> tuple[float, float]:
     start_seconds = timeline_entry.get("start_seconds")
     end_seconds = timeline_entry.get("end_seconds")
@@ -109,6 +162,18 @@ def _build_clip_range(timeline_entry: dict, padding_seconds: float) -> tuple[flo
     padded_start = max(0.0, float(start_seconds) - padding_seconds)
     padded_end = float(end_seconds) + padding_seconds
     return padded_start, padded_end - padded_start
+
+
+def _build_range_clip_filename(index: int) -> str:
+    return f"timeline_{index:06d}.mp4"
+
+
+def _resolve_encoding_options(accurate: bool, crf: int | None, preset: str | None) -> tuple[int, str]:
+    if not accurate and (crf is not None or preset is not None):
+        raise VideoClipperError("--crf/--presetは--accurate指定時だけ使えます。")
+    if accurate:
+        return _build_accurate_encoding_options(crf, preset)
+    return DEFAULT_ACCURATE_CRF, DEFAULT_ACCURATE_PRESET
 
 
 def _build_accurate_encoding_options(crf: int | None, preset: str | None) -> tuple[int, str]:

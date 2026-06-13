@@ -51,6 +51,12 @@ PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir
 PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --output clip.mp4
 ```
 
+複数の連続した `timeline` 区間を個別に切り出す場合は、index範囲と出力ディレクトリを指定する。
+
+```bash
+PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --start-index 3 --end-index 7 --output clips
+```
+
 引数:
 
 - `input`: 入力動画ファイルのパス
@@ -61,13 +67,17 @@ PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --outp
 - `--frames-dir`: 抽出フレームの保存先ベースディレクトリ。既定値は`frames`
 - `clip timeline.json`: `timeline` の指定区間を元動画から切り出す
 - `clip --index`: 切り出す `timeline` 配列の0始まりindex
-- `clip --output`: 切り出しMP4の保存先
+- `clip --start-index`: 連続切り出しの開始 `timeline` index
+- `clip --end-index`: 連続切り出しの終了 `timeline` index。このindexも切り出し対象に含める
+- `clip --output`: `--index`では切り出しMP4の保存先、`--start-index`/`--end-index`では出力ディレクトリ
 - `clip --padding-seconds`: 切り出し範囲の前後に足す余白秒数。既定値は`0`
 - `clip --accurate`: 再エンコードして開始位置の正確さを優先する。既定は高速なcopy切り出し
 - `clip --crf`: `--accurate`時のx264画質。既定値は`18`
 - `clip --preset`: `--accurate`時のx264エンコード速度。既定値は`veryfast`
 
 `clip` は既定では高速な `ffmpeg -c copy` で切り出す。キーフレーム位置の影響で開始位置が指定秒から少しずれる可能性がある。厳密な切り出しが必要な場合は `--accurate` を使う。`--crf`と`--preset`は`--accurate`時だけ有効で、copy切り出しでは指定できない。
+
+範囲切り出しでは、出力ディレクトリに `timeline_000003.mp4` のような `timeline_<index6桁>.mp4` を保存する。存在しないindex、または `--start-index` が `--end-index` より大きい範囲はエラーにする。
 
 将来拡張する任意引数:
 
