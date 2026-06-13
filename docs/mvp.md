@@ -64,8 +64,10 @@ PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --outp
 - `clip --output`: 切り出しMP4の保存先
 - `clip --padding-seconds`: 切り出し範囲の前後に足す余白秒数。既定値は`0`
 - `clip --accurate`: 再エンコードして開始位置の正確さを優先する。既定は高速なcopy切り出し
+- `clip --crf`: `--accurate`時のx264画質。既定値は`18`
+- `clip --preset`: `--accurate`時のx264エンコード速度。既定値は`veryfast`
 
-`clip` は既定では高速な `ffmpeg -c copy` で切り出す。キーフレーム位置の影響で開始位置が指定秒から少しずれる可能性がある。厳密な切り出しが必要な場合は `--accurate` を使う。
+`clip` は既定では高速な `ffmpeg -c copy` で切り出す。キーフレーム位置の影響で開始位置が指定秒から少しずれる可能性がある。厳密な切り出しが必要な場合は `--accurate` を使う。`--crf`と`--preset`は`--accurate`時だけ有効で、copy切り出しでは指定できない。
 
 将来拡張する任意引数:
 

@@ -78,11 +78,82 @@ class VideoClipperTest(unittest.TestCase):
                 "20",
                 "-c:v",
                 "libx264",
+                "-crf",
+                "18",
+                "-preset",
+                "veryfast",
                 "-c:a",
                 "aac",
                 str(output_path),
             ],
         )
+
+    def test_clip_timeline_entry_can_customize_accurate_reencode_quality_and_speed(self):
+        document = {
+            "video": {"path": "/tmp/source.mp4"},
+            "timeline": [{"start_seconds": 20.0, "end_seconds": 35.0}],
+        }
+
+        with TemporaryDirectory() as directory:
+            timeline_path = Path(directory) / "timeline.json"
+            output_path = Path(directory) / "clip.mp4"
+            timeline_path.write_text(json.dumps(document), encoding="utf-8")
+
+            with patch("video_timeline.video_clipper.subprocess.run") as run:
+                clip_timeline_entry(
+                    timeline_path,
+                    index=0,
+                    output_path=output_path,
+                    accurate=True,
+                    crf=20,
+                    preset="fast",
+                )
+
+        command = run.call_args.args[0]
+        self.assertIn("-crf", command)
+        self.assertIn("20", command)
+        self.assertIn("-preset", command)
+        self.assertIn("fast", command)
+
+    def test_clip_timeline_entry_rejects_reencode_options_without_accurate_mode(self):
+        document = {
+            "video": {"path": "/tmp/source.mp4"},
+            "timeline": [{"start_seconds": 20.0, "end_seconds": 35.0}],
+        }
+
+        with TemporaryDirectory() as directory:
+            timeline_path = Path(directory) / "timeline.json"
+            timeline_path.write_text(json.dumps(document), encoding="utf-8")
+
+            with self.assertRaisesRegex(VideoClipperError, "--accurate"):
+                clip_timeline_entry(timeline_path, index=0, output_path=Path(directory) / "clip.mp4", crf=18)
+
+    def test_clip_timeline_entry_rejects_invalid_reencode_options(self):
+        document = {
+            "video": {"path": "/tmp/source.mp4"},
+            "timeline": [{"start_seconds": 20.0, "end_seconds": 35.0}],
+        }
+
+        with TemporaryDirectory() as directory:
+            timeline_path = Path(directory) / "timeline.json"
+            timeline_path.write_text(json.dumps(document), encoding="utf-8")
+
+            with self.assertRaisesRegex(VideoClipperError, "--crf"):
+                clip_timeline_entry(
+                    timeline_path,
+                    index=0,
+                    output_path=Path(directory) / "clip.mp4",
+                    accurate=True,
+                    crf=52,
+                )
+            with self.assertRaisesRegex(VideoClipperError, "--preset"):
+                clip_timeline_entry(
+                    timeline_path,
+                    index=0,
+                    output_path=Path(directory) / "clip.mp4",
+                    accurate=True,
+                    preset="quick",
+                )
 
     def test_clip_timeline_entry_clamps_padding_start_to_zero(self):
         document = {
