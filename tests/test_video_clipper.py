@@ -50,6 +50,40 @@ class VideoClipperTest(unittest.TestCase):
             ],
         )
 
+    def test_clip_timeline_entry_can_use_accurate_reencode_mode(self):
+        document = {
+            "video": {"path": "/tmp/source.mp4"},
+            "timeline": [{"start_seconds": 20.0, "end_seconds": 35.0}],
+        }
+
+        with TemporaryDirectory() as directory:
+            timeline_path = Path(directory) / "timeline.json"
+            output_path = Path(directory) / "clip.mp4"
+            timeline_path.write_text(json.dumps(document), encoding="utf-8")
+
+            with patch("video_timeline.video_clipper.subprocess.run") as run:
+                clip_timeline_entry(timeline_path, index=0, output_path=output_path, padding_seconds=2.5, accurate=True)
+
+        command = run.call_args.args[0]
+        self.assertEqual(
+            command,
+            [
+                "ffmpeg",
+                "-y",
+                "-i",
+                "/tmp/source.mp4",
+                "-ss",
+                "17.5",
+                "-t",
+                "20",
+                "-c:v",
+                "libx264",
+                "-c:a",
+                "aac",
+                str(output_path),
+            ],
+        )
+
     def test_clip_timeline_entry_clamps_padding_start_to_zero(self):
         document = {
             "video": {"path": "/tmp/source.mp4"},

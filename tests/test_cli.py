@@ -222,11 +222,18 @@ class CliTest(unittest.TestCase):
                     "clip.mp4",
                     "--padding-seconds",
                     "1.5",
+                    "--accurate",
                 ]
             )
 
         self.assertEqual(exit_code, 0)
-        clip.assert_called_once_with("timeline.json", index=3, output_path="clip.mp4", padding_seconds=1.5)
+        clip.assert_called_once_with(
+            "timeline.json",
+            index=3,
+            output_path="clip.mp4",
+            padding_seconds=1.5,
+            accurate=True,
+        )
         self.assertIn("wrote clip.mp4", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
 

@@ -20,6 +20,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`clip timeline.json`",
             "`clip --index`",
             "`clip --padding-seconds`",
+            "`clip --accurate`",
             "`ffmpeg -c copy`",
             "`--accurate`",
             "`--interval-seconds`",
@@ -180,7 +181,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[x] タグを使ったtimeline統合ロジックを実装する（#35）", roadmap)
         self.assertIn("[x] 実録画でタグ統合品質を確認する（#43）", roadmap)
         self.assertIn("[x] timeline区間から動画を切り出すCLIを追加する（#36）", roadmap)
-        self.assertIn("[ ] accurateなtimeline切り出しモードを追加する（#46）", roadmap)
+        self.assertIn("[x] accurateなtimeline切り出しモードを追加する（#46）", roadmap)
         self.assertIn("[ ] timeline index範囲をまとめて切り出せるようにする（#47）", roadmap)
         self.assertIn("[ ] 動画とフレーム画像の保存先を外部ストレージ対応にする（#37）", roadmap)
         self.assertIn("[ ] サーバー上でtimeline区間の動画切り出しを実行できるようにする（#38）", roadmap)
