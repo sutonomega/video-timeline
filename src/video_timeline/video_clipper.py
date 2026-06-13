@@ -145,6 +145,8 @@ def _validate_timeline_range(document: dict, start_index: int, end_index: int) -
     timeline = document.get("timeline")
     if not isinstance(timeline, list):
         raise VideoClipperError("timeline JSONにtimelineがありません。")
+    if start_index >= len(timeline):
+        raise VideoClipperError(f"timeline indexが存在しません: {start_index}")
     if end_index >= len(timeline):
         raise VideoClipperError(f"timeline indexが存在しません: {end_index}")
 

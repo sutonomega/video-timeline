@@ -236,6 +236,8 @@ class VideoClipperTest(unittest.TestCase):
                     clip_timeline_entry_range(timeline_path, start_index=2, end_index=1, output_dir=directory)
                 with self.assertRaisesRegex(VideoClipperError, "timeline index"):
                     clip_timeline_entry_range(timeline_path, start_index=0, end_index=2, output_dir=directory)
+                with self.assertRaisesRegex(VideoClipperError, "timeline indexが存在しません: 2"):
+                    clip_timeline_entry_range(timeline_path, start_index=2, end_index=2, output_dir=directory)
 
         run.assert_not_called()
 
