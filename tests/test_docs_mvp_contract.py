@@ -196,6 +196,9 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("--storage-mode server", architecture)
         self.assertIn("ファイル転送やコピーを行うものではなく", architecture)
         self.assertIn("\\\\192.168.10.112\\video-timeline", architecture)
+        self.assertIn("clips", architecture)
+        self.assertIn("storage_root", architecture)
+        self.assertIn("相対パス", architecture)
 
     def test_architecture_defines_frame_summary_tags(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")

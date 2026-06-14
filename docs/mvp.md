@@ -45,7 +45,7 @@ PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json
 PYTHONPATH=src python3 -m video_timeline.cli /mnt/storage/videos/input.mp4 --output /mnt/storage/timelines/input.json --frames-dir /mnt/storage/frames --storage-mode server
 ```
 
-実運用のサーバー格納場所は `\\192.168.10.112\video-timeline` とする。Windows共有パスから実行する場合は、次のように動画、timeline、framesの保存先を同じ共有配下に置く。
+実運用のサーバー格納場所は `\\192.168.10.112\video-timeline` とする。共有配下は `videos`、`frames`、`timelines`、`clips` に分ける。Windows共有パスから実行する場合は、次のように動画、timeline、framesの保存先を同じ共有配下に置く。
 
 ```powershell
 python -m video_timeline.cli "\\192.168.10.112\video-timeline\videos\input.mp4" --output "\\192.168.10.112\video-timeline\timelines\input.json" --frames-dir "\\192.168.10.112\video-timeline\frames" --storage-mode server
@@ -180,6 +180,8 @@ CLIで生成したJSONには、動画、フレーム画像、timeline JSONの参
 ```
 
 `mode` は `local` または `server` とする。`server` はファイルを自動転送する機能ではなく、入力動画、フレーム保存先、timeline保存先がサーバー上のパスであることをJSONに明示するためのメタデータとして扱う。既存のローカル運用では `mode` を `local` とし、従来通り `video.path` と `frame_summaries[].image` から参照できる状態を維持する。
+
+将来、別PCやサーバー上で同じJSONを扱う場合は、絶対パスだけでなく `storage_root` と相対パスを組み合わせる方式も検討する。例として、`storage_root` を `/data/video-timeline`、`video_path` を `videos/a.mp4`、`frames_dir` を `frames/a_xxxx`、`timeline_path` を `timelines/a.json` のように保存すると、環境ごとの差を `storage_root` に寄せられる。
 
 ## フレーム抽出仕様
 
