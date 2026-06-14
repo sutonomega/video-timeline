@@ -62,6 +62,24 @@ class AnalysisMetadata:
 
 
 @dataclass(frozen=True)
+class StorageMetadata:
+    mode: str
+    video_path: str
+    frames_dir: str
+    timeline_path: str
+
+    def to_dict(self) -> dict[str, str]:
+        if self.mode not in ("local", "server"):
+            raise FrameSummarizerError(f"不正なstorage modeです: {self.mode}")
+        return {
+            "mode": self.mode,
+            "video_path": self.video_path,
+            "frames_dir": self.frames_dir,
+            "timeline_path": self.timeline_path,
+        }
+
+
+@dataclass(frozen=True)
 class FrameSummary:
     index: int
     time_seconds: float
@@ -151,6 +169,7 @@ def build_frame_summary_document(
     video: VideoMetadata,
     analysis: AnalysisMetadata,
     frame_summaries: list[FrameSummary],
+    storage: StorageMetadata | None = None,
     timeline: list[TimelineEntry] | None = None,
     events: list[EventCandidate] | None = None,
     generated_at: str | None = None,
@@ -162,6 +181,8 @@ def build_frame_summary_document(
         "analysis": analysis.to_dict(),
         "frame_summaries": [summary.to_dict() for summary in sorted(frame_summaries, key=lambda item: item.time_seconds)],
     }
+    if storage is not None:
+        document["storage"] = storage.to_dict()
     if timeline is not None:
         document["timeline"] = [entry.to_dict() for entry in timeline]
     if events is not None:
