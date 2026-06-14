@@ -28,7 +28,7 @@ ALLOWED_ACCURATE_PRESETS = {
 def clip_timeline_entry(
     timeline_json_path: str | Path,
     index: int,
-    output_path: str | Path,
+    output_path: str | Path | None = None,
     padding_seconds: float = 0.0,
     accurate: bool = False,
     crf: int | None = None,
@@ -45,7 +45,7 @@ def clip_timeline_entry(
     timeline_entry = _read_timeline_entry(document, index)
     start_seconds, duration_seconds = _build_clip_range(timeline_entry, padding_seconds)
 
-    output = Path(output_path)
+    output = _resolve_single_output_path(document, timeline_json_path, output_path, index)
     output.parent.mkdir(parents=True, exist_ok=True)
     _run_ffmpeg_clip(
         video_path,
@@ -63,7 +63,7 @@ def clip_timeline_entry_range(
     timeline_json_path: str | Path,
     start_index: int,
     end_index: int,
-    output_dir: str | Path,
+    output_dir: str | Path | None = None,
     padding_seconds: float = 0.0,
     accurate: bool = False,
     crf: int | None = None,
@@ -82,6 +82,7 @@ def clip_timeline_entry_range(
         document,
         indexes=range(start_index, end_index + 1),
         output_dir=output_dir,
+        timeline_json_path=timeline_json_path,
         padding_seconds=padding_seconds,
         accurate=accurate,
         crf=crf,
@@ -92,7 +93,7 @@ def clip_timeline_entry_range(
 def clip_timeline_entries_by_tag(
     timeline_json_path: str | Path,
     tag: str,
-    output_dir: str | Path,
+    output_dir: str | Path | None = None,
     padding_seconds: float = 0.0,
     accurate: bool = False,
     crf: int | None = None,
@@ -113,6 +114,7 @@ def clip_timeline_entries_by_tag(
         document,
         indexes=matched_indexes,
         output_dir=output_dir,
+        timeline_json_path=timeline_json_path,
         padding_seconds=padding_seconds,
         accurate=accurate,
         crf=crf,
@@ -123,7 +125,8 @@ def clip_timeline_entries_by_tag(
 def _clip_timeline_indices(
     document: dict,
     indexes,
-    output_dir: str | Path,
+    output_dir: str | Path | None,
+    timeline_json_path: str | Path | None,
     padding_seconds: float,
     accurate: bool,
     crf: int | None,
@@ -131,7 +134,7 @@ def _clip_timeline_indices(
 ) -> list[Path]:
     actual_crf, actual_preset = _resolve_encoding_options(accurate, crf, preset)
     video_path = _read_video_path(document)
-    output_directory = Path(output_dir)
+    output_directory = _resolve_output_dir(document, timeline_json_path, output_dir)
 
     clip_ranges = []
     for index in indexes:
@@ -170,6 +173,10 @@ def load_timeline_document(timeline_json_path: str | Path) -> dict:
 
 
 def _read_video_path(document: dict) -> str:
+    storage_video_path = _read_storage_value(document, "video_path")
+    if storage_video_path:
+        return storage_video_path
+
     video = document.get("video")
     if not isinstance(video, dict):
         raise VideoClipperError("timeline JSONにvideoがありません。")
@@ -177,6 +184,43 @@ def _read_video_path(document: dict) -> str:
     if not isinstance(video_path, str) or not video_path:
         raise VideoClipperError("timeline JSONにvideo.pathがありません。")
     return video_path
+
+
+def _read_storage_value(document: dict, key: str) -> str | None:
+    storage = document.get("storage")
+    if not isinstance(storage, dict):
+        return None
+    value = storage.get(key)
+    if isinstance(value, str) and value:
+        return value
+    return None
+
+
+def _resolve_single_output_path(
+    document: dict,
+    timeline_json_path: str | Path,
+    output_path: str | Path | None,
+    index: int,
+) -> Path:
+    if output_path is not None:
+        return Path(output_path)
+    return _resolve_output_dir(document, timeline_json_path, None) / _build_range_clip_filename(index)
+
+
+def _resolve_output_dir(
+    document: dict,
+    timeline_json_path: str | Path | None,
+    output_dir: str | Path | None,
+) -> Path:
+    if output_dir is not None:
+        return Path(output_dir)
+
+    timeline_path = Path(_read_storage_value(document, "timeline_path") or timeline_json_path or "")
+    if not str(timeline_path):
+        raise VideoClipperError("--outputまたはstorage.timeline_pathが必要です。")
+    if timeline_path.parent.name == "timelines":
+        return timeline_path.parent.parent / "clips"
+    return timeline_path.parent / "clips"
 
 
 def _read_timeline_entry(document: dict, index: int) -> dict:

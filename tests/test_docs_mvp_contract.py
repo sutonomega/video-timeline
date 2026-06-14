@@ -30,6 +30,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`clip --accurate`",
             "`clip --crf`",
             "`clip --preset`",
+            "`storage.timeline_path`",
             "`search timeline.json query`",
             "`ffmpeg -c copy`",
             "`--accurate`",
@@ -150,6 +151,8 @@ class DocsMvpContractTest(unittest.TestCase):
 
         self.assertIn("video_clipper", architecture)
         self.assertIn("video.path", architecture)
+        self.assertIn("storage.video_path", architecture)
+        self.assertIn("storage.timeline_path", architecture)
         self.assertIn("--padding-seconds", architecture)
         self.assertIn("ffmpeg", architecture)
         self.assertIn("キーフレーム単位", architecture)
@@ -158,6 +161,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("--start-index", architecture)
         self.assertIn("--tag", architecture)
         self.assertIn("timeline_000003.mp4", architecture)
+        self.assertIn("/mnt/video-timeline/clips/", architecture)
         self.assertIn("完全一致", architecture)
         self.assertIn("複数index", architecture)
 
@@ -260,7 +264,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[x] accurate切り出しの画質と速度を指定できるようにする（#53）", roadmap)
         self.assertIn("[x] timeline index範囲をまとめて切り出せるようにする（#47）", roadmap)
         self.assertIn("[x] 動画とフレーム画像の保存先を外部ストレージ対応にする（#37）", roadmap)
-        self.assertIn("[ ] サーバー上でtimeline区間の動画切り出しを実行できるようにする（#38）", roadmap)
+        self.assertIn("[x] サーバー上でtimeline区間の動画切り出しを実行できるようにする（#38）", roadmap)
         self.assertIn("[x] VLタグを事前定義タグとprimary_tagへ寄せる（#48）", roadmap)
         self.assertIn("[x] timeline検索CLIを追加する（#49）", roadmap)
         self.assertIn("[x] タグ別クリップ生成CLIを追加する（#50）", roadmap)
