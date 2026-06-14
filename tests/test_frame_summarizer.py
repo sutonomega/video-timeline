@@ -104,8 +104,9 @@ class FrameSummarizerTest(unittest.TestCase):
             prompt=(
                 "この画像でユーザーが何をしているかを日本語で1文で要約してください。"
                 "画面の主対象をprimary_tagに1つだけ入れ、補助的な作業や文脈をsecondary_tagsに入れてください。"
-                "primary_tagはできるだけ次から選んでください: "
+                "primary_tagはまず次から選んでください: "
                 "chatgpt, github, vscode, terminal, browser, youtube, discord, game, document, other。"
+                "適切な候補がない場合は、短い自由タグを使ってください。"
                 '必ずJSONだけで返してください。形式: {"summary":"日本語の要約","primary_tag":"chatgpt","secondary_tags":["planning"]}'
             ),
             api_url="http://ollama/api/generate",
