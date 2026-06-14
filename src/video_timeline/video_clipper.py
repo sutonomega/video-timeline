@@ -207,14 +207,41 @@ def _find_timeline_indexes_by_tag(document: dict, normalized_tag: str) -> list[i
     if not isinstance(timeline, list):
         raise VideoClipperError("timeline JSONにtimelineがありません。")
 
+    events_by_timeline_index = _build_events_by_timeline_index(document)
     indexes = []
     for index, entry in enumerate(timeline):
         if not isinstance(entry, dict):
             raise VideoClipperError(f"timeline entryが不正です: {index}")
-        tags = entry.get("tags", [])
-        if isinstance(tags, list) and any(isinstance(tag, str) and tag.casefold() == normalized_tag for tag in tags):
+        if _timeline_entry_has_tag(entry, events_by_timeline_index.get(index, []), normalized_tag):
             indexes.append(index)
     return indexes
+
+
+def _build_events_by_timeline_index(document: dict) -> dict[int, list[dict]]:
+    events = document.get("events", [])
+    if events is None:
+        return {}
+    if not isinstance(events, list):
+        raise VideoClipperError("timeline JSONのeventsが不正です。")
+
+    events_by_timeline_index: dict[int, list[dict]] = {}
+    for event in events:
+        if not isinstance(event, dict):
+            continue
+        timeline_index = event.get("timeline_index")
+        if isinstance(timeline_index, int):
+            events_by_timeline_index.setdefault(timeline_index, []).append(event)
+    return events_by_timeline_index
+
+
+def _timeline_entry_has_tag(entry: dict, events: list[dict], normalized_tag: str) -> bool:
+    return _tags_include(entry.get("tags", []), normalized_tag) or any(
+        _tags_include(event.get("tags", []), normalized_tag) for event in events
+    )
+
+
+def _tags_include(tags: object, normalized_tag: str) -> bool:
+    return isinstance(tags, list) and any(isinstance(tag, str) and tag.casefold() == normalized_tag for tag in tags)
 
 
 def _build_clip_range(timeline_entry: dict, padding_seconds: float) -> tuple[float, float]:

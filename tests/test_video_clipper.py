@@ -296,8 +296,9 @@ class VideoClipperTest(unittest.TestCase):
             "timeline": [
                 {"start_seconds": 0.0, "end_seconds": 5.0, "tags": ["chatgpt"]},
                 {"start_seconds": 10.0, "end_seconds": 20.0, "tags": ["GitHub", "review"]},
-                {"start_seconds": 30.0, "end_seconds": 45.0, "tags": ["github"]},
+                {"start_seconds": 30.0, "end_seconds": 45.0, "tags": ["coding"]},
             ],
+            "events": [{"timeline_index": 2, "kind": "activity", "summary": "PR確認", "tags": ["github"]}],
         }
 
         with TemporaryDirectory() as directory:
