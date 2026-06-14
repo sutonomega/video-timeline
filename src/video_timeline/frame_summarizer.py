@@ -304,6 +304,10 @@ def _load_json_object_from_text(text: str) -> dict | None:
             continue
         if isinstance(payload, dict):
             return payload
+
+    recovered = _recover_partial_frame_summary(text)
+    if recovered is not None:
+        return recovered
     return None
 
 
@@ -341,6 +345,30 @@ def _extract_json_object_text(text: str) -> str | None:
 
 def _repair_common_json_text(text: str) -> str:
     return text.replace('"secondary_tags[]"', '"secondary_tags"')
+
+
+def _recover_partial_frame_summary(text: str) -> dict | None:
+    summary = _extract_json_string_field(text, "summary")
+    primary_tag = _extract_json_string_field(text, "primary_tag")
+    if summary is None or primary_tag is None:
+        return None
+    return {
+        "summary": summary,
+        "primary_tag": primary_tag,
+        "secondary_tags": [],
+    }
+
+
+def _extract_json_string_field(text: str, field_name: str) -> str | None:
+    pattern = rf'"{re.escape(field_name)}"\s*:\s*"((?:\\.|[^"\\])*)"'
+    match = re.search(pattern, text)
+    if match is None:
+        return None
+    raw_value = match.group(1)
+    try:
+        return json.loads(f'"{raw_value}"')
+    except json.JSONDecodeError:
+        return None
 
 
 def normalize_tags(raw_tags: list[object]) -> tuple[str, ...]:

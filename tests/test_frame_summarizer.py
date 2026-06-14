@@ -409,6 +409,16 @@ class FrameSummarizerTest(unittest.TestCase):
         self.assertEqual(content.secondary_tags, ("oatmeal",))
         self.assertEqual(content.tags, ("cooking", "oatmeal"))
 
+    def test_parse_frame_summary_response_recovers_partial_unclosed_json(self):
+        content = parse_frame_summary_response(
+            '{"summary":"フライパンをIHクッキングヒーターに置く","primary_tag":"cooking","secondary_tags[]}'
+        )
+
+        self.assertEqual(content.summary, "フライパンをIHクッキングヒーターに置く")
+        self.assertEqual(content.primary_tag, "cooking")
+        self.assertEqual(content.secondary_tags, ())
+        self.assertEqual(content.tags, ("cooking",))
+
     def test_parse_frame_summary_response_extracts_nested_json_summary(self):
         content = parse_frame_summary_response(
             json.dumps(

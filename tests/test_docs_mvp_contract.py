@@ -78,6 +78,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "JSONオブジェクトを切り出してから読み取る",
             "`secondary_tags[]` のような誤記は `secondary_tags` として救済する",
             "`summary` の中にJSON文字列が埋まっている場合",
+            "JSONが閉じていない場合は `summary` と `primary_tag` だけを正規表現で拾い",
             "再問い合わせはせず",
             "`timeline[].tags`",
             "`<output-dir>/<video_stem>_<path_hash>/`",
@@ -231,8 +232,9 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("`secondary_tags` は必ず `secondary_tags` という配列キーで返す", architecture)
         self.assertIn("`secondary_tags[]` のような誤記は `secondary_tags` として救済する", architecture)
         self.assertIn("`summary` の中にJSON文字列が埋まっている場合", architecture)
+        self.assertIn("JSONが閉じていない場合は `summary` と `primary_tag` だけを正規表現で拾い", architecture)
         self.assertIn("JSONコードブロックや前後の説明文が混入した場合", architecture)
-        self.assertIn("再問い合わせで直すことはせず", architecture)
+        self.assertIn("完全には復元できない場合だけ", architecture)
 
     def test_architecture_defines_event_detector_contract(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
