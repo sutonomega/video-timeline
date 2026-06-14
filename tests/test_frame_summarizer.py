@@ -17,6 +17,7 @@ from video_timeline.frame_summarizer import (
     FrameSummarizerError,
     FrameSummary,
     FrameSummaryContent,
+    StorageMetadata,
     build_frame_summary_document,
     normalize_tags,
     parse_frame_summary_response,
@@ -208,6 +209,51 @@ class FrameSummarizerTest(unittest.TestCase):
                 }
             ],
         )
+
+    def test_build_frame_summary_document_includes_storage_when_given(self):
+        video = VideoMetadata(
+            path="/mnt/storage/videos/input.mp4",
+            duration_seconds=10.0,
+            fps=30.0,
+            frame_count=300,
+            width=1920,
+            height=1080,
+        )
+        analysis = AnalysisMetadata(interval_seconds=10.0)
+
+        document = build_frame_summary_document(
+            video=video,
+            analysis=analysis,
+            storage=StorageMetadata(
+                mode="server",
+                video_path="/mnt/storage/videos/input.mp4",
+                frames_dir="/mnt/storage/frames/input_abcd1234ef56",
+                timeline_path="/mnt/storage/timelines/input.json",
+            ),
+            frame_summaries=[],
+            generated_at="2026-06-11T00:00:00Z",
+        )
+
+        self.assertEqual(
+            document["storage"],
+            {
+                "mode": "server",
+                "video_path": "/mnt/storage/videos/input.mp4",
+                "frames_dir": "/mnt/storage/frames/input_abcd1234ef56",
+                "timeline_path": "/mnt/storage/timelines/input.json",
+            },
+        )
+
+    def test_storage_metadata_rejects_invalid_mode(self):
+        storage = StorageMetadata(
+            mode="remote",
+            video_path="/tmp/input.mp4",
+            frames_dir="frames",
+            timeline_path="timeline.json",
+        )
+
+        with self.assertRaisesRegex(FrameSummarizerError, "storage mode"):
+            storage.to_dict()
 
     def test_build_frame_summary_document_includes_events_when_given(self):
         video = VideoMetadata(

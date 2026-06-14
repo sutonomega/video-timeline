@@ -14,6 +14,7 @@ Output
 - Frame Summary JSON
 - Timeline
 - Events
+- Storage Metadata
 
 Storage
 - JSON
@@ -48,6 +49,18 @@ Main Modules
 - 短い動画や端数秒を含む動画でも決定的に動く抽出制御
 
 CLIから使う場合は、`--frames-dir`をベースディレクトリとして扱い、動画ごとに`<frames-dir>/<video_stem>_<path_hash>/`へ保存する。`path_hash`は解決済み入力パスから作る短いhashで、`videos/a/sample.mp4`と`videos/b/sample.mp4`のような同名動画を連続実行してもフレーム画像が同じディレクトリに混ざらないようにする。
+
+## storage metadata
+
+責務:
+
+- CLIで生成したJSONに `storage` を保存する
+- `storage.mode` で `local` と `server` を区別する
+- `storage.video_path` に元動画の参照先を保存する
+- `storage.frames_dir` に抽出フレームの保存ディレクトリを保存する
+- `storage.timeline_path` にtimeline JSONの保存先を保存する
+
+`--storage-mode server` はファイル転送やコピーを行うものではなく、入力動画、`--frames-dir`、`--output` にサーバー上のパスを指定したとき、その参照先をJSONに明示するための設定とする。既存のローカル運用では `local` を既定値にし、`video.path` と `frame_summaries[].image` の参照を維持する。サーバー上でclipを実行する場合は、この `storage` 情報と従来の `video.path` を使って元動画とフレーム保存先を解決する。
 
 ## frame_summarizer
 

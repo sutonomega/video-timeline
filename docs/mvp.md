@@ -39,6 +39,12 @@ MVPで実装しないこと:
 PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json
 ```
 
+サーバー上の保存場所を参照情報として残す場合は、入力動画、`--output`、`--frames-dir` にサーバー上のパスを渡し、`--storage-mode server` を指定する。
+
+```bash
+PYTHONPATH=src python3 -m video_timeline.cli /mnt/storage/videos/input.mp4 --output /mnt/storage/timelines/input.json --frames-dir /mnt/storage/frames --storage-mode server
+```
+
 複数動画をまとめて解析する場合は、入力ディレクトリと出力ディレクトリを指定する。
 
 ```bash
@@ -83,6 +89,7 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output 
 - `--output-dir`: 一括解析結果の保存先ベースディレクトリ
 - `--interval-seconds`: フレーム抽出間隔。既定値は`10`
 - `--frames-dir`: 抽出フレームの保存先ベースディレクトリ。既定値は`frames`
+- `--storage-mode`: JSONに記録する保存先の種別。`local`または`server`。既定値は`local`
 - `clip timeline.json`: `timeline` の指定区間を元動画から切り出す
 - `clip --index`: 切り出す `timeline` 配列の0始まりindex
 - `clip --start-index`: 連続切り出しの開始 `timeline` index
@@ -151,6 +158,23 @@ MVPではVLプロバイダーとモデルを固定する。
 
 MVPでは`mp4`のみ対応する。CLIから入力動画を受け取る処理は、MVP CLI統合のIssueで接続する。
 
+## 保存先メタデータ仕様
+
+CLIで生成したJSONには、動画、フレーム画像、timeline JSONの参照先を `storage` として保存する。
+
+```json
+{
+  "storage": {
+    "mode": "server",
+    "video_path": "/mnt/storage/videos/input.mp4",
+    "frames_dir": "/mnt/storage/frames/input_abcd1234ef56",
+    "timeline_path": "/mnt/storage/timelines/input.json"
+  }
+}
+```
+
+`mode` は `local` または `server` とする。`server` はファイルを自動転送する機能ではなく、入力動画、フレーム保存先、timeline保存先がサーバー上のパスであることをJSONに明示するためのメタデータとして扱う。既存のローカル運用では `mode` を `local` とし、従来通り `video.path` と `frame_summaries[].image` から参照できる状態を維持する。
+
 ## フレーム抽出仕様
 
 `frame_extractor`は動画メタデータを受け取り、固定間隔でフレーム画像を保存する。
@@ -212,6 +236,12 @@ MVPのJSONは次の構造にする。
     "vl_provider": "ollama",
     "vl_model": "qwen2.5vl:7b"
   },
+  "storage": {
+    "mode": "local",
+    "video_path": "input.mp4",
+    "frames_dir": "frames/input_abcd1234ef56",
+    "timeline_path": "timeline.json"
+  },
   "frame_summaries": [
     {
       "index": 0,
@@ -248,6 +278,10 @@ MVPのJSONは次の構造にする。
 - `analysis.interval_seconds`
 - `analysis.vl_provider`
 - `analysis.vl_model`
+- `storage.mode`
+- `storage.video_path`
+- `storage.frames_dir`
+- `storage.timeline_path`
 - `frame_summaries[].index`
 - `frame_summaries[].time_seconds`
 - `frame_summaries[].image`

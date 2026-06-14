@@ -36,6 +36,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`--preset`",
             "`--interval-seconds`",
             "`--frames-dir`",
+            "`--storage-mode`",
             "`--vl-provider`",
             "`version`",
             "`generated_at`",
@@ -58,6 +59,10 @@ class DocsMvpContractTest(unittest.TestCase):
             "`analysis.interval_seconds`",
             "`analysis.vl_provider`",
             "`analysis.vl_model`",
+            "`storage.mode`",
+            "`storage.video_path`",
+            "`storage.frames_dir`",
+            "`storage.timeline_path`",
             "`ollama`",
             "`qwen2.5vl:7b`",
             "`frame_summaries[].index`",
@@ -179,6 +184,17 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("エスケープ", architecture)
         self.assertIn("01:20-04:10", architecture)
 
+    def test_architecture_defines_storage_metadata_contract(self):
+        architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+
+        self.assertIn("storage metadata", architecture)
+        self.assertIn("storage.mode", architecture)
+        self.assertIn("storage.video_path", architecture)
+        self.assertIn("storage.frames_dir", architecture)
+        self.assertIn("storage.timeline_path", architecture)
+        self.assertIn("--storage-mode server", architecture)
+        self.assertIn("ファイル転送やコピーを行うものではなく", architecture)
+
     def test_architecture_defines_frame_summary_tags(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
@@ -238,7 +254,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[x] accurateなtimeline切り出しモードを追加する（#46）", roadmap)
         self.assertIn("[x] accurate切り出しの画質と速度を指定できるようにする（#53）", roadmap)
         self.assertIn("[x] timeline index範囲をまとめて切り出せるようにする（#47）", roadmap)
-        self.assertIn("[ ] 動画とフレーム画像の保存先を外部ストレージ対応にする（#37）", roadmap)
+        self.assertIn("[x] 動画とフレーム画像の保存先を外部ストレージ対応にする（#37）", roadmap)
         self.assertIn("[ ] サーバー上でtimeline区間の動画切り出しを実行できるようにする（#38）", roadmap)
         self.assertIn("[x] VLタグを事前定義タグとprimary_tagへ寄せる（#48）", roadmap)
         self.assertIn("[x] timeline検索CLIを追加する（#49）", roadmap)
