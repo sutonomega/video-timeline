@@ -39,6 +39,7 @@ DEFAULT_SUMMARY_PROMPT = (
     "primary_tagはまず次から選んでください: "
     f"{', '.join(PREDEFINED_PRIMARY_TAGS)}。"
     "適切な候補がない場合は、短い自由タグを使ってください。"
+    "secondary_tagsは必ず配列キーsecondary_tagsとして返してください。secondary_tags[]は使わないでください。"
     '必ずJSONだけで返してください。形式: {"summary":"日本語の要約","primary_tag":"chatgpt","secondary_tags":["planning"]}'
 )
 

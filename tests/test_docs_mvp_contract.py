@@ -74,6 +74,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`frame_summaries[].primary_tag`",
             "`frame_summaries[].secondary_tags`",
             "`frame_summaries[].tags`",
+            "secondary_tagsは必ず配列キーsecondary_tagsとして返してください",
             "JSONオブジェクトを切り出してから読み取る",
             "再問い合わせはせず",
             "`timeline[].tags`",
@@ -223,6 +224,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("小文字英数字", architecture)
         self.assertIn("日本語タグ", architecture)
         self.assertIn("保持する", architecture)
+        self.assertIn("secondary_tagsは必ず配列キーsecondary_tagsとして返してください", architecture)
+        self.assertIn("secondary_tags[]", architecture)
         self.assertIn("JSONコードブロックや前後の説明文が混入した場合", architecture)
         self.assertIn("再問い合わせで直すことはせず", architecture)
 
