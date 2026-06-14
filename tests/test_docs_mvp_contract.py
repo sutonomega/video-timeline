@@ -131,6 +131,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("連続する近い`summary`", architecture)
         self.assertIn("代表summary", architecture)
         self.assertIn("軽量な類似判定", architecture)
+        self.assertIn("summary の語彙がまったく重ならない場合はタグ一致だけで結合しない", architecture)
         self.assertIn("連続する近い`tags`", architecture)
         self.assertIn("timelineの`tags`", architecture)
         self.assertIn("過統合", architecture)
@@ -216,6 +217,7 @@ class DocsMvpContractTest(unittest.TestCase):
 
     def test_architecture_defines_frame_summary_tags(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+        mvp = (ROOT / "docs" / "mvp.md").read_text(encoding="utf-8")
 
         self.assertIn("フレームごとの検索用タグ", architecture)
         self.assertIn("primary_tag", architecture)
@@ -226,6 +228,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("料理、食事、家事、外出、移動などの生活動画", architecture)
         self.assertIn("other", architecture)
         self.assertIn("タグ類似統合から除外", architecture)
+        self.assertIn("summary の補助条件として扱い", mvp)
         self.assertIn("小文字英数字", architecture)
         self.assertIn("日本語タグ", architecture)
         self.assertIn("保持する", architecture)

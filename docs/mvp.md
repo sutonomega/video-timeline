@@ -317,7 +317,7 @@ VLは `summary`、`primary_tag`、`secondary_tags` をJSONで返す。`primary_t
 
 VLの応答にJSONコードブロックや前後の説明文が混ざっている場合は、先頭のJSONオブジェクトを切り出してから読み取る。`secondary_tags[]` のような誤記は `secondary_tags` として救済する。`summary` の中にJSON文字列が埋まっている場合は、内側のJSONも再解釈する。JSONが閉じていない場合は `summary` と `primary_tag` だけを正規表現で拾い、`secondary_tags` は空配列にする。完全には復元できない場合だけ、再問い合わせはせず、従来通り全文を `summary` として保存する。
 
-`other` は判定不能時の退避先として扱う。`other` が多い実データではtimeline統合やタグ別clipのノイズになるため、タグ類似統合の類似度計算では `other` を除外する。`other` が大量発生する場合は、自由タグや事前定義タグを追加して減らす。
+`other` は判定不能時の退避先として扱う。`other` が多い実データではtimeline統合やタグ別clipのノイズになるため、タグ類似統合の類似度計算では `other` を除外する。`tags` は summary の補助条件として扱い、summary の語彙がまったく重ならない場合はタグ一致だけで timeline を結合しない。`other` が大量発生する場合は、自由タグや事前定義タグを追加して減らす。
 
 MVPの既定値:
 
