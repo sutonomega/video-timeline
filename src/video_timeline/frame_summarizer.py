@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 DEFAULT_VL_PROVIDER = "ollama"
-DEFAULT_VL_MODEL = "qwen2.5vl:7b"
+DEFAULT_VL_MODEL = "gemma3:12b"
 DEFAULT_OLLAMA_URL = "http://localhost:11434/api/generate"
 DEFAULT_PRIMARY_TAG = "other"
 SCREEN_PRIMARY_TAGS = (

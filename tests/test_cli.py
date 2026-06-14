@@ -142,6 +142,8 @@ class CliTest(unittest.TestCase):
                             "5",
                             "--frames-dir",
                             "custom_frames",
+                            "--vl-model",
+                            "custom-vl:latest",
                             "--storage-mode",
                             "server",
                         ]
@@ -157,7 +159,7 @@ class CliTest(unittest.TestCase):
             frames_dir=build_run_frames_dir(video.path, "custom_frames"),
             interval_seconds=5.0,
         )
-        summarize.assert_called_once_with(frames, model="qwen2.5vl:7b", progress=ANY)
+        summarize.assert_called_once_with(frames, model="custom-vl:latest", progress=ANY)
         build_timeline.assert_called_once_with(summaries, video)
         detect_events.assert_called_once_with(timeline)
         self.assertIn("動画メタデータ取得中", output)
@@ -170,7 +172,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(saved["video"]["path"], "/tmp/input.mp4")
         self.assertEqual(saved["analysis"]["interval_seconds"], 5.0)
         self.assertEqual(saved["analysis"]["vl_provider"], "ollama")
-        self.assertEqual(saved["analysis"]["vl_model"], "qwen2.5vl:7b")
+        self.assertEqual(saved["analysis"]["vl_model"], "custom-vl:latest")
         self.assertEqual(
             saved["storage"],
             {
@@ -507,6 +509,8 @@ class CliTest(unittest.TestCase):
                     "timelines",
                     "--interval-seconds",
                     "5",
+                    "--vl-model",
+                    "custom-vl:latest",
                     "--storage-mode",
                     "server",
                 ]
@@ -522,6 +526,7 @@ class CliTest(unittest.TestCase):
             5.0,
             isolate_frames=False,
             storage_mode="server",
+            vl_model="custom-vl:latest",
         )
         run_video.assert_any_call(
             second,
@@ -530,6 +535,7 @@ class CliTest(unittest.TestCase):
             5.0,
             isolate_frames=False,
             storage_mode="server",
+            vl_model="custom-vl:latest",
         )
         self.assertIn("batch complete: success=2 failure=0", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
