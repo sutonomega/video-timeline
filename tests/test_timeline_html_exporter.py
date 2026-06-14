@@ -85,6 +85,17 @@ class TimelineHtmlExporterTest(unittest.TestCase):
         with self.assertRaisesRegex(TimelineHtmlExportError, "timelineがありません"):
             build_timeline_html_document({"video": {}, "analysis": {}})
 
+    def test_build_timeline_html_document_rejects_invalid_event_entry(self):
+        document = {
+            "video": {},
+            "analysis": {},
+            "timeline": [],
+            "events": [123],
+        }
+
+        with self.assertRaisesRegex(TimelineHtmlExportError, "event entryが不正です: 0"):
+            build_timeline_html_document(document)
+
     def test_export_timeline_html_file_writes_static_html(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)

@@ -103,7 +103,7 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output 
 
 `search` は `timeline[].summary`、`timeline[].tags`、対応する `events[].kind`、`events[].summary`、`events[].tags` を大文字小文字を区別せず検索する。結果は `3  01:20-04:10  ChatGPTで仕様相談` のように、timeline index、時刻範囲、summaryを1行ずつ表示する。小数秒は切り捨てて表示する。空結果はエラーにせず `no matches` を表示する。存在しないファイルや不正なJSONはエラーにする。
 
-`export-html` は `video`、`analysis`、`timeline`、`events` を1つの静的HTMLに出力する。`timeline` はindex、時刻範囲、summary、tagsを表で表示する。`events` はkind、時刻範囲、summary、timeline_index、importance_score、tagsを表で表示する。HTML内の値はエスケープし、CSSやJavaScriptに依存しない最小表示にする。存在しないファイル、不正なJSON、`timeline`がないJSONはエラーにする。
+`export-html` は `video`、`analysis`、`timeline`、`events` を1つの静的HTMLに出力する。`timeline` はindex、時刻範囲、summary、tagsを表で表示する。`events` はkind、時刻範囲、summary、timeline_index、importance_score、tagsを表で表示する。HTML内の値はエスケープし、CSSやJavaScriptに依存しない最小表示にする。存在しないファイル、不正なJSON、`timeline`がないJSON、dictではない`timeline`/`events`要素はエラーにする。
 
 将来拡張する任意引数:
 

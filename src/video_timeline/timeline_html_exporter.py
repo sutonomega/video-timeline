@@ -115,7 +115,7 @@ def _build_events_table(events: list) -> str:
     rows = []
     for index, event in enumerate(events):
         if not isinstance(event, dict):
-            continue
+            raise TimelineHtmlExportError(f"event entryが不正です: {index}")
         rows.append(
             "<tr>"
             f"<td>{_html_text(_string_value(event.get('kind')))}</td>"
