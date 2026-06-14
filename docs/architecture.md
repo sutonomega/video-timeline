@@ -62,6 +62,8 @@ CLIから使う場合は、`--frames-dir`をベースディレクトリとして
 
 `--storage-mode server` はファイル転送やコピーを行うものではなく、入力動画、`--frames-dir`、`--output` にサーバー上のパスを指定したとき、その参照先をJSONに明示するための設定とする。既存のローカル運用では `local` を既定値にし、`video.path` と `frame_summaries[].image` の参照を維持する。サーバー上でclipを実行する場合は、この `storage` 情報と従来の `video.path` を使って元動画とフレーム保存先を解決する。
 
+実運用の共有保存先は `\\192.168.10.112\video-timeline` とし、配下に `videos`、`frames`、`timelines` を置く想定にする。Windows共有パスを使う場合も、CLIには通常のパス文字列として渡し、JSONの `storage.video_path`、`storage.frames_dir`、`storage.timeline_path` に同じ参照先を記録する。
+
 ## frame_summarizer
 
 責務:

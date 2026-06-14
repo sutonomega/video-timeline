@@ -16,6 +16,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --start-index 3 --end-index 7 --output clips",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --tag github --output clips",
             "PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt",
+            "\\\\192.168.10.112\\video-timeline",
             "`input`",
             "`--output`",
             "`--input-dir`",
@@ -194,6 +195,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("storage.timeline_path", architecture)
         self.assertIn("--storage-mode server", architecture)
         self.assertIn("ファイル転送やコピーを行うものではなく", architecture)
+        self.assertIn("\\\\192.168.10.112\\video-timeline", architecture)
 
     def test_architecture_defines_frame_summary_tags(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")

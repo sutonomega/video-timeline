@@ -45,6 +45,12 @@ PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json
 PYTHONPATH=src python3 -m video_timeline.cli /mnt/storage/videos/input.mp4 --output /mnt/storage/timelines/input.json --frames-dir /mnt/storage/frames --storage-mode server
 ```
 
+実運用のサーバー格納場所は `\\192.168.10.112\video-timeline` とする。Windows共有パスから実行する場合は、次のように動画、timeline、framesの保存先を同じ共有配下に置く。
+
+```powershell
+python -m video_timeline.cli "\\192.168.10.112\video-timeline\videos\input.mp4" --output "\\192.168.10.112\video-timeline\timelines\input.json" --frames-dir "\\192.168.10.112\video-timeline\frames" --storage-mode server
+```
+
 複数動画をまとめて解析する場合は、入力ディレクトリと出力ディレクトリを指定する。
 
 ```bash
