@@ -9,6 +9,7 @@ from .video_loader import VideoMetadata
 
 SUMMARY_SIMILARITY_THRESHOLD = 0.6
 TAG_SIMILARITY_THRESHOLD = 0.5
+IGNORED_TAG_SIMILARITY_TAGS = {"other"}
 
 
 @dataclass(frozen=True)
@@ -102,14 +103,18 @@ def are_similar_summaries(first: str, second: str) -> bool:
 
 
 def are_similar_tags(first: list[str] | tuple[str, ...], second: list[str] | tuple[str, ...]) -> bool:
-    first_tags = set(first)
-    second_tags = set(second)
+    first_tags = _tag_similarity_set(first)
+    second_tags = _tag_similarity_set(second)
     if not first_tags or not second_tags:
         return False
 
     overlap = first_tags & second_tags
     union = first_tags | second_tags
     return len(overlap) / len(union) >= TAG_SIMILARITY_THRESHOLD
+
+
+def _tag_similarity_set(tags: list[str] | tuple[str, ...]) -> set[str]:
+    return {tag for tag in tags if tag not in IGNORED_TAG_SIMILARITY_TAGS}
 
 
 def _merge_tags(current_tags: list[str], new_tags: tuple[str, ...]) -> list[str]:
