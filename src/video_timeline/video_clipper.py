@@ -75,20 +75,71 @@ def clip_timeline_entry_range(
         raise VideoClipperError("--end-indexは--start-index以上で指定してください。")
     if padding_seconds < 0:
         raise VideoClipperError("--padding-secondsは0以上で指定してください。")
-    actual_crf, actual_preset = _resolve_encoding_options(accurate, crf, preset)
-
     document = load_timeline_document(timeline_json_path)
-    video_path = _read_video_path(document)
     _validate_timeline_range(document, start_index, end_index)
 
+    return _clip_timeline_indices(
+        document,
+        indexes=range(start_index, end_index + 1),
+        output_dir=output_dir,
+        padding_seconds=padding_seconds,
+        accurate=accurate,
+        crf=crf,
+        preset=preset,
+    )
+
+
+def clip_timeline_entries_by_tag(
+    timeline_json_path: str | Path,
+    tag: str,
+    output_dir: str | Path,
+    padding_seconds: float = 0.0,
+    accurate: bool = False,
+    crf: int | None = None,
+    preset: str | None = None,
+) -> list[Path]:
+    normalized_tag = tag.casefold().strip()
+    if not normalized_tag:
+        raise VideoClipperError("--tagを指定してください。")
+    if padding_seconds < 0:
+        raise VideoClipperError("--padding-secondsは0以上で指定してください。")
+
+    document = load_timeline_document(timeline_json_path)
+    matched_indexes = _find_timeline_indexes_by_tag(document, normalized_tag)
+    if not matched_indexes:
+        return []
+
+    return _clip_timeline_indices(
+        document,
+        indexes=matched_indexes,
+        output_dir=output_dir,
+        padding_seconds=padding_seconds,
+        accurate=accurate,
+        crf=crf,
+        preset=preset,
+    )
+
+
+def _clip_timeline_indices(
+    document: dict,
+    indexes,
+    output_dir: str | Path,
+    padding_seconds: float,
+    accurate: bool,
+    crf: int | None,
+    preset: str | None,
+) -> list[Path]:
+    actual_crf, actual_preset = _resolve_encoding_options(accurate, crf, preset)
+    video_path = _read_video_path(document)
+    output_directory = Path(output_dir)
+
     clip_ranges = []
-    for index in range(start_index, end_index + 1):
+    for index in indexes:
         timeline_entry = _read_timeline_entry(document, index)
         clip_ranges.append((index, *_build_clip_range(timeline_entry, padding_seconds)))
 
-    output_directory = Path(output_dir)
-    output_directory.mkdir(parents=True, exist_ok=True)
     outputs = []
+    output_directory.mkdir(parents=True, exist_ok=True)
     for index, start_seconds, duration_seconds in clip_ranges:
         output = output_directory / _build_range_clip_filename(index)
         try:
@@ -149,6 +200,21 @@ def _validate_timeline_range(document: dict, start_index: int, end_index: int) -
         raise VideoClipperError(f"timeline indexが存在しません: {start_index}")
     if end_index >= len(timeline):
         raise VideoClipperError(f"timeline indexが存在しません: {end_index}")
+
+
+def _find_timeline_indexes_by_tag(document: dict, normalized_tag: str) -> list[int]:
+    timeline = document.get("timeline")
+    if not isinstance(timeline, list):
+        raise VideoClipperError("timeline JSONにtimelineがありません。")
+
+    indexes = []
+    for index, entry in enumerate(timeline):
+        if not isinstance(entry, dict):
+            raise VideoClipperError(f"timeline entryが不正です: {index}")
+        tags = entry.get("tags", [])
+        if isinstance(tags, list) and any(isinstance(tag, str) and tag.casefold() == normalized_tag for tag in tags):
+            indexes.append(index)
+    return indexes
 
 
 def _build_clip_range(timeline_entry: dict, padding_seconds: float) -> tuple[float, float]:

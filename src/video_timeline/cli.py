@@ -18,7 +18,7 @@ from .frame_summarizer import (
 )
 from .timeline_generator import build_timeline
 from .timeline_searcher import format_search_result, search_timeline_file
-from .video_clipper import clip_timeline_entry, clip_timeline_entry_range
+from .video_clipper import clip_timeline_entries_by_tag, clip_timeline_entry, clip_timeline_entry_range
 from .video_loader import load_video_metadata
 
 
@@ -103,7 +103,8 @@ def build_clip_parser() -> argparse.ArgumentParser:
     parser.add_argument("--index", type=int, help="切り出すtimeline index")
     parser.add_argument("--start-index", type=int, help="連続切り出しの開始timeline index")
     parser.add_argument("--end-index", type=int, help="連続切り出しの終了timeline index")
-    parser.add_argument("--output", required=True, help="切り出しMP4の保存先、または範囲切り出しの出力ディレクトリ")
+    parser.add_argument("--tag", help="指定タグを含むtimeline区間を切り出す")
+    parser.add_argument("--output", required=True, help="切り出しMP4の保存先、または複数切り出しの出力ディレクトリ")
     parser.add_argument(
         "--padding-seconds",
         type=float,
@@ -137,10 +138,12 @@ def build_search_parser() -> argparse.ArgumentParser:
 def run_clip(args: argparse.Namespace) -> Path | list[Path]:
     has_single_index = args.index is not None
     has_range = args.start_index is not None or args.end_index is not None
-    if has_single_index and has_range:
-        raise ValueError("--indexと--start-index/--end-indexは同時に指定できません")
-    if not has_single_index and not has_range:
-        raise ValueError("--index または --start-index/--end-index のどちらかを指定してください")
+    has_tag = args.tag is not None
+    selected_modes = sum([has_single_index, has_range, has_tag])
+    if selected_modes > 1:
+        raise ValueError("--index、--start-index/--end-index、--tagは同時に指定できません")
+    if selected_modes == 0:
+        raise ValueError("--index、--start-index/--end-index、--tagのいずれかを指定してください")
     if has_range and (args.start_index is None or args.end_index is None):
         raise ValueError("--start-indexと--end-indexは両方指定してください")
 
@@ -149,6 +152,17 @@ def run_clip(args: argparse.Namespace) -> Path | list[Path]:
             args.timeline_json,
             index=args.index,
             output_path=args.output,
+            padding_seconds=args.padding_seconds,
+            accurate=args.accurate,
+            crf=args.crf,
+            preset=args.preset,
+        )
+
+    if has_tag:
+        return clip_timeline_entries_by_tag(
+            args.timeline_json,
+            tag=args.tag,
+            output_dir=args.output,
             padding_seconds=args.padding_seconds,
             accurate=args.accurate,
             crf=args.crf,
@@ -286,8 +300,11 @@ def main(argv: list[str] | None = None) -> int:
             return 1
 
         if isinstance(output_path, list):
-            for path in output_path:
-                print(f"wrote {path}")
+            if not output_path:
+                print("no matches")
+            else:
+                for path in output_path:
+                    print(f"wrote {path}")
         else:
             print(f"wrote {output_path}")
         return 0
