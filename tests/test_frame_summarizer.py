@@ -105,8 +105,10 @@ class FrameSummarizerTest(unittest.TestCase):
             prompt=(
                 "この画像でユーザーが何をしているかを日本語で1文で要約してください。"
                 "画面の主対象をprimary_tagに1つだけ入れ、補助的な作業や文脈をsecondary_tagsに入れてください。"
-                "primary_tagはまず次から選んでください: "
-                "chatgpt, github, vscode, terminal, browser, youtube, discord, game, document, other。"
+                "PCやスマホの画面が主対象ならprimary_tagは次から選んでください: "
+                "chatgpt, github, vscode, terminal, browser, youtube, discord, game, document。"
+                "料理、食事、家事、外出、移動などの生活動画が主対象ならprimary_tagは次から選んでください: "
+                "cooking, oatmeal, rice_cooker, eating, shopping, walking, exercise, cleaning, travel, study。"
                 "適切な候補がない場合は、短い自由タグを使ってください。"
                 "secondary_tagsは必ず配列キーsecondary_tagsとして返してください。secondary_tags[]は使わないでください。"
                 '必ずJSONだけで返してください。形式: {"summary":"日本語の要約","primary_tag":"chatgpt","secondary_tags":["planning"]}'

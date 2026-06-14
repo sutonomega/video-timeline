@@ -21,7 +21,7 @@ DEFAULT_VL_PROVIDER = "ollama"
 DEFAULT_VL_MODEL = "qwen2.5vl:7b"
 DEFAULT_OLLAMA_URL = "http://localhost:11434/api/generate"
 DEFAULT_PRIMARY_TAG = "other"
-PREDEFINED_PRIMARY_TAGS = (
+SCREEN_PRIMARY_TAGS = (
     "chatgpt",
     "github",
     "vscode",
@@ -31,13 +31,26 @@ PREDEFINED_PRIMARY_TAGS = (
     "discord",
     "game",
     "document",
-    "other",
+)
+LIFE_PRIMARY_TAGS = (
+    "cooking",
+    "oatmeal",
+    "rice_cooker",
+    "eating",
+    "shopping",
+    "walking",
+    "exercise",
+    "cleaning",
+    "travel",
+    "study",
 )
 DEFAULT_SUMMARY_PROMPT = (
     "この画像でユーザーが何をしているかを日本語で1文で要約してください。"
     "画面の主対象をprimary_tagに1つだけ入れ、補助的な作業や文脈をsecondary_tagsに入れてください。"
-    "primary_tagはまず次から選んでください: "
-    f"{', '.join(PREDEFINED_PRIMARY_TAGS)}。"
+    "PCやスマホの画面が主対象ならprimary_tagは次から選んでください: "
+    f"{', '.join(SCREEN_PRIMARY_TAGS)}。"
+    "料理、食事、家事、外出、移動などの生活動画が主対象ならprimary_tagは次から選んでください: "
+    f"{', '.join(LIFE_PRIMARY_TAGS)}。"
     "適切な候補がない場合は、短い自由タグを使ってください。"
     "secondary_tagsは必ず配列キーsecondary_tagsとして返してください。secondary_tags[]は使わないでください。"
     '必ずJSONだけで返してください。形式: {"summary":"日本語の要約","primary_tag":"chatgpt","secondary_tags":["planning"]}'

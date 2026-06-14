@@ -219,6 +219,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("secondary_tags", architecture)
         self.assertIn("事前定義タグ", architecture)
         self.assertIn("短い自由タグ", architecture)
+        self.assertIn("PCやスマホの画面が主対象のとき", architecture)
+        self.assertIn("料理、食事、家事、外出、移動などの生活動画", architecture)
         self.assertIn("other", architecture)
         self.assertIn("タグ類似統合から除外", architecture)
         self.assertIn("小文字英数字", architecture)

@@ -79,7 +79,7 @@ CLIから使う場合は、`--frames-dir`をベースディレクトリとして
 - video、analysis、frame_summariesを持つJSON構造の生成
 - UTF-8 JSONファイルへの保存
 
-VLプロンプトでは、自由なタグ列ではなく`primary_tag`と`secondary_tags`を返すように指定する。`secondary_tags` は必ず `secondary_tags` という配列キーで返す。`secondary_tags[]` というキー名は使わない。事前定義タグは`chatgpt`、`github`、`vscode`、`terminal`、`browser`、`youtube`、`discord`、`game`、`document`、`other`を優先し、画面の主対象を`primary_tag`に置く。適切な候補がない場合は、将棋、音楽制作、動画編集、Blender、通院、食事のような短い自由タグも許可する。`tags`は後方互換のため残し、保存時は`primary_tag`と`secondary_tags`を結合した配列として扱う。古い`tags`のみのVL応答は先頭タグを`primary_tag`、残りを`secondary_tags`として扱う。
+VLプロンプトでは、自由なタグ列ではなく`primary_tag`と`secondary_tags`を返すように指定する。`secondary_tags` は必ず `secondary_tags` という配列キーで返す。`secondary_tags[]` というキー名は使わない。PCやスマホの画面が主対象のときは`chatgpt`、`github`、`vscode`、`terminal`、`browser`、`youtube`、`discord`、`game`、`document`、`other`を優先し、料理、食事、家事、外出、移動などの生活動画では`cooking`、`oatmeal`、`rice_cooker`、`eating`、`shopping`、`walking`、`exercise`、`cleaning`、`travel`、`study`を優先する。適切な候補がない場合は、将棋、音楽制作、動画編集、Blender、通院のような短い自由タグも許可する。`tags`は後方互換のため残し、保存時は`primary_tag`と`secondary_tags`を結合した配列として扱う。古い`tags`のみのVL応答は先頭タグを`primary_tag`、残りを`secondary_tags`として扱う。
 
 VLがJSON以外の文章を返した場合は、従来通り全文を`summary`として保存し、`primary_tag`は`other`、`secondary_tags`は空にする。`summary`にJSONコードブロックや前後の説明文が混入した場合は、先頭のJSONオブジェクトを切り出してから読み取る。壊れたJSONを再問い合わせで直すことはせず、復元できない場合だけ全文を`summary`として扱う。`other`は判定不能時の退避先なので、実データで多発する場合はtimelineのタグ類似統合から除外するか、自由タグや事前定義タグの追加で減らす。
 
