@@ -232,3 +232,62 @@ TAG_SIMILARITY_THRESHOLD = 0.5
 - 一方で、`chatgpt` だけが共通する程度では過分割改善につながらなかった。
 - タグ統合は維持してよいが、過分割改善を狙うには `planning` 系タグの揺れを減らすプロンプト改善や、主要タグと補助タグを分ける設計が必要になる可能性がある。
 - 今回は画面録画風の検証動画であり、実際のOBS録画では引き続き確認が必要。
+
+## 2026-06-14 VLモデル比較: qwen2.5vl:7b と gemma3:12b
+
+料理動画 `sample1.mp4` を使い、OllamaのVLモデルを `qwen2.5vl:7b` から `gemma3:12b` に変えて品質を比較した。
+
+確認観点:
+
+- `summary` が料理工程を説明できているか
+- `primary_tag` / `secondary_tags` が工程の違いを残せているか
+- JSON応答が壊れにくいか
+- `frame_summaries` から生成される `timeline` が自然に分かれるか
+
+### qwen2.5vl:7b
+
+確認された課題:
+
+- `secondary_tags[]}` のような閉じていないJSONが多く、`primary_tag=other` へのフォールバックが発生した
+- `other` が多いため、timeline統合やタグ別clipの判断材料として弱かった
+- 料理動画にもかかわらず `browser` や `youtube` が出る誤認識があった
+- `oatmeal`、`rice_cooker`、`eating` など、料理工程を区別するタグが十分に出なかった
+
+代表的な問題例:
+
+```text
+{"summary":"お粥を混ぜる","primary_tag":"cooking","secondary_tags[]}
+```
+
+この形式はJSONとして閉じていないため、単純な `json.loads()` では救えない。現行実装では `summary` と `primary_tag` を正規表現で拾う部分復元を入れているが、モデル応答自体の安定性は低い。
+
+### gemma3:12b
+
+改善された点:
+
+- `summary` が料理工程をより具体的に説明した
+- `secondary_tags` が豊富になり、`rice_cooker`、`oatmeal`、`eating` などが出た
+- 料理動画の工程分割が自然になった
+- 確認した範囲ではJSON破損が目立たなかった
+
+代表的な改善:
+
+- オートミール投入
+- 加熱
+- 炊き上がり
+- お粥を混ぜる
+- 食べる、盛り付ける
+
+これらが `summary` とタグに残り、後続の `timeline` 品質を評価できる状態になった。
+
+### 判定
+
+料理動画の確認では `gemma3:12b` の方が `qwen2.5vl:7b` より安定していたため、既定VLモデルを `gemma3:12b` に変更する判断は妥当とする。
+
+一方で、`gemma3:12b` は `qwen2.5vl:7b` より重いため、軽量に試す場合はCLIの `--vl-model qwen2.5vl:7b` を使える状態を維持する。
+
+### 今後の確認
+
+- `sample1.mp4` 以外の生活動画で `gemma3:12b` の安定性を確認する
+- 画面録画系動画でも `qwen2.5vl:7b` と `gemma3:12b` を比較する
+- `export-html` で `timeline`、`summary`、`tags` を見やすくし、JSONを直接読まずに品質確認できるようにする
