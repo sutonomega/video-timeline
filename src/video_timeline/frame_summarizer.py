@@ -20,9 +20,26 @@ if TYPE_CHECKING:
 DEFAULT_VL_PROVIDER = "ollama"
 DEFAULT_VL_MODEL = "qwen2.5vl:7b"
 DEFAULT_OLLAMA_URL = "http://localhost:11434/api/generate"
+DEFAULT_PRIMARY_TAG = "other"
+PREDEFINED_PRIMARY_TAGS = (
+    "chatgpt",
+    "github",
+    "vscode",
+    "terminal",
+    "browser",
+    "youtube",
+    "discord",
+    "game",
+    "document",
+    "other",
+)
 DEFAULT_SUMMARY_PROMPT = (
-    "この画像でユーザーが何をしているかを日本語で1文で要約し、検索用タグも付けてください。"
-    '必ずJSONだけで返してください。形式: {"summary":"日本語の要約","tags":["chatgpt","coding"]}'
+    "この画像でユーザーが何をしているかを日本語で1文で要約してください。"
+    "画面の主対象をprimary_tagに1つだけ入れ、補助的な作業や文脈をsecondary_tagsに入れてください。"
+    "primary_tagはまず次から選んでください: "
+    f"{', '.join(PREDEFINED_PRIMARY_TAGS)}。"
+    "適切な候補がない場合は、短い自由タグを使ってください。"
+    '必ずJSONだけで返してください。形式: {"summary":"日本語の要約","primary_tag":"chatgpt","secondary_tags":["planning"]}'
 )
 
 
@@ -51,14 +68,23 @@ class FrameSummary:
     image: str
     summary: str
     tags: tuple[str, ...] = ()
+    primary_tag: str = DEFAULT_PRIMARY_TAG
+    secondary_tags: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, float | int | str | list[str]]:
+        primary_tag, secondary_tags, tags = _resolve_tag_fields(
+            self.primary_tag,
+            self.secondary_tags,
+            self.tags,
+        )
         return {
             "index": self.index,
             "time_seconds": self.time_seconds,
             "image": self.image,
             "summary": self.summary,
-            "tags": list(self.tags),
+            "primary_tag": primary_tag,
+            "secondary_tags": list(secondary_tags),
+            "tags": list(tags),
         }
 
 
@@ -66,6 +92,8 @@ class FrameSummary:
 class FrameSummaryContent:
     summary: str
     tags: tuple[str, ...] = ()
+    primary_tag: str = DEFAULT_PRIMARY_TAG
+    secondary_tags: tuple[str, ...] = ()
 
 
 FrameSummaryFunction = Callable[[ExtractedFrame], FrameSummaryContent | str]
@@ -93,6 +121,8 @@ def summarize_frames(
                 image=frame.image,
                 summary=content.summary,
                 tags=content.tags,
+                primary_tag=content.primary_tag,
+                secondary_tags=content.secondary_tags,
             )
         )
     return summaries
@@ -198,10 +228,23 @@ def parse_frame_summary_response(response_text: str) -> FrameSummaryContent:
     if not isinstance(summary, str) or not summary.strip():
         raise FrameSummarizerError("Ollama APIから要約文を取得できません。")
 
-    raw_tags = payload.get("tags", [])
-    if not isinstance(raw_tags, list):
-        raw_tags = []
-    return FrameSummaryContent(summary=summary.strip(), tags=normalize_tags(raw_tags))
+    primary_tag = payload.get("primary_tag")
+    raw_secondary_tags = payload.get("secondary_tags")
+    raw_tags = payload.get("tags")
+
+    if isinstance(raw_secondary_tags, list) or isinstance(primary_tag, str):
+        secondary_tags = normalize_tags(raw_secondary_tags if isinstance(raw_secondary_tags, list) else [])
+        resolved_primary_tag, resolved_secondary_tags, tags = _resolve_tag_fields(primary_tag, secondary_tags, ())
+    else:
+        legacy_tags = normalize_tags(raw_tags if isinstance(raw_tags, list) else [])
+        resolved_primary_tag, resolved_secondary_tags, tags = _resolve_tag_fields(None, (), legacy_tags)
+
+    return FrameSummaryContent(
+        summary=summary.strip(),
+        tags=tags,
+        primary_tag=resolved_primary_tag,
+        secondary_tags=resolved_secondary_tags,
+    )
 
 
 def normalize_tags(raw_tags: list[object]) -> tuple[str, ...]:
@@ -221,8 +264,40 @@ def normalize_tags(raw_tags: list[object]) -> tuple[str, ...]:
 
 def _coerce_frame_summary_content(value: FrameSummaryContent | str) -> FrameSummaryContent:
     if isinstance(value, FrameSummaryContent):
-        return FrameSummaryContent(summary=value.summary.strip(), tags=normalize_tags(list(value.tags)))
+        primary_tag, secondary_tags, tags = _resolve_tag_fields(value.primary_tag, value.secondary_tags, value.tags)
+        return FrameSummaryContent(
+            summary=value.summary.strip(),
+            tags=tags,
+            primary_tag=primary_tag,
+            secondary_tags=secondary_tags,
+        )
     return FrameSummaryContent(summary=value.strip())
+
+
+def _resolve_tag_fields(
+    primary_tag: object,
+    secondary_tags: tuple[str, ...] | list[object],
+    tags: tuple[str, ...] | list[object],
+) -> tuple[str, tuple[str, ...], tuple[str, ...]]:
+    normalized_tags = normalize_tags(list(tags))
+    normalized_secondary_tags = normalize_tags(list(secondary_tags))
+    normalized_primary_tags = normalize_tags([primary_tag] if isinstance(primary_tag, str) else [])
+
+    resolved_primary_tag = normalized_primary_tags[0] if normalized_primary_tags else ""
+    if resolved_primary_tag == DEFAULT_PRIMARY_TAG and normalized_tags:
+        resolved_primary_tag = ""
+    if not resolved_primary_tag and normalized_tags:
+        resolved_primary_tag = normalized_tags[0]
+    if not resolved_primary_tag:
+        resolved_primary_tag = DEFAULT_PRIMARY_TAG
+
+    if not normalized_secondary_tags and normalized_tags:
+        normalized_secondary_tags = tuple(tag for tag in normalized_tags if tag != resolved_primary_tag)
+    else:
+        normalized_secondary_tags = tuple(tag for tag in normalized_secondary_tags if tag != resolved_primary_tag)
+
+    resolved_tags = normalize_tags([resolved_primary_tag, *normalized_secondary_tags])
+    return resolved_primary_tag, normalized_secondary_tags, resolved_tags
 
 
 def _utc_now_isoformat() -> str:

@@ -208,6 +208,8 @@ MVPのJSONは次の構造にする。
       "time_seconds": 120.0,
       "image": "frames/000120000.jpg",
       "summary": "ChatGPTで動画タイムライン生成ツールの仕様を相談している",
+      "primary_tag": "chatgpt",
+      "secondary_tags": ["planning"],
       "tags": ["chatgpt", "planning"]
     }
   ],
@@ -240,12 +242,20 @@ MVPのJSONは次の構造にする。
 - `frame_summaries[].time_seconds`
 - `frame_summaries[].image`
 - `frame_summaries[].summary`
+- `frame_summaries[].primary_tag`
+- `frame_summaries[].secondary_tags`
 - `frame_summaries[].tags`
 - `timeline[].tags`
 
 ## フレーム要約JSON生成仕様
 
 `frame_summarizer`は抽出済みフレームをVLで要約し、MVPの出力JSONを生成する。
+
+VLは `summary`、`primary_tag`、`secondary_tags` をJSONで返す。`primary_tag`は画面の主対象を1つだけ表すタグ、`secondary_tags`は補助的な作業や文脈を表すタグとする。MVP後の運用では `chatgpt`、`github`、`vscode`、`terminal`、`browser`、`youtube`、`discord`、`game`、`document`、`other` を事前定義タグとして優先する。ただし、生活ログや専門作業など候補にない対象では短い自由タグも許可する。
+
+既存JSONとの互換性のため、`tags` は引き続き保存する。新形式の応答では `tags` を `primary_tag + secondary_tags` から生成する。古い `{"summary":"...","tags":[...]}` 形式の応答では、先頭のタグを `primary_tag`、残りを `secondary_tags` として扱う。タグがない場合は `primary_tag` を `other`、`secondary_tags` を空配列にする。
+
+`other` は判定不能時の退避先として扱う。`other` が多い実データではtimeline統合やタグ別clipのノイズになるため、後続で `other` をタグ類似統合から除外するか、自由タグや事前定義タグを追加して減らす。
 
 MVPの既定値:
 
@@ -266,7 +276,8 @@ Ollama呼び出し:
 
 - ローカルのOllama HTTP APIを使う
 - 画像はbase64にして`/api/generate`へ渡す
-- `response`は`summary`と`tags`を持つJSON文字列を優先して読み取る
+- `response`は`summary`、`primary_tag`、`secondary_tags`を持つJSON文字列を優先して読み取る
+- 旧形式の`summary`と`tags`を持つJSON文字列も互換形式として読み取る
 - 自動テストではOllama呼び出し境界を差し替えて検証する
 
 ## 完了条件

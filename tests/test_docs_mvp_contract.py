@@ -64,6 +64,8 @@ class DocsMvpContractTest(unittest.TestCase):
             "`frame_summaries[].time_seconds`",
             "`frame_summaries[].image`",
             "`frame_summaries[].summary`",
+            "`frame_summaries[].primary_tag`",
+            "`frame_summaries[].secondary_tags`",
             "`frame_summaries[].tags`",
             "`timeline[].tags`",
             "`<output-dir>/<video_stem>_<path_hash>/`",
@@ -169,6 +171,12 @@ class DocsMvpContractTest(unittest.TestCase):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
         self.assertIn("フレームごとの検索用タグ", architecture)
+        self.assertIn("primary_tag", architecture)
+        self.assertIn("secondary_tags", architecture)
+        self.assertIn("事前定義タグ", architecture)
+        self.assertIn("短い自由タグ", architecture)
+        self.assertIn("other", architecture)
+        self.assertIn("タグ類似統合から除外", architecture)
         self.assertIn("小文字英数字", architecture)
         self.assertIn("日本語タグ", architecture)
         self.assertIn("保持する", architecture)
@@ -220,7 +228,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[x] timeline index範囲をまとめて切り出せるようにする（#47）", roadmap)
         self.assertIn("[ ] 動画とフレーム画像の保存先を外部ストレージ対応にする（#37）", roadmap)
         self.assertIn("[ ] サーバー上でtimeline区間の動画切り出しを実行できるようにする（#38）", roadmap)
-        self.assertIn("[ ] VLタグを事前定義タグとprimary_tagへ寄せる（#48）", roadmap)
+        self.assertIn("[x] VLタグを事前定義タグとprimary_tagへ寄せる（#48）", roadmap)
         self.assertIn("[x] timeline検索CLIを追加する（#49）", roadmap)
         self.assertIn("[x] タグ別クリップ生成CLIを追加する（#50）", roadmap)
         self.assertIn("[ ] タイムラインHTML出力CLIを追加する（#51）", roadmap)
