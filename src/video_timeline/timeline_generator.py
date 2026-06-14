@@ -48,9 +48,10 @@ def build_timeline(
 
     for summary in sorted_summaries[1:]:
         normalized_summary = _normalize_summary(summary.summary)
-        if are_similar_summaries(current_summary, normalized_summary) or (
-            use_tag_similarity and are_similar_tags(current_tags, list(summary.tags))
-        ):
+        summary_related = are_similar_summaries(current_summary, normalized_summary)
+        tags_related = use_tag_similarity and are_similar_tags(current_tags, list(summary.tags))
+        shared_summary_tokens = _summary_tokens(current_summary) & _summary_tokens(normalized_summary)
+        if summary_related or (tags_related and shared_summary_tokens):
             current_frame_indices.append(summary.index)
             current_tags = _merge_tags(current_tags, summary.tags)
             continue

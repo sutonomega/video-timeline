@@ -125,14 +125,14 @@ class TimelineGeneratorTest(unittest.TestCase):
                 index=0,
                 time_seconds=0.0,
                 image="frames/000000000.jpg",
-                summary="ChatGPTで仕様について話している",
+                summary="ChatGPTでPRの確認をしている",
                 tags=("chatgpt", "review"),
             ),
             FrameSummary(
                 index=1,
                 time_seconds=10.0,
                 image="frames/000010000.jpg",
-                summary="PRの確認画面を見ている",
+                summary="ChatGPTでPRの差分を確認している",
                 tags=("chatgpt", "review", "github"),
             ),
             FrameSummary(
@@ -151,6 +151,43 @@ class TimelineGeneratorTest(unittest.TestCase):
         self.assertEqual(timeline[0].tags, ["chatgpt", "review", "github"])
         self.assertEqual(timeline[1].frame_indices, [2])
         self.assertEqual(timeline[1].tags, ["terminal", "testing"])
+
+    def test_build_timeline_does_not_group_on_tags_only_when_summary_differs(self):
+        video = VideoMetadata(
+            path="/tmp/input.mp4",
+            duration_seconds=30.0,
+            fps=30.0,
+            frame_count=900,
+            width=1920,
+            height=1080,
+        )
+        summaries = [
+            FrameSummary(
+                index=0,
+                time_seconds=0.0,
+                image="frames/000000000.jpg",
+                summary="オートミールを器に入れている",
+                tags=("cooking", "oatmeal"),
+            ),
+            FrameSummary(
+                index=1,
+                time_seconds=10.0,
+                image="frames/000010000.jpg",
+                summary="お湯を注いでいる",
+                tags=("cooking",),
+            ),
+            FrameSummary(
+                index=2,
+                time_seconds=20.0,
+                image="frames/000020000.jpg",
+                summary="食卓の片付けをしている",
+                tags=("cooking",),
+            ),
+        ]
+
+        timeline = build_timeline(summaries, video)
+
+        self.assertEqual([entry.frame_indices for entry in timeline], [[0], [1], [2]])
 
     def test_build_timeline_does_not_group_by_other_tag_only(self):
         video = VideoMetadata(
