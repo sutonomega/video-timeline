@@ -254,6 +254,27 @@ class CliTest(unittest.TestCase):
         self.assertIn("wrote clip.mp4", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
 
+    def test_clip_cli_allows_omitted_output_for_storage_timeline(self):
+        with (
+            patch("video_timeline.cli.clip_timeline_entry", return_value=Path("/mnt/video-timeline/clips/timeline_000003.mp4")) as clip,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["clip", "timeline.json", "--index", "3"])
+
+        self.assertEqual(exit_code, 0)
+        clip.assert_called_once_with(
+            "timeline.json",
+            index=3,
+            output_path=None,
+            padding_seconds=0.0,
+            accurate=False,
+            crf=None,
+            preset=None,
+        )
+        self.assertIn("wrote /mnt/video-timeline/clips/timeline_000003.mp4", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
     def test_clip_cli_connects_index_range_to_video_clipper(self):
         with (
             patch(

@@ -63,6 +63,12 @@ PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir
 PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --output clip.mp4
 ```
 
+`storage` 情報を持つサーバー保存済み `timeline.json` では、`--output` を省略すると `storage.timeline_path` から共有配下の `clips/` を推定して保存する。
+
+```bash
+PYTHONPATH=src python3 -m video_timeline.cli clip /mnt/video-timeline/timelines/sample.json --index 3
+```
+
 複数の連続した `timeline` 区間を個別に切り出す場合は、index範囲と出力ディレクトリを指定する。
 
 ```bash
@@ -101,7 +107,7 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output 
 - `clip --start-index`: 連続切り出しの開始 `timeline` index
 - `clip --end-index`: 連続切り出しの終了 `timeline` index。このindexも切り出し対象に含める
 - `clip --tag`: 指定タグを含む `timeline` 区間を個別clipとして切り出す
-- `clip --output`: `--index`では切り出しMP4の保存先、`--start-index`/`--end-index`または`--tag`では出力ディレクトリ
+- `clip --output`: `--index`では切り出しMP4の保存先、`--start-index`/`--end-index`または`--tag`では出力ディレクトリ。省略時は `storage.timeline_path` または `timeline.json` の場所から `clips/` を推定する
 - `clip --padding-seconds`: 切り出し範囲の前後に足す余白秒数。既定値は`0`
 - `clip --accurate`: 再エンコードして開始位置の正確さを優先する。既定は高速なcopy切り出し
 - `clip --crf`: `--accurate`時のx264画質。既定値は`18`
@@ -112,7 +118,7 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output 
 
 `clip` は既定では高速な `ffmpeg -c copy` で切り出す。キーフレーム位置の影響で開始位置が指定秒から少しずれる可能性がある。厳密な切り出しが必要な場合は `--accurate` を使う。`--crf`と`--preset`は`--accurate`時だけ有効で、copy切り出しでは指定できない。
 
-範囲切り出しとタグ切り出しでは、出力ディレクトリに `timeline_000003.mp4` のような `timeline_<index6桁>.mp4` を保存する。存在しないindex、または `--start-index` が `--end-index` より大きい範囲はエラーにする。タグ切り出しは `timeline[].tags` と対応する `events[].tags` に対する大文字小文字を区別しない完全一致で判定する。タグに一致する区間がない場合はエラーにせず `no matches` を表示する。
+範囲切り出しとタグ切り出しでは、出力ディレクトリに `timeline_000003.mp4` のような `timeline_<index6桁>.mp4` を保存する。`--output` 省略時の単一区間切り出しも同じファイル名を使う。存在しないindex、または `--start-index` が `--end-index` より大きい範囲はエラーにする。タグ切り出しは `timeline[].tags` と対応する `events[].tags` に対する大文字小文字を区別しない完全一致で判定する。タグに一致する区間がない場合はエラーにせず `no matches` を表示する。
 
 `search` は `timeline[].summary`、`timeline[].tags`、対応する `events[].kind`、`events[].summary`、`events[].tags` を大文字小文字を区別せず検索する。結果は `3  01:20-04:10  ChatGPTで仕様相談` のように、timeline index、時刻範囲、summaryを1行ずつ表示する。小数秒は切り捨てて表示する。空結果はエラーにせず `no matches` を表示する。存在しないファイルや不正なJSONはエラーにする。
 
@@ -182,6 +188,8 @@ CLIで生成したJSONには、動画、フレーム画像、timeline JSONの参
 `mode` は `local` または `server` とする。`server` はファイルを自動転送する機能ではなく、入力動画、フレーム保存先、timeline保存先がサーバー上のパスであることをJSONに明示するためのメタデータとして扱う。既存のローカル運用では `mode` を `local` とし、従来通り `video.path` と `frame_summaries[].image` から参照できる状態を維持する。
 
 将来、別PCやサーバー上で同じJSONを扱う場合は、絶対パスだけでなく `storage_root` と相対パスを組み合わせる方式も検討する。例として、`storage_root` を `/data/video-timeline`、`video_path` を `videos/a.mp4`、`frames_dir` を `frames/a_xxxx`、`timeline_path` を `timelines/a.json` のように保存すると、環境ごとの差を `storage_root` に寄せられる。
+
+同じ考え方で、clipの保存先を明示したい場合は将来 `storage.clips_dir` を追加する。現時点では、共有ルート直下に `timelines` と `clips` を兄弟ディレクトリとして置くMVP運用を前提に、`storage.timeline_path` から `clips/` を推定する。
 
 ## フレーム抽出仕様
 

@@ -112,7 +112,7 @@ def build_clip_parser() -> argparse.ArgumentParser:
     parser.add_argument("--start-index", type=int, help="連続切り出しの開始timeline index")
     parser.add_argument("--end-index", type=int, help="連続切り出しの終了timeline index")
     parser.add_argument("--tag", help="指定タグを含むtimeline区間を切り出す")
-    parser.add_argument("--output", required=True, help="切り出しMP4の保存先、または複数切り出しの出力ディレクトリ")
+    parser.add_argument("--output", help="切り出しMP4の保存先、または複数切り出しの出力ディレクトリ")
     parser.add_argument(
         "--padding-seconds",
         type=float,

@@ -56,6 +56,51 @@ class VideoClipperTest(unittest.TestCase):
             ],
         )
 
+    def test_clip_timeline_entry_prefers_storage_video_path(self):
+        document = {
+            "video": {"path": "/tmp/local-source.mp4"},
+            "storage": {
+                "mode": "server",
+                "video_path": "/mnt/video-timeline/videos/source.mp4",
+                "timeline_path": "/mnt/video-timeline/timelines/source.json",
+            },
+            "timeline": [{"start_seconds": 5.0, "end_seconds": 10.0}],
+        }
+
+        with TemporaryDirectory() as directory:
+            timeline_path = Path(directory) / "timeline.json"
+            output_path = Path(directory) / "clip.mp4"
+            timeline_path.write_text(json.dumps(document), encoding="utf-8")
+
+            with patch("video_timeline.video_clipper.subprocess.run") as run:
+                clip_timeline_entry(timeline_path, index=0, output_path=output_path)
+
+        command = run.call_args.args[0]
+        self.assertIn("/mnt/video-timeline/videos/source.mp4", command)
+        self.assertNotIn("/tmp/local-source.mp4", command)
+
+    def test_clip_timeline_entry_uses_storage_clips_dir_when_output_is_omitted(self):
+        document = {
+            "video": {"path": "/tmp/source.mp4"},
+            "storage": {
+                "mode": "server",
+                "video_path": "/mnt/video-timeline/videos/source.mp4",
+                "timeline_path": "/mnt/video-timeline/timelines/source.json",
+            },
+            "timeline": [{"start_seconds": 5.0, "end_seconds": 10.0}],
+        }
+
+        with TemporaryDirectory() as directory:
+            timeline_path = Path(directory) / "timeline.json"
+            timeline_path.write_text(json.dumps(document), encoding="utf-8")
+
+            with patch("video_timeline.video_clipper.subprocess.run") as run:
+                result = clip_timeline_entry(timeline_path, index=0)
+
+        expected = Path("/mnt/video-timeline/clips/timeline_000000.mp4")
+        self.assertEqual(result, expected)
+        self.assertEqual(run.call_args.args[0][-1], str(expected))
+
     def test_clip_timeline_entry_can_use_accurate_reencode_mode(self):
         document = {
             "video": {"path": "/tmp/source.mp4"},
@@ -225,6 +270,36 @@ class VideoClipperTest(unittest.TestCase):
                 str(output_dir / "timeline_000002.mp4"),
             ],
         )
+
+    def test_clip_timeline_entry_range_uses_storage_clips_dir_when_output_is_omitted(self):
+        document = {
+            "video": {"path": "/tmp/source.mp4"},
+            "storage": {
+                "mode": "server",
+                "video_path": "/mnt/video-timeline/videos/source.mp4",
+                "timeline_path": "/mnt/video-timeline/timelines/source.json",
+            },
+            "timeline": [
+                {"start_seconds": 0.0, "end_seconds": 5.0},
+                {"start_seconds": 10.0, "end_seconds": 20.0},
+            ],
+        }
+
+        with TemporaryDirectory() as directory:
+            timeline_path = Path(directory) / "timeline.json"
+            timeline_path.write_text(json.dumps(document), encoding="utf-8")
+
+            with patch("video_timeline.video_clipper.subprocess.run") as run:
+                results = clip_timeline_entry_range(timeline_path, start_index=0, end_index=1, output_dir=None)
+
+        self.assertEqual(
+            results,
+            [
+                Path("/mnt/video-timeline/clips/timeline_000000.mp4"),
+                Path("/mnt/video-timeline/clips/timeline_000001.mp4"),
+            ],
+        )
+        self.assertEqual(run.call_count, 2)
 
     def test_clip_timeline_entry_range_rejects_invalid_range_before_running_ffmpeg(self):
         document = {
