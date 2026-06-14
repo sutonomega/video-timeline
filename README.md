@@ -22,12 +22,12 @@ Requirements:
 - Python 3.12+
 - ffmpeg / ffprobe
 - Ollama
-- qwen2.5vl:7b
+- gemma3:12b
 
 Prepare the VL model:
 
 ```bash
-ollama pull qwen2.5vl:7b
+ollama pull gemma3:12b
 ```
 
 Run:

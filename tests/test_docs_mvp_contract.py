@@ -67,7 +67,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`storage.frames_dir`",
             "`storage.timeline_path`",
             "`ollama`",
-            "`qwen2.5vl:7b`",
+            "`gemma3:12b`",
             "`frame_summaries[].index`",
             "`frame_summaries[].time_seconds`",
             "`frame_summaries[].image`",
