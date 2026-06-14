@@ -259,8 +259,15 @@ def parse_frame_summary_response(response_text: str) -> FrameSummaryContent:
     if not isinstance(summary, str) or not summary.strip():
         raise FrameSummarizerError("Ollama APIから要約文を取得できません。")
 
+    nested_payload = _load_json_object_from_text(summary.strip()) if summary.strip().startswith("{") else None
+    if nested_payload is not None and nested_payload.get("summary"):
+        payload = nested_payload
+        summary = nested_payload["summary"]
+
     primary_tag = payload.get("primary_tag")
     raw_secondary_tags = payload.get("secondary_tags")
+    if not isinstance(raw_secondary_tags, list):
+        raw_secondary_tags = payload.get("secondary_tags[]")
     raw_tags = payload.get("tags")
 
     if isinstance(raw_secondary_tags, list) or isinstance(primary_tag, str):
@@ -280,9 +287,15 @@ def parse_frame_summary_response(response_text: str) -> FrameSummaryContent:
 
 def _load_json_object_from_text(text: str) -> dict | None:
     candidates = [text]
+    repaired_text = _repair_common_json_text(text)
+    if repaired_text != text:
+        candidates.append(repaired_text)
     extracted = _extract_json_object_text(text)
-    if extracted and extracted != text:
+    if extracted and extracted not in candidates:
         candidates.append(extracted)
+    repaired_extracted = _extract_json_object_text(repaired_text)
+    if repaired_extracted and repaired_extracted not in candidates:
+        candidates.append(repaired_extracted)
 
     for candidate in candidates:
         try:
@@ -324,6 +337,10 @@ def _extract_json_object_text(text: str) -> str | None:
                 return text[start_index : index + 1]
 
     return None
+
+
+def _repair_common_json_text(text: str) -> str:
+    return text.replace('"secondary_tags[]"', '"secondary_tags"')
 
 
 def normalize_tags(raw_tags: list[object]) -> tuple[str, ...]:

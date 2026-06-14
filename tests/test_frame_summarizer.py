@@ -393,6 +393,44 @@ class FrameSummarizerTest(unittest.TestCase):
         self.assertEqual(content.secondary_tags, ("oatmeal",))
         self.assertEqual(content.tags, ("cooking", "oatmeal"))
 
+    def test_parse_frame_summary_response_repairs_secondary_tags_brackets(self):
+        content = parse_frame_summary_response(
+            json.dumps(
+                {
+                    "summary": "お粥を混ぜる",
+                    "primary_tag": "cooking",
+                    "secondary_tags[]": ["oatmeal"],
+                }
+            )
+        )
+
+        self.assertEqual(content.summary, "お粥を混ぜる")
+        self.assertEqual(content.primary_tag, "cooking")
+        self.assertEqual(content.secondary_tags, ("oatmeal",))
+        self.assertEqual(content.tags, ("cooking", "oatmeal"))
+
+    def test_parse_frame_summary_response_extracts_nested_json_summary(self):
+        content = parse_frame_summary_response(
+            json.dumps(
+                {
+                    "summary": json.dumps(
+                        {
+                            "summary": "フライパンをIHクッキングヒーターに置く",
+                            "primary_tag": "cooking",
+                            "secondary_tags": ["cooking"],
+                        }
+                    ),
+                    "primary_tag": "other",
+                    "secondary_tags": [],
+                }
+            )
+        )
+
+        self.assertEqual(content.summary, "フライパンをIHクッキングヒーターに置く")
+        self.assertEqual(content.primary_tag, "cooking")
+        self.assertEqual(content.secondary_tags, ())
+        self.assertEqual(content.tags, ("cooking",))
+
     def test_parse_frame_summary_response_derives_primary_tag_from_legacy_tags(self):
         content = parse_frame_summary_response(
             json.dumps(

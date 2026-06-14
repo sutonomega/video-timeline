@@ -76,6 +76,8 @@ class DocsMvpContractTest(unittest.TestCase):
             "`frame_summaries[].tags`",
             "`secondary_tags` は必ず `secondary_tags` という配列キーで返す",
             "JSONオブジェクトを切り出してから読み取る",
+            "`secondary_tags[]` のような誤記は `secondary_tags` として救済する",
+            "`summary` の中にJSON文字列が埋まっている場合",
             "再問い合わせはせず",
             "`timeline[].tags`",
             "`<output-dir>/<video_stem>_<path_hash>/`",
@@ -227,7 +229,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("日本語タグ", architecture)
         self.assertIn("保持する", architecture)
         self.assertIn("`secondary_tags` は必ず `secondary_tags` という配列キーで返す", architecture)
-        self.assertIn("secondary_tags[]", architecture)
+        self.assertIn("`secondary_tags[]` のような誤記は `secondary_tags` として救済する", architecture)
+        self.assertIn("`summary` の中にJSON文字列が埋まっている場合", architecture)
         self.assertIn("JSONコードブロックや前後の説明文が混入した場合", architecture)
         self.assertIn("再問い合わせで直すことはせず", architecture)
 
