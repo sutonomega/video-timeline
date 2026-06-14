@@ -54,11 +54,16 @@ CLIから使う場合は、`--frames-dir`をベースディレクトリとして
 
 - 抽出済みフレームをVLで要約
 - フレームごとの検索用タグを生成する
+- `primary_tag`と`secondary_tags`で主対象と補助タグを分ける
 - タグを小文字英数字、`_`、日本語中心に正規化する
 - 日本語タグは検索やtimeline統合に使えるよう保持する
 - Ollama HTTP API呼び出しの境界を提供
 - video、analysis、frame_summariesを持つJSON構造の生成
 - UTF-8 JSONファイルへの保存
+
+VLプロンプトでは、自由なタグ列ではなく`primary_tag`と`secondary_tags`を返すように指定する。事前定義タグは`chatgpt`、`github`、`vscode`、`terminal`、`browser`、`youtube`、`discord`、`game`、`document`、`other`を優先し、画面の主対象を`primary_tag`に置く。`tags`は後方互換のため残し、保存時は`primary_tag`と`secondary_tags`を結合した配列として扱う。古い`tags`のみのVL応答は先頭タグを`primary_tag`、残りを`secondary_tags`として扱う。
+
+VLがJSON以外の文章を返した場合は、従来通り全文を`summary`として保存し、`primary_tag`は`other`、`secondary_tags`は空にする。`summary`にJSONコードブロックが混入した場合も壊さず保存するが、後続の品質レビューで検出対象にする。
 
 ## cli batch mode
 

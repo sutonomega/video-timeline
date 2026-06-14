@@ -53,6 +53,8 @@ class FrameSummarizerTest(unittest.TestCase):
                     "time_seconds": 0.0,
                     "image": "frames/000000000.jpg",
                     "summary": "0秒の画面",
+                    "primary_tag": "chatgpt",
+                    "secondary_tags": ["pr_review"],
                     "tags": ["chatgpt", "pr_review"],
                 },
                 {
@@ -60,6 +62,8 @@ class FrameSummarizerTest(unittest.TestCase):
                     "time_seconds": 10.0,
                     "image": "frames/000010000.jpg",
                     "summary": "10秒の画面",
+                    "primary_tag": "chatgpt",
+                    "secondary_tags": ["pr_review"],
                     "tags": ["chatgpt", "pr_review"],
                 },
             ],
@@ -97,7 +101,13 @@ class FrameSummarizerTest(unittest.TestCase):
         summarize.assert_called_once_with(
             "frames/000000000.jpg",
             model="qwen2.5vl:7b",
-            prompt='この画像でユーザーが何をしているかを日本語で1文で要約し、検索用タグも付けてください。必ずJSONだけで返してください。形式: {"summary":"日本語の要約","tags":["chatgpt","coding"]}',
+            prompt=(
+                "この画像でユーザーが何をしているかを日本語で1文で要約してください。"
+                "画面の主対象をprimary_tagに1つだけ入れ、補助的な作業や文脈をsecondary_tagsに入れてください。"
+                "primary_tagはできるだけ次から選んでください: "
+                "chatgpt, github, vscode, terminal, browser, youtube, discord, game, document, other。"
+                '必ずJSONだけで返してください。形式: {"summary":"日本語の要約","primary_tag":"chatgpt","secondary_tags":["planning"]}'
+            ),
             api_url="http://ollama/api/generate",
         )
 
@@ -154,6 +164,8 @@ class FrameSummarizerTest(unittest.TestCase):
             },
         )
         self.assertEqual(document["frame_summaries"][0]["summary"], "仕様相談をしている")
+        self.assertEqual(document["frame_summaries"][0]["primary_tag"], "chatgpt")
+        self.assertEqual(document["frame_summaries"][0]["secondary_tags"], ["planning"])
         self.assertEqual(document["frame_summaries"][0]["tags"], ["chatgpt", "planning"])
 
     def test_build_frame_summary_document_includes_timeline_when_given(self):
@@ -300,6 +312,36 @@ class FrameSummarizerTest(unittest.TestCase):
     def test_parse_frame_summary_response_rejects_tags_without_summary(self):
         with self.assertRaisesRegex(FrameSummarizerError, "要約文"):
             parse_frame_summary_response(json.dumps({"tags": ["chatgpt"]}))
+
+    def test_parse_frame_summary_response_supports_primary_and_secondary_tags(self):
+        content = parse_frame_summary_response(
+            json.dumps(
+                {
+                    "summary": "GitHubでPRを確認している",
+                    "primary_tag": "GitHub",
+                    "secondary_tags": ["PR Review", "github"],
+                }
+            )
+        )
+
+        self.assertEqual(content.summary, "GitHubでPRを確認している")
+        self.assertEqual(content.primary_tag, "github")
+        self.assertEqual(content.secondary_tags, ("pr_review",))
+        self.assertEqual(content.tags, ("github", "pr_review"))
+
+    def test_parse_frame_summary_response_derives_primary_tag_from_legacy_tags(self):
+        content = parse_frame_summary_response(
+            json.dumps(
+                {
+                    "summary": "ChatGPTで仕様相談をしている",
+                    "tags": ["ChatGPT", "planning"],
+                }
+            )
+        )
+
+        self.assertEqual(content.primary_tag, "chatgpt")
+        self.assertEqual(content.secondary_tags, ("planning",))
+        self.assertEqual(content.tags, ("chatgpt", "planning"))
 
     def test_normalize_tags_keeps_lowercase_alnum_underscore_and_japanese_tags(self):
         self.assertEqual(
