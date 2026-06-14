@@ -167,6 +167,18 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("no matches", architecture)
         self.assertIn("01:20-04:10", architecture)
 
+    def test_architecture_defines_timeline_html_exporter_contract(self):
+        architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+
+        self.assertIn("timeline_html_exporter", architecture)
+        self.assertIn("video", architecture)
+        self.assertIn("analysis", architecture)
+        self.assertIn("timeline", architecture)
+        self.assertIn("events", architecture)
+        self.assertIn("静的HTML", architecture)
+        self.assertIn("エスケープ", architecture)
+        self.assertIn("01:20-04:10", architecture)
+
     def test_architecture_defines_frame_summary_tags(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
@@ -231,7 +243,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[x] VLタグを事前定義タグとprimary_tagへ寄せる（#48）", roadmap)
         self.assertIn("[x] timeline検索CLIを追加する（#49）", roadmap)
         self.assertIn("[x] タグ別クリップ生成CLIを追加する（#50）", roadmap)
-        self.assertIn("[ ] タイムラインHTML出力CLIを追加する（#51）", roadmap)
+        self.assertIn("[x] タイムラインHTML出力CLIを追加する（#51）", roadmap)
 
     def test_quality_review_records_frame_summary_to_timeline_findings(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")

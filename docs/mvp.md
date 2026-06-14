@@ -69,6 +69,12 @@ PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --tag github --o
 PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt
 ```
 
+生成済み `timeline.json` をブラウザで確認するHTMLに出力する場合は `export-html` サブコマンドを使う。
+
+```bash
+PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output timeline.html
+```
+
 引数:
 
 - `input`: 入力動画ファイルのパス
@@ -88,12 +94,16 @@ PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt
 - `clip --crf`: `--accurate`時のx264画質。既定値は`18`
 - `clip --preset`: `--accurate`時のx264エンコード速度。既定値は`veryfast`
 - `search timeline.json query`: `timeline` と `events` からqueryに一致する区間を検索する
+- `export-html timeline.json`: `timeline.json` を静的HTMLに変換する
+- `export-html --output`: 出力HTMLファイルのパス
 
 `clip` は既定では高速な `ffmpeg -c copy` で切り出す。キーフレーム位置の影響で開始位置が指定秒から少しずれる可能性がある。厳密な切り出しが必要な場合は `--accurate` を使う。`--crf`と`--preset`は`--accurate`時だけ有効で、copy切り出しでは指定できない。
 
 範囲切り出しとタグ切り出しでは、出力ディレクトリに `timeline_000003.mp4` のような `timeline_<index6桁>.mp4` を保存する。存在しないindex、または `--start-index` が `--end-index` より大きい範囲はエラーにする。タグ切り出しは `timeline[].tags` と対応する `events[].tags` に対する大文字小文字を区別しない完全一致で判定する。タグに一致する区間がない場合はエラーにせず `no matches` を表示する。
 
 `search` は `timeline[].summary`、`timeline[].tags`、対応する `events[].kind`、`events[].summary`、`events[].tags` を大文字小文字を区別せず検索する。結果は `3  01:20-04:10  ChatGPTで仕様相談` のように、timeline index、時刻範囲、summaryを1行ずつ表示する。小数秒は切り捨てて表示する。空結果はエラーにせず `no matches` を表示する。存在しないファイルや不正なJSONはエラーにする。
+
+`export-html` は `video`、`analysis`、`timeline`、`events` を1つの静的HTMLに出力する。`timeline` はindex、時刻範囲、summary、tagsを表で表示する。`events` はkind、時刻範囲、summary、timeline_index、importance_score、tagsを表で表示する。HTML内の値はエスケープし、CSSやJavaScriptに依存しない最小表示にする。存在しないファイル、不正なJSON、`timeline`がないJSONはエラーにする。
 
 将来拡張する任意引数:
 

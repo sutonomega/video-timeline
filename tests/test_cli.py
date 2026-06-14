@@ -430,6 +430,30 @@ class CliTest(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertIn("error: failed", stderr.getvalue())
 
+    def test_export_html_cli_connects_timeline_json_to_exporter(self):
+        with (
+            patch("video_timeline.cli.export_timeline_html_file", return_value=Path("timeline.html")) as export_html,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["export-html", "timeline.json", "--output", "timeline.html"])
+
+        self.assertEqual(exit_code, 0)
+        export_html.assert_called_once_with("timeline.json", "timeline.html")
+        self.assertIn("wrote timeline.html", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_export_html_cli_returns_error_for_export_failure(self):
+        with (
+            patch("video_timeline.cli.export_timeline_html_file", side_effect=ValueError("failed")),
+            patch("sys.stdout", new_callable=io.StringIO),
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["export-html", "timeline.json", "--output", "timeline.html"])
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("error: failed", stderr.getvalue())
+
     def test_batch_cli_processes_all_mp4s_and_reports_counts(self):
         first = Path("/tmp/videos/a/sample.mp4")
         second = Path("/tmp/videos/b/sample.mp4")

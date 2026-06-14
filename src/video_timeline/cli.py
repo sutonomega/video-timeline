@@ -17,6 +17,7 @@ from .frame_summarizer import (
     summarize_frames_with_ollama,
 )
 from .timeline_generator import build_timeline
+from .timeline_html_exporter import export_timeline_html_file
 from .timeline_searcher import format_search_result, search_timeline_file
 from .video_clipper import clip_timeline_entries_by_tag, clip_timeline_entry, clip_timeline_entry_range
 from .video_loader import load_video_metadata
@@ -135,6 +136,13 @@ def build_search_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def build_export_html_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Export timeline JSON to static HTML.")
+    parser.add_argument("timeline_json", help="timeline JSONファイルのパス")
+    parser.add_argument("--output", required=True, help="出力HTMLファイルのパス")
+    return parser
+
+
 def run_clip(args: argparse.Namespace) -> Path | list[Path]:
     has_single_index = args.index is not None
     has_range = args.start_index is not None or args.end_index is not None
@@ -183,6 +191,10 @@ def run_clip(args: argparse.Namespace) -> Path | list[Path]:
 
 def run_search(args: argparse.Namespace) -> list[str]:
     return [format_search_result(result) for result in search_timeline_file(args.timeline_json, args.query)]
+
+
+def run_export_html(args: argparse.Namespace) -> Path:
+    return export_timeline_html_file(args.timeline_json, args.output)
 
 
 def run_video(
@@ -274,6 +286,18 @@ def run(args: argparse.Namespace) -> Path | tuple[int, int]:
 def main(argv: list[str] | None = None) -> int:
     if argv is None:
         argv = sys.argv[1:]
+    if argv and argv[0] == "export-html":
+        parser = build_export_html_parser()
+        args = parser.parse_args(argv[1:])
+        try:
+            output_path = run_export_html(args)
+        except Exception as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+
+        print(f"wrote {output_path}")
+        return 0
+
     if argv and argv[0] == "search":
         parser = build_search_parser()
         args = parser.parse_args(argv[1:])
