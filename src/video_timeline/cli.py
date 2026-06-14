@@ -96,6 +96,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="フレーム抽出間隔。既定値は10秒",
     )
     parser.add_argument("--frames-dir", default="frames", help="抽出フレームの保存先")
+    parser.add_argument("--vl-model", default=DEFAULT_VL_MODEL, help=f"フレーム要約に使うOllamaモデル。既定値は{DEFAULT_VL_MODEL}")
     parser.add_argument(
         "--storage-mode",
         choices=("local", "server"),
@@ -212,6 +213,7 @@ def run_video(
     *,
     isolate_frames: bool = True,
     storage_mode: str = "local",
+    vl_model: str = DEFAULT_VL_MODEL,
 ) -> Path:
     print_progress("動画メタデータ取得中")
     video = load_video_metadata(input_path)
@@ -225,7 +227,7 @@ def run_video(
     print_progress("フレーム要約中")
     frame_summaries = summarize_frames_with_ollama(
         frames,
-        model=DEFAULT_VL_MODEL,
+        model=vl_model,
         progress=FrameSummarizationProgress(),
     )
     print_progress("タイムライン生成中")
@@ -235,7 +237,7 @@ def run_video(
     print_progress("JSON保存中")
     document = build_frame_summary_document(
         video=video,
-        analysis=AnalysisMetadata(interval_seconds=interval_seconds),
+        analysis=AnalysisMetadata(interval_seconds=interval_seconds, vl_model=vl_model),
         storage=StorageMetadata(
             mode=storage_mode,
             video_path=video.path,
@@ -272,6 +274,7 @@ def run_batch(args: argparse.Namespace) -> tuple[int, int]:
                 args.interval_seconds,
                 isolate_frames=False,
                 storage_mode=args.storage_mode,
+                vl_model=args.vl_model,
             )
         except Exception as exc:
             failure_count += 1
@@ -301,6 +304,7 @@ def run(args: argparse.Namespace) -> Path | tuple[int, int]:
         args.frames_dir,
         args.interval_seconds,
         storage_mode=args.storage_mode,
+        vl_model=args.vl_model,
     )
 
 

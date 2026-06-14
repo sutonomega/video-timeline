@@ -39,6 +39,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`--interval-seconds`",
             "`--frames-dir`",
             "`--storage-mode`",
+            "`--vl-model`",
             "`--vl-provider`",
             "`version`",
             "`generated_at`",

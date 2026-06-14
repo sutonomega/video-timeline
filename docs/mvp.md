@@ -102,6 +102,7 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output 
 - `--interval-seconds`: フレーム抽出間隔。既定値は`10`
 - `--frames-dir`: 抽出フレームの保存先ベースディレクトリ。既定値は`frames`
 - `--storage-mode`: JSONに記録する保存先の種別。`local`または`server`。既定値は`local`
+- `--vl-model`: フレーム要約に使うOllamaモデル。既定値は`qwen2.5vl:7b`
 - `clip timeline.json`: `timeline` の指定区間を元動画から切り出す
 - `clip --index`: 切り出す `timeline` 配列の0始まりindex
 - `clip --start-index`: 連続切り出しの開始 `timeline` index
@@ -131,12 +132,12 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output 
 
 ## VL仕様
 
-MVPではVLプロバイダーとモデルを固定する。
+MVPではVLプロバイダーをOllamaに固定する。モデルは既定値を `qwen2.5vl:7b` とし、品質比較のためCLIの `--vl-model` で切り替えられる。
 
 - 既定プロバイダー: `ollama`
 - 既定モデル: `qwen2.5vl:7b`
 
-プロバイダーやモデルの切り替えはMVP後の拡張とする。
+プロバイダーの切り替えはMVP後の拡張とする。実行時に指定したモデル名は `analysis.vl_model` に保存する。
 
 ## 入力仕様
 
