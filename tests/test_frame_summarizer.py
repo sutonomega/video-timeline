@@ -376,6 +376,20 @@ class FrameSummarizerTest(unittest.TestCase):
         self.assertEqual(content.secondary_tags, ("pr_review",))
         self.assertEqual(content.tags, ("github", "pr_review"))
 
+    def test_parse_frame_summary_response_extracts_json_from_wrapped_text(self):
+        content = parse_frame_summary_response(
+            "解析結果です。\n"
+            "```json\n"
+            '{"summary":"料理をしている","primary_tag":"cooking","secondary_tags":["oatmeal"]}'
+            "\n```\n"
+            "以上です。"
+        )
+
+        self.assertEqual(content.summary, "料理をしている")
+        self.assertEqual(content.primary_tag, "cooking")
+        self.assertEqual(content.secondary_tags, ("oatmeal",))
+        self.assertEqual(content.tags, ("cooking", "oatmeal"))
+
     def test_parse_frame_summary_response_derives_primary_tag_from_legacy_tags(self):
         content = parse_frame_summary_response(
             json.dumps(

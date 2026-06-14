@@ -237,12 +237,8 @@ def summarize_image_with_ollama(
 
 def parse_frame_summary_response(response_text: str) -> FrameSummaryContent:
     text = response_text.strip()
-    try:
-        payload = json.loads(text)
-    except json.JSONDecodeError:
-        return FrameSummaryContent(summary=text)
-
-    if not isinstance(payload, dict):
+    payload = _load_json_object_from_text(text)
+    if payload is None:
         return FrameSummaryContent(summary=text)
 
     summary = payload.get("summary")
@@ -266,6 +262,54 @@ def parse_frame_summary_response(response_text: str) -> FrameSummaryContent:
         primary_tag=resolved_primary_tag,
         secondary_tags=resolved_secondary_tags,
     )
+
+
+def _load_json_object_from_text(text: str) -> dict | None:
+    candidates = [text]
+    extracted = _extract_json_object_text(text)
+    if extracted and extracted != text:
+        candidates.append(extracted)
+
+    for candidate in candidates:
+        try:
+            payload = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict):
+            return payload
+    return None
+
+
+def _extract_json_object_text(text: str) -> str | None:
+    start_index = text.find("{")
+    if start_index == -1:
+        return None
+
+    depth = 0
+    in_string = False
+    escape = False
+    for index in range(start_index, len(text)):
+        char = text[index]
+        if in_string:
+            if escape:
+                escape = False
+            elif char == "\\":
+                escape = True
+            elif char == '"':
+                in_string = False
+            continue
+
+        if char == '"':
+            in_string = True
+            continue
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start_index : index + 1]
+
+    return None
 
 
 def normalize_tags(raw_tags: list[object]) -> tuple[str, ...]:

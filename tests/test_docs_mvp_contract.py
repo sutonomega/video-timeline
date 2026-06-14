@@ -74,6 +74,8 @@ class DocsMvpContractTest(unittest.TestCase):
             "`frame_summaries[].primary_tag`",
             "`frame_summaries[].secondary_tags`",
             "`frame_summaries[].tags`",
+            "JSONオブジェクトを切り出してから読み取る",
+            "再問い合わせはせず",
             "`timeline[].tags`",
             "`<output-dir>/<video_stem>_<path_hash>/`",
             "`timeline.json`",
@@ -221,6 +223,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("小文字英数字", architecture)
         self.assertIn("日本語タグ", architecture)
         self.assertIn("保持する", architecture)
+        self.assertIn("JSONコードブロックや前後の説明文が混入した場合", architecture)
+        self.assertIn("再問い合わせで直すことはせず", architecture)
 
     def test_architecture_defines_event_detector_contract(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
