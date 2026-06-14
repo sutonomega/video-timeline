@@ -127,6 +127,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("連続する近い`tags`", architecture)
         self.assertIn("timelineの`tags`", architecture)
         self.assertIn("過統合", architecture)
+        self.assertIn("タグ類似統合の類似度計算から除外", architecture)
         self.assertIn("タグ統合あり/なし", architecture)
         self.assertIn("閾値は実データで調整", architecture)
 
