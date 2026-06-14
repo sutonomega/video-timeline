@@ -162,6 +162,9 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("--tag", architecture)
         self.assertIn("timeline_000003.mp4", architecture)
         self.assertIn("/mnt/video-timeline/clips/", architecture)
+        self.assertIn("サーバープロセス", architecture)
+        self.assertIn("storage.clips_dir", architecture)
+        self.assertIn("storage_root", architecture)
         self.assertIn("完全一致", architecture)
         self.assertIn("複数index", architecture)
 
