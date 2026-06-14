@@ -30,6 +30,8 @@ Prepare the VL model:
 ollama pull gemma3:12b
 ```
 
+軽量に試す場合は `--vl-model qwen2.5vl:7b` も利用できます。
+
 Run:
 
 ```bash
