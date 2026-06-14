@@ -21,7 +21,7 @@ DEFAULT_VL_PROVIDER = "ollama"
 DEFAULT_VL_MODEL = "qwen2.5vl:7b"
 DEFAULT_OLLAMA_URL = "http://localhost:11434/api/generate"
 DEFAULT_PRIMARY_TAG = "other"
-PREDEFINED_PRIMARY_TAGS = (
+SCREEN_PRIMARY_TAGS = (
     "chatgpt",
     "github",
     "vscode",
@@ -31,14 +31,28 @@ PREDEFINED_PRIMARY_TAGS = (
     "discord",
     "game",
     "document",
-    "other",
+)
+LIFE_PRIMARY_TAGS = (
+    "cooking",
+    "oatmeal",
+    "rice_cooker",
+    "eating",
+    "shopping",
+    "walking",
+    "exercise",
+    "cleaning",
+    "travel",
+    "study",
 )
 DEFAULT_SUMMARY_PROMPT = (
     "この画像でユーザーが何をしているかを日本語で1文で要約してください。"
     "画面の主対象をprimary_tagに1つだけ入れ、補助的な作業や文脈をsecondary_tagsに入れてください。"
-    "primary_tagはまず次から選んでください: "
-    f"{', '.join(PREDEFINED_PRIMARY_TAGS)}。"
+    "PCやスマホの画面が主対象ならprimary_tagは次から選んでください: "
+    f"{', '.join(SCREEN_PRIMARY_TAGS)}。"
+    "料理、食事、家事、外出、移動などの生活動画が主対象ならprimary_tagは次から選んでください: "
+    f"{', '.join(LIFE_PRIMARY_TAGS)}。"
     "適切な候補がない場合は、短い自由タグを使ってください。"
+    "secondary_tagsは必ず配列キーsecondary_tagsとして返してください。secondary_tags[]は使わないでください。"
     '必ずJSONだけで返してください。形式: {"summary":"日本語の要約","primary_tag":"chatgpt","secondary_tags":["planning"]}'
 )
 
@@ -245,8 +259,15 @@ def parse_frame_summary_response(response_text: str) -> FrameSummaryContent:
     if not isinstance(summary, str) or not summary.strip():
         raise FrameSummarizerError("Ollama APIから要約文を取得できません。")
 
+    nested_payload = _load_json_object_from_text(summary.strip()) if summary.strip().startswith("{") else None
+    if nested_payload is not None and nested_payload.get("summary"):
+        payload = nested_payload
+        summary = nested_payload["summary"]
+
     primary_tag = payload.get("primary_tag")
     raw_secondary_tags = payload.get("secondary_tags")
+    if not isinstance(raw_secondary_tags, list):
+        raw_secondary_tags = payload.get("secondary_tags[]")
     raw_tags = payload.get("tags")
 
     if isinstance(raw_secondary_tags, list) or isinstance(primary_tag, str):
@@ -266,9 +287,15 @@ def parse_frame_summary_response(response_text: str) -> FrameSummaryContent:
 
 def _load_json_object_from_text(text: str) -> dict | None:
     candidates = [text]
+    repaired_text = _repair_common_json_text(text)
+    if repaired_text != text:
+        candidates.append(repaired_text)
     extracted = _extract_json_object_text(text)
-    if extracted and extracted != text:
+    if extracted and extracted not in candidates:
         candidates.append(extracted)
+    repaired_extracted = _extract_json_object_text(repaired_text)
+    if repaired_extracted and repaired_extracted not in candidates:
+        candidates.append(repaired_extracted)
 
     for candidate in candidates:
         try:
@@ -277,6 +304,10 @@ def _load_json_object_from_text(text: str) -> dict | None:
             continue
         if isinstance(payload, dict):
             return payload
+
+    recovered = _recover_partial_frame_summary(text)
+    if recovered is not None:
+        return recovered
     return None
 
 
@@ -310,6 +341,34 @@ def _extract_json_object_text(text: str) -> str | None:
                 return text[start_index : index + 1]
 
     return None
+
+
+def _repair_common_json_text(text: str) -> str:
+    return text.replace('"secondary_tags[]"', '"secondary_tags"')
+
+
+def _recover_partial_frame_summary(text: str) -> dict | None:
+    summary = _extract_json_string_field(text, "summary")
+    primary_tag = _extract_json_string_field(text, "primary_tag")
+    if summary is None or primary_tag is None:
+        return None
+    return {
+        "summary": summary,
+        "primary_tag": primary_tag,
+        "secondary_tags": [],
+    }
+
+
+def _extract_json_string_field(text: str, field_name: str) -> str | None:
+    pattern = rf'"{re.escape(field_name)}"\s*:\s*"((?:\\.|[^"\\])*)"'
+    match = re.search(pattern, text)
+    if match is None:
+        return None
+    raw_value = match.group(1)
+    try:
+        return json.loads(f'"{raw_value}"')
+    except json.JSONDecodeError:
+        return None
 
 
 def normalize_tags(raw_tags: list[object]) -> tuple[str, ...]:

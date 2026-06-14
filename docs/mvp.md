@@ -311,11 +311,11 @@ MVPのJSONは次の構造にする。
 
 `frame_summarizer`は抽出済みフレームをVLで要約し、MVPの出力JSONを生成する。
 
-VLは `summary`、`primary_tag`、`secondary_tags` をJSONで返す。`primary_tag`は画面の主対象を1つだけ表すタグ、`secondary_tags`は補助的な作業や文脈を表すタグとする。MVP後の運用では `chatgpt`、`github`、`vscode`、`terminal`、`browser`、`youtube`、`discord`、`game`、`document`、`other` を事前定義タグとして優先する。ただし、生活ログや専門作業など候補にない対象では短い自由タグも許可する。
+VLは `summary`、`primary_tag`、`secondary_tags` をJSONで返す。`primary_tag`は画面の主対象を1つだけ表すタグ、`secondary_tags`は補助的な作業や文脈を表すタグとする。`secondary_tags` は必ず `secondary_tags` という配列キーで返す。`secondary_tags[]` というキー名は使わない。MVP後の運用では、PCやスマホの画面が主対象のときは `chatgpt`、`github`、`vscode`、`terminal`、`browser`、`youtube`、`discord`、`game`、`document`、`other` を優先し、料理、食事、家事、外出、移動などの生活動画では `cooking`、`oatmeal`、`rice_cooker`、`eating`、`shopping`、`walking`、`exercise`、`cleaning`、`travel`、`study` を優先する。ただし、候補にない対象では短い自由タグも許可する。
 
 既存JSONとの互換性のため、`tags` は引き続き保存する。新形式の応答では `tags` を `primary_tag + secondary_tags` から生成する。古い `{"summary":"...","tags":[...]}` 形式の応答では、先頭のタグを `primary_tag`、残りを `secondary_tags` として扱う。タグがない場合は `primary_tag` を `other`、`secondary_tags` を空配列にする。
 
-VLの応答にJSONコードブロックや前後の説明文が混ざっている場合は、先頭のJSONオブジェクトを切り出してから読み取る。JSONが本当に壊れていて復元できない場合は、再問い合わせはせず、従来通り全文を `summary` として保存する。
+VLの応答にJSONコードブロックや前後の説明文が混ざっている場合は、先頭のJSONオブジェクトを切り出してから読み取る。`secondary_tags[]` のような誤記は `secondary_tags` として救済する。`summary` の中にJSON文字列が埋まっている場合は、内側のJSONも再解釈する。JSONが閉じていない場合は `summary` と `primary_tag` だけを正規表現で拾い、`secondary_tags` は空配列にする。完全には復元できない場合だけ、再問い合わせはせず、従来通り全文を `summary` として保存する。
 
 `other` は判定不能時の退避先として扱う。`other` が多い実データではtimeline統合やタグ別clipのノイズになるため、タグ類似統合の類似度計算では `other` を除外する。`other` が大量発生する場合は、自由タグや事前定義タグを追加して減らす。
 

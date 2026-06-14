@@ -105,9 +105,12 @@ class FrameSummarizerTest(unittest.TestCase):
             prompt=(
                 "この画像でユーザーが何をしているかを日本語で1文で要約してください。"
                 "画面の主対象をprimary_tagに1つだけ入れ、補助的な作業や文脈をsecondary_tagsに入れてください。"
-                "primary_tagはまず次から選んでください: "
-                "chatgpt, github, vscode, terminal, browser, youtube, discord, game, document, other。"
+                "PCやスマホの画面が主対象ならprimary_tagは次から選んでください: "
+                "chatgpt, github, vscode, terminal, browser, youtube, discord, game, document。"
+                "料理、食事、家事、外出、移動などの生活動画が主対象ならprimary_tagは次から選んでください: "
+                "cooking, oatmeal, rice_cooker, eating, shopping, walking, exercise, cleaning, travel, study。"
                 "適切な候補がない場合は、短い自由タグを使ってください。"
+                "secondary_tagsは必ず配列キーsecondary_tagsとして返してください。secondary_tags[]は使わないでください。"
                 '必ずJSONだけで返してください。形式: {"summary":"日本語の要約","primary_tag":"chatgpt","secondary_tags":["planning"]}'
             ),
             api_url="http://ollama/api/generate",
@@ -389,6 +392,54 @@ class FrameSummarizerTest(unittest.TestCase):
         self.assertEqual(content.primary_tag, "cooking")
         self.assertEqual(content.secondary_tags, ("oatmeal",))
         self.assertEqual(content.tags, ("cooking", "oatmeal"))
+
+    def test_parse_frame_summary_response_repairs_secondary_tags_brackets(self):
+        content = parse_frame_summary_response(
+            json.dumps(
+                {
+                    "summary": "お粥を混ぜる",
+                    "primary_tag": "cooking",
+                    "secondary_tags[]": ["oatmeal"],
+                }
+            )
+        )
+
+        self.assertEqual(content.summary, "お粥を混ぜる")
+        self.assertEqual(content.primary_tag, "cooking")
+        self.assertEqual(content.secondary_tags, ("oatmeal",))
+        self.assertEqual(content.tags, ("cooking", "oatmeal"))
+
+    def test_parse_frame_summary_response_recovers_partial_unclosed_json(self):
+        content = parse_frame_summary_response(
+            '{"summary":"フライパンをIHクッキングヒーターに置く","primary_tag":"cooking","secondary_tags[]}'
+        )
+
+        self.assertEqual(content.summary, "フライパンをIHクッキングヒーターに置く")
+        self.assertEqual(content.primary_tag, "cooking")
+        self.assertEqual(content.secondary_tags, ())
+        self.assertEqual(content.tags, ("cooking",))
+
+    def test_parse_frame_summary_response_extracts_nested_json_summary(self):
+        content = parse_frame_summary_response(
+            json.dumps(
+                {
+                    "summary": json.dumps(
+                        {
+                            "summary": "フライパンをIHクッキングヒーターに置く",
+                            "primary_tag": "cooking",
+                            "secondary_tags": ["cooking"],
+                        }
+                    ),
+                    "primary_tag": "other",
+                    "secondary_tags": [],
+                }
+            )
+        )
+
+        self.assertEqual(content.summary, "フライパンをIHクッキングヒーターに置く")
+        self.assertEqual(content.primary_tag, "cooking")
+        self.assertEqual(content.secondary_tags, ())
+        self.assertEqual(content.tags, ("cooking",))
 
     def test_parse_frame_summary_response_derives_primary_tag_from_legacy_tags(self):
         content = parse_frame_summary_response(

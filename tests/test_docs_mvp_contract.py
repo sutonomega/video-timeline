@@ -74,7 +74,11 @@ class DocsMvpContractTest(unittest.TestCase):
             "`frame_summaries[].primary_tag`",
             "`frame_summaries[].secondary_tags`",
             "`frame_summaries[].tags`",
+            "`secondary_tags` は必ず `secondary_tags` という配列キーで返す",
             "JSONオブジェクトを切り出してから読み取る",
+            "`secondary_tags[]` のような誤記は `secondary_tags` として救済する",
+            "`summary` の中にJSON文字列が埋まっている場合",
+            "JSONが閉じていない場合は `summary` と `primary_tag` だけを正規表現で拾い",
             "再問い合わせはせず",
             "`timeline[].tags`",
             "`<output-dir>/<video_stem>_<path_hash>/`",
@@ -218,13 +222,19 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("secondary_tags", architecture)
         self.assertIn("事前定義タグ", architecture)
         self.assertIn("短い自由タグ", architecture)
+        self.assertIn("PCやスマホの画面が主対象のとき", architecture)
+        self.assertIn("料理、食事、家事、外出、移動などの生活動画", architecture)
         self.assertIn("other", architecture)
         self.assertIn("タグ類似統合から除外", architecture)
         self.assertIn("小文字英数字", architecture)
         self.assertIn("日本語タグ", architecture)
         self.assertIn("保持する", architecture)
+        self.assertIn("`secondary_tags` は必ず `secondary_tags` という配列キーで返す", architecture)
+        self.assertIn("`secondary_tags[]` のような誤記は `secondary_tags` として救済する", architecture)
+        self.assertIn("`summary` の中にJSON文字列が埋まっている場合", architecture)
+        self.assertIn("JSONが閉じていない場合は `summary` と `primary_tag` だけを正規表現で拾い", architecture)
         self.assertIn("JSONコードブロックや前後の説明文が混入した場合", architecture)
-        self.assertIn("再問い合わせで直すことはせず", architecture)
+        self.assertIn("完全には復元できない場合だけ", architecture)
 
     def test_architecture_defines_event_detector_contract(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
