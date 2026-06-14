@@ -315,7 +315,7 @@ VLは `summary`、`primary_tag`、`secondary_tags` をJSONで返す。`primary_t
 
 既存JSONとの互換性のため、`tags` は引き続き保存する。新形式の応答では `tags` を `primary_tag + secondary_tags` から生成する。古い `{"summary":"...","tags":[...]}` 形式の応答では、先頭のタグを `primary_tag`、残りを `secondary_tags` として扱う。タグがない場合は `primary_tag` を `other`、`secondary_tags` を空配列にする。
 
-`other` は判定不能時の退避先として扱う。`other` が多い実データではtimeline統合やタグ別clipのノイズになるため、後続で `other` をタグ類似統合から除外するか、自由タグや事前定義タグを追加して減らす。
+`other` は判定不能時の退避先として扱う。`other` が多い実データではtimeline統合やタグ別clipのノイズになるため、タグ類似統合の類似度計算では `other` を除外する。`other` が大量発生する場合は、自由タグや事前定義タグを追加して減らす。
 
 MVPの既定値:
 

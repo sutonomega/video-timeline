@@ -152,6 +152,43 @@ class TimelineGeneratorTest(unittest.TestCase):
         self.assertEqual(timeline[1].frame_indices, [2])
         self.assertEqual(timeline[1].tags, ["terminal", "testing"])
 
+    def test_build_timeline_does_not_group_by_other_tag_only(self):
+        video = VideoMetadata(
+            path="/tmp/input.mp4",
+            duration_seconds=30.0,
+            fps=30.0,
+            frame_count=900,
+            width=1920,
+            height=1080,
+        )
+        summaries = [
+            FrameSummary(
+                index=0,
+                time_seconds=0.0,
+                image="frames/000000000.jpg",
+                summary="料理を調理している",
+                tags=("other",),
+            ),
+            FrameSummary(
+                index=1,
+                time_seconds=10.0,
+                image="frames/000010000.jpg",
+                summary="料理を皿に盛っている",
+                tags=("other",),
+            ),
+            FrameSummary(
+                index=2,
+                time_seconds=20.0,
+                image="frames/000020000.jpg",
+                summary="料理を食卓へ運んでいる",
+                tags=("other",),
+            ),
+        ]
+
+        timeline = build_timeline(summaries, video)
+
+        self.assertEqual([entry.frame_indices for entry in timeline], [[0], [1], [2]])
+
     def test_build_timeline_can_disable_tag_similarity_for_quality_review(self):
         video = VideoMetadata(
             path="/tmp/input.mp4",
@@ -195,6 +232,8 @@ class TimelineGeneratorTest(unittest.TestCase):
     def test_are_similar_tags_uses_overlap_ratio(self):
         self.assertTrue(are_similar_tags(["chatgpt", "review"], ["chatgpt", "review", "github"]))
         self.assertFalse(are_similar_tags(["chatgpt", "review"], ["terminal", "testing"]))
+        self.assertFalse(are_similar_tags(["other"], ["other"]))
+        self.assertFalse(are_similar_tags(["other", "chatgpt"], ["other", "github"]))
 
     def test_build_timeline_sorts_by_time_and_index(self):
         video = VideoMetadata(
