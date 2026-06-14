@@ -311,7 +311,7 @@ MVPのJSONは次の構造にする。
 
 `frame_summarizer`は抽出済みフレームをVLで要約し、MVPの出力JSONを生成する。
 
-VLは `summary`、`primary_tag`、`secondary_tags` をJSONで返す。`primary_tag`は画面の主対象を1つだけ表すタグ、`secondary_tags`は補助的な作業や文脈を表すタグとする。secondary_tagsは必ず配列キーsecondary_tagsとして返してください。secondary_tags[]は使わないでください。MVP後の運用では `chatgpt`、`github`、`vscode`、`terminal`、`browser`、`youtube`、`discord`、`game`、`document`、`other` を事前定義タグとして優先する。ただし、生活ログや専門作業など候補にない対象では短い自由タグも許可する。
+VLは `summary`、`primary_tag`、`secondary_tags` をJSONで返す。`primary_tag`は画面の主対象を1つだけ表すタグ、`secondary_tags`は補助的な作業や文脈を表すタグとする。`secondary_tags` は必ず `secondary_tags` という配列キーで返す。`secondary_tags[]` というキー名は使わない。MVP後の運用では `chatgpt`、`github`、`vscode`、`terminal`、`browser`、`youtube`、`discord`、`game`、`document`、`other` を事前定義タグとして優先する。ただし、生活ログや専門作業など候補にない対象では短い自由タグも許可する。
 
 既存JSONとの互換性のため、`tags` は引き続き保存する。新形式の応答では `tags` を `primary_tag + secondary_tags` から生成する。古い `{"summary":"...","tags":[...]}` 形式の応答では、先頭のタグを `primary_tag`、残りを `secondary_tags` として扱う。タグがない場合は `primary_tag` を `other`、`secondary_tags` を空配列にする。
 
