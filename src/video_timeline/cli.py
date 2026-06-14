@@ -12,6 +12,7 @@ from .frame_extractor import DEFAULT_INTERVAL_SECONDS, ExtractedFrame, extract_f
 from .frame_summarizer import (
     AnalysisMetadata,
     DEFAULT_VL_MODEL,
+    StorageMetadata,
     build_frame_summary_document,
     save_frame_summary_json,
     summarize_frames_with_ollama,
@@ -95,6 +96,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="フレーム抽出間隔。既定値は10秒",
     )
     parser.add_argument("--frames-dir", default="frames", help="抽出フレームの保存先")
+    parser.add_argument(
+        "--storage-mode",
+        choices=("local", "server"),
+        default="local",
+        help="JSONに記録する保存先の種別。既定値はlocal",
+    )
     return parser
 
 
@@ -204,6 +211,7 @@ def run_video(
     interval_seconds: float,
     *,
     isolate_frames: bool = True,
+    storage_mode: str = "local",
 ) -> Path:
     print_progress("動画メタデータ取得中")
     video = load_video_metadata(input_path)
@@ -228,6 +236,12 @@ def run_video(
     document = build_frame_summary_document(
         video=video,
         analysis=AnalysisMetadata(interval_seconds=interval_seconds),
+        storage=StorageMetadata(
+            mode=storage_mode,
+            video_path=video.path,
+            frames_dir=str(actual_frames_dir),
+            timeline_path=str(output_path),
+        ),
         frame_summaries=frame_summaries,
         timeline=timeline,
         events=events,
@@ -257,6 +271,7 @@ def run_batch(args: argparse.Namespace) -> tuple[int, int]:
                 video_dir / "frames",
                 args.interval_seconds,
                 isolate_frames=False,
+                storage_mode=args.storage_mode,
             )
         except Exception as exc:
             failure_count += 1
@@ -280,7 +295,13 @@ def run(args: argparse.Namespace) -> Path | tuple[int, int]:
     if args.output is None:
         raise ValueError("--outputが必要です")
 
-    return run_video(args.input, args.output, args.frames_dir, args.interval_seconds)
+    return run_video(
+        args.input,
+        args.output,
+        args.frames_dir,
+        args.interval_seconds,
+        storage_mode=args.storage_mode,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

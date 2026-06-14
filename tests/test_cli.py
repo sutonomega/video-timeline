@@ -142,6 +142,8 @@ class CliTest(unittest.TestCase):
                             "5",
                             "--frames-dir",
                             "custom_frames",
+                            "--storage-mode",
+                            "server",
                         ]
                     )
 
@@ -169,6 +171,15 @@ class CliTest(unittest.TestCase):
         self.assertEqual(saved["analysis"]["interval_seconds"], 5.0)
         self.assertEqual(saved["analysis"]["vl_provider"], "ollama")
         self.assertEqual(saved["analysis"]["vl_model"], "qwen2.5vl:7b")
+        self.assertEqual(
+            saved["storage"],
+            {
+                "mode": "server",
+                "video_path": "/tmp/input.mp4",
+                "frames_dir": str(build_run_frames_dir(video.path, "custom_frames")),
+                "timeline_path": str(output_path),
+            },
+        )
         self.assertEqual(saved["frame_summaries"][0]["summary"], "ChatGPTで仕様相談をしている")
         self.assertEqual(
             saved["timeline"],
@@ -475,6 +486,8 @@ class CliTest(unittest.TestCase):
                     "timelines",
                     "--interval-seconds",
                     "5",
+                    "--storage-mode",
+                    "server",
                 ]
             )
 
@@ -487,6 +500,7 @@ class CliTest(unittest.TestCase):
             build_batch_video_dir(first, "timelines") / "frames",
             5.0,
             isolate_frames=False,
+            storage_mode="server",
         )
         run_video.assert_any_call(
             second,
@@ -494,6 +508,7 @@ class CliTest(unittest.TestCase):
             build_batch_video_dir(second, "timelines") / "frames",
             5.0,
             isolate_frames=False,
+            storage_mode="server",
         )
         self.assertIn("batch complete: success=2 failure=0", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
