@@ -14,6 +14,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir timelines",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --output clip.mp4",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --start-index 3 --end-index 7 --output clips",
+            "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --tag github --output clips",
             "PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt",
             "`input`",
             "`--output`",
@@ -23,6 +24,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`clip --index`",
             "`clip --start-index`",
             "`clip --end-index`",
+            "`clip --tag`",
             "`clip --padding-seconds`",
             "`clip --accurate`",
             "`clip --crf`",
@@ -146,7 +148,9 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("--crf 18", architecture)
         self.assertIn("--preset veryfast", architecture)
         self.assertIn("--start-index", architecture)
+        self.assertIn("--tag", architecture)
         self.assertIn("timeline_000003.mp4", architecture)
+        self.assertIn("完全一致", architecture)
         self.assertIn("複数index", architecture)
 
     def test_architecture_defines_timeline_searcher_contract(self):
@@ -218,7 +222,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[ ] サーバー上でtimeline区間の動画切り出しを実行できるようにする（#38）", roadmap)
         self.assertIn("[ ] VLタグを事前定義タグとprimary_tagへ寄せる（#48）", roadmap)
         self.assertIn("[x] timeline検索CLIを追加する（#49）", roadmap)
-        self.assertIn("[ ] タグ別クリップ生成CLIを追加する（#50）", roadmap)
+        self.assertIn("[x] タグ別クリップ生成CLIを追加する（#50）", roadmap)
         self.assertIn("[ ] タイムラインHTML出力CLIを追加する（#51）", roadmap)
 
     def test_quality_review_records_frame_summary_to_timeline_findings(self):

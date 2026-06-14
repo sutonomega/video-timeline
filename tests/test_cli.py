@@ -287,10 +287,59 @@ class CliTest(unittest.TestCase):
         self.assertIn("wrote clips/timeline_000004.mp4", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
 
-    def test_clip_cli_rejects_mixed_single_and_range_index(self):
+    def test_clip_cli_connects_tag_to_video_clipper(self):
+        with (
+            patch(
+                "video_timeline.cli.clip_timeline_entries_by_tag",
+                return_value=[Path("clips/timeline_000003.mp4"), Path("clips/timeline_000004.mp4")],
+            ) as clip_by_tag,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(
+                [
+                    "clip",
+                    "timeline.json",
+                    "--tag",
+                    "github",
+                    "--output",
+                    "clips",
+                    "--padding-seconds",
+                    "1.5",
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        clip_by_tag.assert_called_once_with(
+            "timeline.json",
+            tag="github",
+            output_dir="clips",
+            padding_seconds=1.5,
+            accurate=False,
+            crf=None,
+            preset=None,
+        )
+        self.assertIn("wrote clips/timeline_000003.mp4", stdout.getvalue())
+        self.assertIn("wrote clips/timeline_000004.mp4", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_clip_cli_prints_no_matches_for_empty_tag_clip_result(self):
+        with (
+            patch("video_timeline.cli.clip_timeline_entries_by_tag", return_value=[]),
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["clip", "timeline.json", "--tag", "github", "--output", "clips"])
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("no matches", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_clip_cli_rejects_mixed_clip_selection_modes(self):
         with (
             patch("video_timeline.cli.clip_timeline_entry") as clip,
             patch("video_timeline.cli.clip_timeline_entry_range") as clip_range,
+            patch("video_timeline.cli.clip_timeline_entries_by_tag") as clip_by_tag,
             patch("sys.stdout", new_callable=io.StringIO),
             patch("sys.stderr", new_callable=io.StringIO) as stderr,
         ):
@@ -304,6 +353,8 @@ class CliTest(unittest.TestCase):
                     "3",
                     "--end-index",
                     "4",
+                    "--tag",
+                    "github",
                     "--output",
                     "clips",
                 ]
@@ -312,7 +363,8 @@ class CliTest(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         clip.assert_not_called()
         clip_range.assert_not_called()
-        self.assertIn("--indexと--start-index/--end-indexは同時に指定できません", stderr.getvalue())
+        clip_by_tag.assert_not_called()
+        self.assertIn("同時に指定できません", stderr.getvalue())
 
     def test_clip_cli_rejects_missing_index_selection(self):
         with (
@@ -326,7 +378,7 @@ class CliTest(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         clip.assert_not_called()
         clip_range.assert_not_called()
-        self.assertIn("--index または --start-index/--end-index のどちらかを指定してください", stderr.getvalue())
+        self.assertIn("--index、--start-index/--end-index、--tagのいずれか", stderr.getvalue())
 
     def test_clip_cli_returns_error_for_video_clipper_failure(self):
         with (

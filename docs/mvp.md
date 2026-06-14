@@ -57,6 +57,12 @@ PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --outp
 PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --start-index 3 --end-index 7 --output clips
 ```
 
+指定タグを含む `timeline` 区間をまとめて切り出す場合は、タグと出力ディレクトリを指定する。
+
+```bash
+PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --tag github --output clips
+```
+
 生成済み `timeline.json` から作業区間を検索する場合は `search` サブコマンドを使う。
 
 ```bash
@@ -75,7 +81,8 @@ PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt
 - `clip --index`: 切り出す `timeline` 配列の0始まりindex
 - `clip --start-index`: 連続切り出しの開始 `timeline` index
 - `clip --end-index`: 連続切り出しの終了 `timeline` index。このindexも切り出し対象に含める
-- `clip --output`: `--index`では切り出しMP4の保存先、`--start-index`/`--end-index`では出力ディレクトリ
+- `clip --tag`: 指定タグを含む `timeline` 区間を個別clipとして切り出す
+- `clip --output`: `--index`では切り出しMP4の保存先、`--start-index`/`--end-index`または`--tag`では出力ディレクトリ
 - `clip --padding-seconds`: 切り出し範囲の前後に足す余白秒数。既定値は`0`
 - `clip --accurate`: 再エンコードして開始位置の正確さを優先する。既定は高速なcopy切り出し
 - `clip --crf`: `--accurate`時のx264画質。既定値は`18`
@@ -84,7 +91,7 @@ PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt
 
 `clip` は既定では高速な `ffmpeg -c copy` で切り出す。キーフレーム位置の影響で開始位置が指定秒から少しずれる可能性がある。厳密な切り出しが必要な場合は `--accurate` を使う。`--crf`と`--preset`は`--accurate`時だけ有効で、copy切り出しでは指定できない。
 
-範囲切り出しでは、出力ディレクトリに `timeline_000003.mp4` のような `timeline_<index6桁>.mp4` を保存する。存在しないindex、または `--start-index` が `--end-index` より大きい範囲はエラーにする。
+範囲切り出しとタグ切り出しでは、出力ディレクトリに `timeline_000003.mp4` のような `timeline_<index6桁>.mp4` を保存する。存在しないindex、または `--start-index` が `--end-index` より大きい範囲はエラーにする。タグ切り出しは `timeline[].tags` と対応する `events[].tags` に対する大文字小文字を区別しない完全一致で判定する。タグに一致する区間がない場合はエラーにせず `no matches` を表示する。
 
 `search` は `timeline[].summary`、`timeline[].tags`、対応する `events[].kind`、`events[].summary`、`events[].tags` を大文字小文字を区別せず検索する。結果は `3  01:20-04:10  ChatGPTで仕様相談` のように、timeline index、時刻範囲、summaryを1行ずつ表示する。小数秒は切り捨てて表示する。空結果はエラーにせず `no matches` を表示する。存在しないファイルや不正なJSONはエラーにする。
 

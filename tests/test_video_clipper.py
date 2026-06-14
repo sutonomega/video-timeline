@@ -10,7 +10,12 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from video_timeline.video_clipper import VideoClipperError, clip_timeline_entry, clip_timeline_entry_range
+from video_timeline.video_clipper import (
+    VideoClipperError,
+    clip_timeline_entries_by_tag,
+    clip_timeline_entry,
+    clip_timeline_entry_range,
+)
 
 
 class VideoClipperTest(unittest.TestCase):
@@ -284,6 +289,61 @@ class VideoClipperTest(unittest.TestCase):
                     clip_timeline_entry_range(timeline_path, start_index=0, end_index=1, output_dir=directory)
 
         self.assertEqual(run.call_count, 2)
+
+    def test_clip_timeline_entries_by_tag_clips_matching_tag_indexes(self):
+        document = {
+            "video": {"path": "/tmp/source.mp4"},
+            "timeline": [
+                {"start_seconds": 0.0, "end_seconds": 5.0, "tags": ["chatgpt"]},
+                {"start_seconds": 10.0, "end_seconds": 20.0, "tags": ["GitHub", "review"]},
+                {"start_seconds": 30.0, "end_seconds": 45.0, "tags": ["coding"]},
+            ],
+            "events": [{"timeline_index": 2, "kind": "activity", "summary": "PR確認", "tags": ["github"]}],
+        }
+
+        with TemporaryDirectory() as directory:
+            timeline_path = Path(directory) / "timeline.json"
+            output_dir = Path(directory) / "clips"
+            timeline_path.write_text(json.dumps(document), encoding="utf-8")
+
+            with patch("video_timeline.video_clipper.subprocess.run") as run:
+                results = clip_timeline_entries_by_tag(
+                    timeline_path,
+                    tag="github",
+                    output_dir=output_dir,
+                    padding_seconds=1.0,
+                )
+
+        self.assertEqual(
+            results,
+            [
+                output_dir / "timeline_000001.mp4",
+                output_dir / "timeline_000002.mp4",
+            ],
+        )
+        self.assertEqual(run.call_count, 2)
+        self.assertEqual(run.call_args_list[0].args[0][-1], str(output_dir / "timeline_000001.mp4"))
+        self.assertEqual(run.call_args_list[1].args[0][-1], str(output_dir / "timeline_000002.mp4"))
+
+    def test_clip_timeline_entries_by_tag_returns_empty_list_for_no_matches(self):
+        document = {
+            "video": {"path": "/tmp/source.mp4"},
+            "timeline": [{"start_seconds": 0.0, "end_seconds": 5.0, "tags": ["chatgpt"]}],
+        }
+
+        with TemporaryDirectory() as directory:
+            timeline_path = Path(directory) / "timeline.json"
+            timeline_path.write_text(json.dumps(document), encoding="utf-8")
+
+            with patch("video_timeline.video_clipper.subprocess.run") as run:
+                results = clip_timeline_entries_by_tag(timeline_path, tag="github", output_dir=directory)
+
+        self.assertEqual(results, [])
+        run.assert_not_called()
+
+    def test_clip_timeline_entries_by_tag_rejects_empty_tag(self):
+        with self.assertRaisesRegex(VideoClipperError, "--tag"):
+            clip_timeline_entries_by_tag("timeline.json", tag=" ", output_dir="clips")
 
     def test_clip_timeline_entry_clamps_padding_start_to_zero(self):
         document = {
