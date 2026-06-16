@@ -248,7 +248,7 @@ TAG_SIMILARITY_THRESHOLD = 0.5
 
 確認された課題:
 
-- `secondary_tags[]}` のような閉じていないJSONが多く、`primary_tag=other` へのフォールバックが発生した
+- `secondary_tags[]` のキー名が途中で崩れ、JSONとして閉じない応答が多く、`primary_tag=other` へのフォールバックが発生した
 - `other` が多いため、timeline統合やタグ別clipの判断材料として弱かった
 - 料理動画にもかかわらず `browser` や `youtube` が出る誤認識があった
 - `oatmeal`、`rice_cooker`、`eating` など、料理工程を区別するタグが十分に出なかった
@@ -276,7 +276,7 @@ TAG_SIMILARITY_THRESHOLD = 0.5
 - 加熱
 - 炊き上がり
 - お粥を混ぜる
-- 食べる、盛り付ける
+- 食べる、すくう
 
 これらが `summary` とタグに残り、後続の `timeline` 品質を評価できる状態になった。
 
