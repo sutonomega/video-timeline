@@ -100,6 +100,11 @@ class SceneDetectionProgress:
         )
 
 
+class FrameExtractionProgress:
+    def __call__(self, current: int, total: int, time_seconds: float) -> None:
+        print_progress(f"frame extraction progress: {current}/{total} ({format_timestamp(time_seconds)})")
+
+
 def build_run_frames_dir(video_path: str | Path, frames_dir: str | Path) -> Path:
     resolved_video_path = Path(video_path).resolve(strict=False)
     path_hash = hashlib.sha256(str(resolved_video_path).encode("utf-8")).hexdigest()[:12]
@@ -277,6 +282,7 @@ def run_video(
         video,
         frames_dir=actual_frames_dir,
         interval_seconds=interval_seconds,
+        progress=FrameExtractionProgress(),
     )
     print_progress("フレーム要約中")
     frame_summaries = summarize_frames_with_ollama(

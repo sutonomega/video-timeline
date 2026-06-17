@@ -3,11 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import subprocess
+from typing import Callable
 
 from .video_loader import VideoMetadata
 
 
 DEFAULT_INTERVAL_SECONDS = 10.0
+FrameExtractionProgress = Callable[[int, int, float], None]
 
 
 class FrameExtractorError(ValueError):
@@ -32,6 +34,7 @@ def extract_frames(
     metadata: VideoMetadata,
     frames_dir: str | Path = "frames",
     interval_seconds: float = DEFAULT_INTERVAL_SECONDS,
+    progress: FrameExtractionProgress | None = None,
 ) -> list[ExtractedFrame]:
     if interval_seconds <= 0:
         raise FrameExtractorError("interval_secondsは0より大きい値を指定してください。")
@@ -40,7 +43,11 @@ def extract_frames(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     frames: list[ExtractedFrame] = []
-    for index, time_seconds in enumerate(generate_frame_times(metadata.duration_seconds, interval_seconds)):
+    frame_times = generate_frame_times(metadata.duration_seconds, interval_seconds)
+    total_frames = len(frame_times)
+    for index, time_seconds in enumerate(frame_times):
+        if progress is not None:
+            progress(index + 1, total_frames, time_seconds)
         image_path = output_dir / format_frame_filename(time_seconds)
         _run_ffmpeg_extract_frame(metadata.path, time_seconds, image_path)
         frames.append(
