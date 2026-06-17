@@ -53,6 +53,14 @@ html_dir = "html"
 
 現在のMVPでは、動画解析CLI、`search`、`clip`、`export-html` の短縮指定が設定ファイルを参照する。batchの入力解決はまだ既存CLI引数を使うが、後続で同じ `video_timeline.toml` に寄せる。
 
+CLI引数とTOML設定の優先順位は次の通りとする。
+
+1. ディレクトリを含む明示パス、絶対パス、通常の相対パスは設定より優先し、そのまま使う。
+2. ファイル名だけの指定で `video_timeline.toml` が見つかる場合は、`storage.root` と各ディレクトリ設定から解決する。
+3. ファイル名だけの指定で `video_timeline.toml` がない場合は、従来通りカレントディレクトリ基準の通常パスとして扱う。ただし動画解析で `--output` を省略できるのは設定ファイルがある場合だけとする。
+4. CLI引数とTOMLが同じ種類の値を指定できる場合は、CLI引数を優先する。
+5. batch CLIは現時点では `--input-dir` と `--output-dir` を明示する運用を維持する。
+
 動画解析とHTML出力は別コマンドとして実行する。1つ目のコマンドで `timelines/` にJSONを生成し、2つ目の `export-html` でそのJSONをHTMLへ変換する。`input` がファイル名だけで `--output` を省略した場合、入力動画は `<storage.root>/<videos_dir>/`、出力JSONは動画ファイル名のstemを使って `<storage.root>/<timelines_dir>/` に解決する。
 
 ```bash
@@ -121,7 +129,7 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output 
 引数:
 
 - `input`: 入力動画ファイルのパス
-- `--output`: 出力JSONファイルのパス。ファイル名は自動生成せず、指定したパスをそのまま使う
+- `--output`: 出力JSONファイルのパス。明示した場合は指定したパスを優先する。`video_timeline.toml` があり、入力がファイル名だけの場合は省略できる
 - `--input-dir`: 一括解析する入力ディレクトリ。配下の`mp4`を再帰的に検出する
 - `--output-dir`: 一括解析結果の保存先ベースディレクトリ
 - `--interval-seconds`: フレーム抽出間隔。既定値は`10`
@@ -147,7 +155,7 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output 
 
 `search` は `timeline[].summary`、`timeline[].tags`、対応する `events[].kind`、`events[].summary`、`events[].tags` を大文字小文字を区別せず検索する。結果は `3  01:20-04:10  ChatGPTで仕様相談` のように、timeline index、時刻範囲、summaryを1行ずつ表示する。小数秒は切り捨てて表示する。空結果はエラーにせず `no matches` を表示する。存在しないファイルや不正なJSONはエラーにする。
 
-`export-html` は `video`、`analysis`、`timeline`、`events` を1つの静的HTMLに出力する。`timeline` はindex、時刻範囲、summary、tagsを表で表示する。`events` はkind、時刻範囲、summary、timeline_index、importance_score、tagsを表で表示する。HTML内の値はエスケープし、CSSやJavaScriptに依存しない最小表示にする。存在しないファイル、不正なJSON、`timeline`がないJSON、dictではない`timeline`/`events`要素はエラーにする。`video_timeline.toml` はカレントディレクトリから親ディレクトリへ向かって探索する。設定ファイルがあり、`export-html` の入力が `sample` または `sample.json` のようなファイル名だけの場合は、`storage.root`、`storage.timelines_dir`、`storage.html_dir` から入出力パスを解決する。既存のフルパス指定と `--output` 指定はそのまま優先する。
+`export-html` は `video`、`analysis`、`timeline`、`events` を1つの静的HTMLに出力する。`timeline` はindex、時刻範囲、summary、tagsを表で表示する。`events` はkind、時刻範囲、summary、timeline_index、importance_score、tagsを表で表示する。HTML内の値はエスケープし、CSSやJavaScriptに依存しない最小表示にする。存在しないファイル、不正なJSON、`timeline`がないJSON、dictではない`timeline`/`events`要素はエラーにする。`video_timeline.toml` はカレントディレクトリから親ディレクトリへ向かって探索する。設定ファイルがあり、`export-html` の入力が `sample` または `sample.json` のようなファイル名だけの場合は、`storage.root`、`storage.timelines_dir`、`storage.html_dir` から入出力パスを解決する。既存の明示パス指定と `--output` 指定はそのまま優先する。
 
 ## 設定ファイル方針
 
@@ -162,6 +170,25 @@ TOMLの対象:
 - タイムライン生成設定
 - 将来の検索設定
 
+現在実装するTOMLは `[storage]` のみとする。`root` は標準ディレクトリを置く基点で、ローカルSSD、外付けSSD、NAS、SMB共有、NFSの違いは区別しない。
+
+将来の設定セクションは次の方向にする。
+
+```toml
+[vl]
+provider = "ollama"
+model = "gemma3:12b"
+
+[timeline]
+interval_seconds = 10
+
+[html]
+# 表示形式やテンプレートなど、HTML出力の挙動を置く。
+
+[search]
+# 既定の検索条件や表示件数を置く。
+```
+
 JSONの対象:
 
 - `timeline.json`
@@ -171,7 +198,7 @@ JSONの対象:
 - APIレスポンス
 - 将来の検索インデックス
 
-`timeline` 出力、`frame_summaries`、APIレスポンスはTOML化しない。CLIはまず `video_timeline.toml` を読み込み、設定が存在しない場合は現在の既定値と明示されたCLI引数を使う。
+`timeline` 出力、`frame_summaries`、APIレスポンスはTOML化しない。CLIはまず `video_timeline.toml` を読み込み、設定が存在しない場合は現在の既定値と明示されたCLI引数を使う。`AppConfig` はアプリケーション設定全体を保持し、CLI向けのパス解決ヘルパーを公開する。`StoragePathConfig` は `[storage]` だけを表し、`storage.root` と標準ディレクトリ名の管理に責務を限定する。
 
 将来拡張する任意引数:
 

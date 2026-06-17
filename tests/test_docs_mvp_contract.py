@@ -26,10 +26,21 @@ class DocsMvpContractTest(unittest.TestCase):
             "`storage.timelines_dir`",
             "`storage.html_dir`",
             "[storage]",
+            "[vl]",
+            "[timeline]",
+            "[html]",
+            "[search]",
             'root = "/mnt/video-timeline"',
             "設定ファイルはTOML、生成物はJSON",
             "TOMLは設定専用、JSONはデータ交換形式",
             "動画解析とHTML出力は別コマンド",
+            "CLI引数とTOML設定の優先順位",
+            "明示パス",
+            "ファイル名だけ",
+            "CLI引数を優先",
+            "batch CLIは現時点では `--input-dir` と `--output-dir` を明示する運用",
+            "`AppConfig`",
+            "`StoragePathConfig`",
             "カレントディレクトリから親ディレクトリへ向かって探索",
             "`input`",
             "`--output`",
@@ -126,6 +137,10 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn('root = "/mnt/video-timeline"', config)
         self.assertIn('timelines_dir = "timelines"', config)
         self.assertIn('html_dir = "html"', config)
+        self.assertIn("# [vl]", config)
+        self.assertIn("# [timeline]", config)
+        self.assertIn("# [html]", config)
+        self.assertIn("# [search]", config)
 
     def test_docs_record_mvp_acceptance(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -239,8 +254,28 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("local/serverの種別を判定するためのものではなく", architecture)
         self.assertIn("\\\\192.168.10.112\\video-timeline", architecture)
         self.assertIn("clips", architecture)
-        self.assertIn("共有ストレージ上のパス", architecture)
+        self.assertIn("`storage.root` 配下のパス", architecture)
         self.assertIn("相対パス", architecture)
+
+    def test_architecture_defines_config_storage_cli_policy(self):
+        architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+
+        self.assertIn("configuration and storage policy", architecture)
+        self.assertIn("設定ファイルはTOML、生成物はJSON", architecture)
+        self.assertIn("local」「server」のような保存先種別を判定しない", architecture)
+        self.assertIn("ファイル名だけを指定したときの解決規則", architecture)
+        self.assertIn("[storage]", architecture)
+        self.assertIn("[vl]", architecture)
+        self.assertIn("[timeline]", architecture)
+        self.assertIn("[html]", architecture)
+        self.assertIn("[search]", architecture)
+        self.assertIn("CLI引数とTOML設定の優先順位", architecture)
+        self.assertIn("明示パス", architecture)
+        self.assertIn("CLI引数を優先", architecture)
+        self.assertIn("batch CLIは現時点では `--input-dir` と `--output-dir` を明示する運用", architecture)
+        self.assertIn("即時利用を優先", architecture)
+        self.assertIn("`storage.root` と `videos/sample.mp4`", architecture)
+        self.assertIn("StoragePathConfig` は `[storage]` だけを表す値オブジェクト", architecture)
 
     def test_architecture_defines_frame_summary_tags(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")

@@ -5,3 +5,18 @@ frames_dir = "frames"
 timelines_dir = "timelines"
 clips_dir = "clips"
 html_dir = "html"
+
+# 将来の設定セクション:
+#
+# [vl]
+# provider = "ollama"
+# model = "gemma3:12b"
+#
+# [timeline]
+# interval_seconds = 10
+#
+# [html]
+# HTMLテンプレートや表示オプションなどを置く。
+#
+# [search]
+# 検索件数やフィルタなどの既定値を置く。
