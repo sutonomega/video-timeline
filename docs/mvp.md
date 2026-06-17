@@ -39,17 +39,19 @@ MVPで実装しないこと:
 PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json
 ```
 
-サーバー上の保存場所を参照情報として残す場合は、入力動画、`--output`、`--frames-dir` にサーバー上のパスを渡し、`--storage-mode server` を指定する。
+共有ストレージ運用では、リポジトリ直下または作業ディレクトリの親ディレクトリに `video_timeline.toml` を置き、保存先をTOMLで管理する。実運用では `/mnt/video-timeline` を共有ストレージのマウント先とし、共有配下は `videos`、`frames`、`timelines`、`clips`、`html` に分ける。
 
-```bash
-PYTHONPATH=src python3 -m video_timeline.cli /mnt/storage/videos/input.mp4 --output /mnt/storage/timelines/input.json --frames-dir /mnt/storage/frames --storage-mode server
+```toml
+[storage]
+root = "/mnt/video-timeline"
+videos_dir = "videos"
+frames_dir = "frames"
+timelines_dir = "timelines"
+clips_dir = "clips"
+html_dir = "html"
 ```
 
-実運用のサーバー格納場所は `\\192.168.10.112\video-timeline` とする。共有配下は `videos`、`frames`、`timelines`、`clips` に分ける。Windows共有パスから実行する場合は、次のように動画、timeline、framesの保存先を同じ共有配下に置く。
-
-```powershell
-python -m video_timeline.cli "\\192.168.10.112\video-timeline\videos\input.mp4" --output "\\192.168.10.112\video-timeline\timelines\input.json" --frames-dir "\\192.168.10.112\video-timeline\frames" --storage-mode server
-```
+現在のMVPでは `export-html` の短縮指定が設定ファイルを参照する。動画解析、batch、clipの入力解決はまだ既存CLI引数を使うが、後続で同じ `video_timeline.toml` に寄せる。
 
 複数動画をまとめて解析する場合は、入力ディレクトリと出力ディレクトリを指定する。
 
@@ -87,29 +89,33 @@ PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --tag github --o
 PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt
 ```
 
-生成済み `timeline.json` をブラウザで確認するHTMLに出力する場合は `export-html` サブコマンドを使う。
-
-```bash
-PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output timeline.html
-```
-
-共有ストレージ運用では、`video_timeline.toml` に保存先を定義すると、ファイル名だけで `timeline.json` とHTML出力先を解決できる。
-
-```toml
-[storage]
-root = "/mnt/video-timeline"
-videos_dir = "videos"
-frames_dir = "frames"
-timelines_dir = "timelines"
-clips_dir = "clips"
-html_dir = "html"
-```
+生成済み `timeline.json` をブラウザで確認するHTMLに出力する場合は `export-html` サブコマンドを使う。`video_timeline.toml` がある共有ストレージ運用では、ファイル名だけで `timelines/` の入力JSONと `html/` の出力HTMLを解決する。
 
 ```bash
 PYTHONPATH=src python3 -m video_timeline.cli export-html sample1-gemma312b
 ```
 
-この場合、入力JSONは `/mnt/video-timeline/timelines/sample1-gemma312b.json`、出力HTMLは `/mnt/video-timeline/html/sample1-gemma312b.html` として扱う。設定ファイルがない場合、または通常のパスを指定する場合は、従来通り `--output` で出力HTMLを明示する。設定ファイルはTOML、解析結果やHTML出力の元になる生成物はJSONとし、MVP以降もTOMLは設定専用、JSONはデータ交換形式として使い分ける。
+この場合、入力JSONは `/mnt/video-timeline/timelines/sample1-gemma312b.json`、出力HTMLは `/mnt/video-timeline/html/sample1-gemma312b.html` として扱う。
+
+設定ファイルがない場合、または通常のパスを指定する場合は、従来通り `--output` で出力HTMLを明示する。
+
+```bash
+PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output timeline.html
+```
+
+既存互換として、サーバー上の保存場所を参照情報として残す場合は、入力動画、`--output`、`--frames-dir` にサーバー上のパスを渡し、`--storage-mode server` を指定できる。
+
+```bash
+PYTHONPATH=src python3 -m video_timeline.cli /mnt/video-timeline/videos/input.mp4 --output /mnt/video-timeline/timelines/input.json --frames-dir /mnt/video-timeline/frames --storage-mode server
+```
+
+Windows共有パスから実行する場合も、必要なら従来通り動画、timeline、framesの保存先を同じ共有配下に直接指定できる。共有ストレージの例は `\\192.168.10.112\video-timeline` とする。
+
+```powershell
+python -m video_timeline.cli "\\192.168.10.112\video-timeline\videos\input.mp4" --output "\\192.168.10.112\video-timeline\timelines\input.json" --frames-dir "\\192.168.10.112\video-timeline\frames" --storage-mode server
+```
+
+設定ファイルはTOML、解析結果やHTML出力の元になる生成物はJSONとし、MVP以降もTOMLは設定専用、JSONはデータ交換形式として使い分ける。
 
 引数:
 

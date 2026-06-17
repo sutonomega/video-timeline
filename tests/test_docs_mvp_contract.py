@@ -117,6 +117,14 @@ class DocsMvpContractTest(unittest.TestCase):
             text = (ROOT / relative_path).read_text(encoding="utf-8")
             self.assertIn("mvp.md", text)
 
+    def test_repository_includes_default_toml_config(self):
+        config = (ROOT / "video_timeline.toml").read_text(encoding="utf-8")
+
+        self.assertIn("[storage]", config)
+        self.assertIn('root = "/mnt/video-timeline"', config)
+        self.assertIn('timelines_dir = "timelines"', config)
+        self.assertIn('html_dir = "html"', config)
+
     def test_docs_record_mvp_acceptance(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")

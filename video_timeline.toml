@@ -1,0 +1,7 @@
+[storage]
+root = "/mnt/video-timeline"
+videos_dir = "videos"
+frames_dir = "frames"
+timelines_dir = "timelines"
+clips_dir = "clips"
+html_dir = "html"
