@@ -659,7 +659,7 @@ class CliTest(unittest.TestCase):
         self.assertIn("batch complete: success=2 failure=0", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
 
-    def test_batch_cli_resolves_simple_dirs_with_app_config(self):
+    def test_batch_cli_uses_storage_dirs_with_app_config(self):
         config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
         first = Path("/mnt/video-timeline/videos/a/sample.mp4")
 
@@ -673,7 +673,7 @@ class CliTest(unittest.TestCase):
             patch("sys.stdout", new_callable=io.StringIO) as stdout,
             patch("sys.stderr", new_callable=io.StringIO) as stderr,
         ):
-            exit_code = main(["--input-dir", "videos"])
+            exit_code = main(["--batch"])
 
         self.assertEqual(exit_code, 0)
         discover.assert_called_once_with(Path("/mnt/video-timeline/videos"))
@@ -688,6 +688,17 @@ class CliTest(unittest.TestCase):
         self.assertIn("batch complete: success=1 failure=0", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
 
+    def test_batch_cli_requires_config_or_input_dir(self):
+        with (
+            patch("video_timeline.cli.load_app_config", return_value=None),
+            patch("sys.stdout", new_callable=io.StringIO),
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["--batch"])
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("error: --batchを使う場合はvideo_timeline.tomlまたは--input-dirが必要です", stderr.getvalue())
+
     def test_batch_cli_requires_output_dir_without_app_config(self):
         with (
             patch("video_timeline.cli.load_app_config", return_value=None),
@@ -697,7 +708,7 @@ class CliTest(unittest.TestCase):
             exit_code = main(["--input-dir", "videos"])
 
         self.assertEqual(exit_code, 1)
-        self.assertIn("error: --input-dirを使う場合は--output-dirが必要です", stderr.getvalue())
+        self.assertIn("error: --batchまたは--input-dirを使う場合は--output-dirが必要です", stderr.getvalue())
 
     def test_batch_cli_continues_after_single_video_failure(self):
         first = Path("/tmp/videos/a/sample.mp4")

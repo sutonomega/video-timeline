@@ -216,6 +216,14 @@ class AppConfigTest(unittest.TestCase):
         self.assertEqual(input_dir, Path("/mnt/video-timeline/videos"))
         self.assertEqual(output_dir, Path("/mnt/video-timeline/timelines"))
 
+    def test_resolve_batch_paths_uses_storage_defaults_when_dirs_are_omitted(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        input_dir, output_dir = resolve_batch_paths(None, None, config)
+
+        self.assertEqual(input_dir, Path("/mnt/video-timeline/videos"))
+        self.assertEqual(output_dir, Path("/mnt/video-timeline/timelines"))
+
     def test_resolve_batch_paths_keeps_explicit_dirs(self):
         config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
 

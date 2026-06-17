@@ -13,6 +13,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json",
             "PYTHONPATH=src python3 -m video_timeline.cli sample1.mp4",
             "PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir timelines",
+            "PYTHONPATH=src python3 -m video_timeline.cli --batch",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --output clip.mp4",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --start-index 3 --end-index 7 --output clips",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --tag github --output clips",
@@ -38,14 +39,15 @@ class DocsMvpContractTest(unittest.TestCase):
             "明示パス",
             "ファイル名だけ",
             "CLI引数を優先",
-            "batch CLIは `--input-dir` を必須",
-            "`--output-dir` 省略時は `<storage.root>/<storage.timelines_dir>` を使う",
-            "設定ファイルがない場合は従来通り `--output-dir` を必須",
+            "batch CLIは `--batch` または `--input-dir` で明示",
+            "`--batch` だけで `<storage.root>/<storage.videos_dir>` を入力",
+            "設定ファイルがない場合は従来通り `--input-dir` と `--output-dir` を必須",
             "`AppConfig`",
             "`StoragePathConfig`",
             "カレントディレクトリから親ディレクトリへ向かって探索",
             "`input`",
             "`--output`",
+            "`--batch`",
             "`--input-dir`",
             "`--output-dir`",
             "`clip timeline.json`",
@@ -282,7 +284,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("CLI引数とTOML設定の優先順位", architecture)
         self.assertIn("明示パス", architecture)
         self.assertIn("CLI引数を優先", architecture)
-        self.assertIn("batch CLIは `--input-dir` を必須", architecture)
+        self.assertIn("batch CLIは `--batch` または `--input-dir` で明示", architecture)
+        self.assertIn("`--batch` だけで `<storage.root>/<storage.videos_dir>`", architecture)
         self.assertIn("短い `--input-dir videos`", architecture)
         self.assertIn("短い `--output-dir timelines`", architecture)
         self.assertIn("動画別ディレクトリを維持", architecture)

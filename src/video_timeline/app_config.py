@@ -213,19 +213,21 @@ def resolve_video_run_paths(
 
 
 def resolve_batch_paths(
-    input_dir: str | Path,
+    input_dir: str | Path | None,
     output_dir: str | Path | None,
     config: AppConfig | None,
 ) -> tuple[str | Path, str | Path | None]:
     if config is None:
         return input_dir, output_dir
 
-    input_candidate = Path(input_dir)
-    resolved_input: str | Path
-    if _is_simple_filename(input_candidate):
-        resolved_input = config.directory_path(input_candidate)
+    if input_dir is None:
+        resolved_input: str | Path = config.directory_path(config.storage.videos_dir)
     else:
-        resolved_input = input_dir
+        input_candidate = Path(input_dir)
+        if _is_simple_filename(input_candidate):
+            resolved_input = config.directory_path(input_candidate)
+        else:
+            resolved_input = input_dir
 
     if output_dir is None:
         return resolved_input, config.directory_path(config.storage.timelines_dir)
