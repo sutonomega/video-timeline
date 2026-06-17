@@ -65,6 +65,35 @@ class FrameExtractorTest(unittest.TestCase):
         self.assertIn("/tmp/input.mp4", first_command)
         self.assertIn("0.000000", first_command)
 
+    def test_extract_frames_reports_progress_for_each_time(self):
+        metadata = VideoMetadata(
+            path="/tmp/input.mp4",
+            duration_seconds=21.0,
+            fps=30.0,
+            frame_count=630,
+            width=1920,
+            height=1080,
+        )
+        progress_calls = []
+
+        with TemporaryDirectory() as directory:
+            with patch("video_timeline.frame_extractor.subprocess.run"):
+                extract_frames(
+                    metadata,
+                    frames_dir=directory,
+                    interval_seconds=10.0,
+                    progress=lambda current, total, time_seconds: progress_calls.append((current, total, time_seconds)),
+                )
+
+        self.assertEqual(
+            progress_calls,
+            [
+                (1, 3, 0.0),
+                (2, 3, 10.0),
+                (3, 3, 20.0),
+            ],
+        )
+
     def test_extract_frames_rejects_invalid_interval(self):
         metadata = VideoMetadata(
             path="/tmp/input.mp4",

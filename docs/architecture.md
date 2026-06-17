@@ -97,6 +97,7 @@ CLI引数とTOML設定の優先順位は次の通りとする。
 - `ffmpeg`によるフレーム画像の保存
 - index、time_seconds、imageを持つ抽出結果の生成
 - 短い動画や端数秒を含む動画でも決定的に動く抽出制御
+- 長い動画でも停止して見えないよう、抽出予定枚数、抽出中の番号、対象時刻をCLI進捗として通知する
 
 CLIから使う場合は、`--frames-dir`をベースディレクトリとして扱い、動画ごとに`<frames-dir>/<video_stem>_<path_hash>/`へ保存する。`path_hash`は解決済み入力パスから作る短いhashで、`videos/a/sample.mp4`と`videos/b/sample.mp4`のような同名動画を連続実行してもフレーム画像が同じディレクトリに混ざらないようにする。
 

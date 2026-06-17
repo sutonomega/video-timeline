@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from video_timeline.cli import (
+    FrameExtractionProgress,
     FrameSummarizationProgress,
     SceneDetectionProgress,
     build_batch_video_dir,
@@ -51,6 +52,13 @@ class CliTest(unittest.TestCase):
         output = stdout.getvalue()
         self.assertIn("frame summarization started: 1/2 (0s, remaining: calculating)", output)
         self.assertIn("frame summarization started: 2/2 (10s, remaining: 30s)", output)
+
+    def test_frame_extraction_progress_reports_current_total_and_time(self):
+        with patch("sys.stdout", new_callable=io.StringIO) as stdout:
+            progress = FrameExtractionProgress()
+            progress(3, 120, 20.0)
+
+        self.assertIn("frame extraction progress: 3/120 (00:20)", stdout.getvalue())
 
     def test_scene_detection_progress_reports_processed_time_and_percent(self):
         with patch("sys.stdout", new_callable=io.StringIO) as stdout:
@@ -190,6 +198,7 @@ class CliTest(unittest.TestCase):
             video,
             frames_dir=build_run_frames_dir(video.path, "custom_frames"),
             interval_seconds=5.0,
+            progress=ANY,
         )
         summarize.assert_called_once_with(frames, model="custom-vl:latest", progress=ANY)
         build_timeline.assert_called_once_with(summaries, video)

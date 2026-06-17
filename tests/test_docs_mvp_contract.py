@@ -106,6 +106,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`external_asr`",
             "`ffmpeg -progress pipe:1`",
             "scene detection progress: 01:20/10:00 (13%)",
+            "frame extraction progress: 3/120 (00:20)",
             "Whisper 系",
             "faster-whisper",
             "whisper.cpp",
@@ -413,6 +414,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[x] シーン分割をtimeline生成の補助情報として追加する（#88）", roadmap)
         self.assertIn("[x] 音声認識結果をtimeline補助情報として保存する（#89）", roadmap)
         self.assertIn("[x] シーン境界検出中の進捗表示を追加する（#98）", roadmap)
+        self.assertIn("[x] フレーム抽出中の進捗表示を追加する（#99）", roadmap)
         self.assertIn("[ ] LLMを使ったイベント重要度判定と分類理由生成", roadmap)
         self.assertIn("[ ] ローカルASR実行とtranscript品質確認", roadmap)
 
