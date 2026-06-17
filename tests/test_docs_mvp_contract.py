@@ -96,6 +96,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`storage.frames_dir`",
             "`storage.timeline_path`",
             "`storage.mode` は保存しない",
+            "`scene_boundaries`",
             "`ollama`",
             "`gemma3:12b`",
             "`frame_summaries[].index`",
@@ -187,6 +188,18 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("タグ類似統合の類似度計算から除外", architecture)
         self.assertIn("タグ統合あり/なし", architecture)
         self.assertIn("閾値は実データで調整", architecture)
+
+    def test_architecture_defines_scene_detector_contract(self):
+        architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+
+        self.assertIn("scene_detector", architecture)
+        self.assertIn("scene_boundaries", architecture)
+        self.assertIn("time_seconds", architecture)
+        self.assertIn("score", architecture)
+        self.assertIn("source", architecture)
+        self.assertIn("timeline 生成の主判断には使わず", architecture)
+        self.assertIn("品質確認や後続の区間調整", architecture)
+        self.assertIn("シーン境界をイベントと同一視すること", architecture)
 
     def test_architecture_defines_per_video_frame_directory(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
@@ -363,6 +376,7 @@ class DocsMvpContractTest(unittest.TestCase):
 
         self.assertIn("[x] イベント候補に軽量な重要度スコアを追加する（#30）", roadmap)
         self.assertIn("[x] summary/tagsを使ったイベントkind分類と重要度補正（#90）", roadmap)
+        self.assertIn("[x] シーン分割をtimeline生成の補助情報として追加する（#88）", roadmap)
         self.assertIn("[ ] LLMを使ったイベント重要度判定と分類理由生成", roadmap)
 
     def test_roadmap_tracks_per_video_frame_directory(self):

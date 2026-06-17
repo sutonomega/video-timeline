@@ -23,6 +23,7 @@ Storage
 Main Modules
 - video_loader
 - frame_extractor
+- scene_detector
 - frame_summarizer
 - timeline_generator
 - event_detector
@@ -97,6 +98,17 @@ CLI引数とTOML設定の優先順位は次の通りとする。
 - 短い動画や端数秒を含む動画でも決定的に動く抽出制御
 
 CLIから使う場合は、`--frames-dir`をベースディレクトリとして扱い、動画ごとに`<frames-dir>/<video_stem>_<path_hash>/`へ保存する。`path_hash`は解決済み入力パスから作る短いhashで、`videos/a/sample.mp4`と`videos/b/sample.mp4`のような同名動画を連続実行してもフレーム画像が同じディレクトリに混ざらないようにする。
+
+## scene_detector
+
+責務:
+
+- `ffmpeg` の scene detection を使い、画面の大きな変化時刻を `scene_boundaries` として抽出する
+- `time_seconds`、`score`、`source` を持つ境界情報を生成する
+- `scene_boundaries` は timeline 生成の主判断には使わず、品質確認や後続の区間調整に使う補助情報として保存する
+- 検出失敗時は動画解析全体を止めず、空の `scene_boundaries` として扱えるようにする
+
+`scene_boundaries` は `frame_summaries`、`timeline`、`events` と同じJSON内のトップレベル配列として保存する。`timeline` は引き続き summary / tags の類似度で生成し、scene boundary は「この時刻で画面が大きく変わった可能性がある」という補助情報に留める。scene boundary だけで timeline を分割すること、シーン境界をイベントと同一視すること、VL要約なしで動画内容を理解した扱いにすることは非目標とする。
 
 ## storage metadata
 

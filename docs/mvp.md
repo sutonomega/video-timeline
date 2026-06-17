@@ -382,6 +382,7 @@ MVPのJSONは次の構造にする。
 - `storage.video_path`
 - `storage.frames_dir`
 - `storage.timeline_path`
+- `scene_boundaries`
 - `frame_summaries[].index`
 - `frame_summaries[].time_seconds`
 - `frame_summaries[].image`

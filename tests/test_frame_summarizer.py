@@ -27,6 +27,7 @@ from video_timeline.frame_summarizer import (
     summarize_image_with_ollama,
 )
 from video_timeline.event_detector import EventCandidate
+from video_timeline.scene_detector import SceneBoundary
 from video_timeline.video_loader import VideoMetadata
 
 
@@ -284,6 +285,36 @@ class FrameSummarizerTest(unittest.TestCase):
                     "summary": "仕様相談をしている",
                     "timeline_index": 0,
                     "importance_score": 0.17,
+                }
+            ],
+        )
+
+    def test_build_frame_summary_document_includes_scene_boundaries_when_given(self):
+        video = VideoMetadata(
+            path="/tmp/input.mp4",
+            duration_seconds=20.0,
+            fps=30.0,
+            frame_count=600,
+            width=1920,
+            height=1080,
+        )
+        analysis = AnalysisMetadata(interval_seconds=10.0)
+
+        document = build_frame_summary_document(
+            video=video,
+            analysis=analysis,
+            frame_summaries=[],
+            scene_boundaries=[SceneBoundary(time_seconds=12.5, score=0.42)],
+            generated_at="2026-06-11T00:00:00Z",
+        )
+
+        self.assertEqual(
+            document["scene_boundaries"],
+            [
+                {
+                    "time_seconds": 12.5,
+                    "source": "ffmpeg_scene",
+                    "score": 0.42,
                 }
             ],
         )
