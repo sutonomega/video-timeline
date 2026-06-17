@@ -334,9 +334,12 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("timeline_index", architecture)
         self.assertIn("importance_score", architecture)
         self.assertIn("activity", architecture)
+        self.assertIn("`review`、`terminal`、`coding`、`chat`、`cooking`、`browser`、`activity`へ分類", architecture)
         self.assertIn("検索UI", architecture)
         self.assertIn("区間の長さ", architecture)
         self.assertIn("duration score", architecture)
+        self.assertIn("区間の長さと`kind`から`importance_score`を計算", architecture)
+        self.assertIn("`browser`と`activity`は補正しない", architecture)
         self.assertIn("`timeline`は動画を時系列の区間へ分けた一次構造", architecture)
         self.assertIn("`events`は`timeline`から派生する二次構造", architecture)
         self.assertIn("重要イベント抽出", architecture)
@@ -359,7 +362,8 @@ class DocsMvpContractTest(unittest.TestCase):
         roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
 
         self.assertIn("[x] イベント候補に軽量な重要度スコアを追加する（#30）", roadmap)
-        self.assertIn("[ ] LLMや分類を使ったイベント重要度判定", roadmap)
+        self.assertIn("[x] summary/tagsを使ったイベントkind分類と重要度補正（#90）", roadmap)
+        self.assertIn("[ ] LLMを使ったイベント重要度判定と分類理由生成", roadmap)
 
     def test_roadmap_tracks_per_video_frame_directory(self):
         roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
