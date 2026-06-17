@@ -157,6 +157,8 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output 
 
 `export-html` は `video`、`analysis`、`timeline`、`events` を1つの静的HTMLに出力する。`timeline` はindex、時刻範囲、summary、tagsを表で表示する。`events` はkind、時刻範囲、summary、timeline_index、importance_score、tagsを表で表示する。HTML内の値はエスケープし、CSSやJavaScriptに依存しない最小表示にする。存在しないファイル、不正なJSON、`timeline`がないJSON、dictではない`timeline`/`events`要素はエラーにする。`video_timeline.toml` はカレントディレクトリから親ディレクトリへ向かって探索する。設定ファイルがあり、`export-html` の入力が `sample` または `sample.json` のようなファイル名だけの場合は、`storage.root`、`storage.timelines_dir`、`storage.html_dir` から入出力パスを解決する。既存の明示パス指定と `--output` 指定はそのまま優先する。
 
+`timeline` は動画区間の一次構造とし、検索、clip、HTML表示の基本単位にする。`events` は `timeline_index` で元の `timeline` 区間へ戻れる派生イベント候補とし、将来の重要イベント抽出、`kind` 分類、検索UIでの強調表示に使う。現時点では `timeline` と近い情報を持つが、`events` を timeline の代替構造にはしない。
+
 ## 設定ファイル方針
 
 設定ファイルはTOML、生成物はJSONとする。TOMLは人が編集する設定を読みやすく管理するために使い、JSONは解析結果、APIレスポンス、検索インデックスなど機械処理やWeb表示で扱うデータ交換形式として使う。
