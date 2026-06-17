@@ -11,12 +11,26 @@ class DocsMvpContractTest(unittest.TestCase):
 
         required_terms = [
             "PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json",
+            "PYTHONPATH=src python3 -m video_timeline.cli sample1.mp4",
             "PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir timelines",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --output clip.mp4",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --start-index 3 --end-index 7 --output clips",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --tag github --output clips",
-            "PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt",
-            "\\\\192.168.10.112\\video-timeline",
+            "PYTHONPATH=src python3 -m video_timeline.cli search sample1.json chatgpt",
+            "PYTHONPATH=src python3 -m video_timeline.cli export-html timeline",
+            "PYTHONPATH=src python3 -m video_timeline.cli export-html sample1",
+            "/mnt/video-timeline/timelines/sample1.json",
+            "/mnt/video-timeline/html/sample1.html",
+            "`video_timeline.toml`",
+            "`storage.root`",
+            "`storage.timelines_dir`",
+            "`storage.html_dir`",
+            "[storage]",
+            'root = "/mnt/video-timeline"',
+            "設定ファイルはTOML、生成物はJSON",
+            "TOMLは設定専用、JSONはデータ交換形式",
+            "動画解析とHTML出力は別コマンド",
+            "カレントディレクトリから親ディレクトリへ向かって探索",
             "`input`",
             "`--output`",
             "`--input-dir`",
@@ -32,13 +46,14 @@ class DocsMvpContractTest(unittest.TestCase):
             "`clip --preset`",
             "`storage.timeline_path`",
             "`search timeline.json query`",
+            "`export-html timeline.json`",
+            "`export-html --output`",
             "`ffmpeg -c copy`",
             "`--accurate`",
             "`--crf`",
             "`--preset`",
             "`--interval-seconds`",
             "`--frames-dir`",
-            "`--storage-mode`",
             "`--vl-model`",
             "`--vl-provider`",
             "`version`",
@@ -62,7 +77,6 @@ class DocsMvpContractTest(unittest.TestCase):
             "`analysis.interval_seconds`",
             "`analysis.vl_provider`",
             "`analysis.vl_model`",
-            "`storage.mode`",
             "`storage.video_path`",
             "`storage.frames_dir`",
             "`storage.timeline_path`",
@@ -104,6 +118,14 @@ class DocsMvpContractTest(unittest.TestCase):
         ]:
             text = (ROOT / relative_path).read_text(encoding="utf-8")
             self.assertIn("mvp.md", text)
+
+    def test_repository_includes_default_toml_config(self):
+        config = (ROOT / "video_timeline.toml").read_text(encoding="utf-8")
+
+        self.assertIn("[storage]", config)
+        self.assertIn('root = "/mnt/video-timeline"', config)
+        self.assertIn('timelines_dir = "timelines"', config)
+        self.assertIn('html_dir = "html"', config)
 
     def test_docs_record_mvp_acceptance(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -171,9 +193,9 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("--tag", architecture)
         self.assertIn("timeline_000003.mp4", architecture)
         self.assertIn("/mnt/video-timeline/clips/", architecture)
-        self.assertIn("サーバープロセス", architecture)
+        self.assertIn("常駐プロセス", architecture)
         self.assertIn("storage.clips_dir", architecture)
-        self.assertIn("storage_root", architecture)
+        self.assertIn("storage.root", architecture)
         self.assertIn("完全一致", architecture)
         self.assertIn("複数index", architecture)
 
@@ -200,20 +222,24 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("静的HTML", architecture)
         self.assertIn("エスケープ", architecture)
         self.assertIn("01:20-04:10", architecture)
+        self.assertIn("app_config", architecture)
+        self.assertIn("AppConfig", architecture)
+        self.assertIn("StoragePathConfig", architecture)
+        self.assertIn("timeline_json_path()", architecture)
+        self.assertIn("html_output_path()", architecture)
+        self.assertIn("親ディレクトリへ向かって", architecture)
 
     def test_architecture_defines_storage_metadata_contract(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
         self.assertIn("storage metadata", architecture)
-        self.assertIn("storage.mode", architecture)
         self.assertIn("storage.video_path", architecture)
         self.assertIn("storage.frames_dir", architecture)
         self.assertIn("storage.timeline_path", architecture)
-        self.assertIn("--storage-mode server", architecture)
-        self.assertIn("ファイル転送やコピーを行うものではなく", architecture)
+        self.assertIn("local/serverの種別を判定するためのものではなく", architecture)
         self.assertIn("\\\\192.168.10.112\\video-timeline", architecture)
         self.assertIn("clips", architecture)
-        self.assertIn("storage_root", architecture)
+        self.assertIn("共有ストレージ上のパス", architecture)
         self.assertIn("相対パス", architecture)
 
     def test_architecture_defines_frame_summary_tags(self):
@@ -285,8 +311,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[x] accurateなtimeline切り出しモードを追加する（#46）", roadmap)
         self.assertIn("[x] accurate切り出しの画質と速度を指定できるようにする（#53）", roadmap)
         self.assertIn("[x] timeline index範囲をまとめて切り出せるようにする（#47）", roadmap)
-        self.assertIn("[x] 動画とフレーム画像の保存先を外部ストレージ対応にする（#37）", roadmap)
-        self.assertIn("[x] サーバー上でtimeline区間の動画切り出しを実行できるようにする（#38）", roadmap)
+        self.assertIn("[x] 動画とフレーム画像の保存先を共有ストレージ対応にする（#37）", roadmap)
+        self.assertIn("[x] 共有ストレージ上でtimeline区間の動画切り出しを実行できるようにする（#38）", roadmap)
         self.assertIn("[x] VLタグを事前定義タグとprimary_tagへ寄せる（#48）", roadmap)
         self.assertIn("[x] timeline検索CLIを追加する（#49）", roadmap)
         self.assertIn("[x] タグ別クリップ生成CLIを追加する（#50）", roadmap)

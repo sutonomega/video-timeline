@@ -21,6 +21,7 @@ from video_timeline.cli import (
 from video_timeline.event_detector import EventCandidate
 from video_timeline.frame_extractor import ExtractedFrame
 from video_timeline.frame_summarizer import FrameSummary
+from video_timeline.app_config import AppConfig, StoragePathConfig
 from video_timeline.timeline_generator import TimelineEntry
 from video_timeline.video_loader import VideoMetadata
 
@@ -144,8 +145,6 @@ class CliTest(unittest.TestCase):
                             "custom_frames",
                             "--vl-model",
                             "custom-vl:latest",
-                            "--storage-mode",
-                            "server",
                         ]
                     )
 
@@ -176,7 +175,6 @@ class CliTest(unittest.TestCase):
         self.assertEqual(
             saved["storage"],
             {
-                "mode": "server",
                 "video_path": "/tmp/input.mp4",
                 "frames_dir": str(build_run_frames_dir(video.path, "custom_frames")),
                 "timeline_path": str(output_path),
@@ -219,8 +217,53 @@ class CliTest(unittest.TestCase):
 
         self.assertEqual(exit_code, 1)
 
+    def test_cli_resolves_simple_video_run_paths_with_app_config(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        with (
+            patch("video_timeline.cli.load_app_config", return_value=config),
+            patch("video_timeline.cli.run_video", return_value=Path("/mnt/video-timeline/timelines/timeline-sample1.json")) as run_video,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["sample1.mp4", "--output", "timeline-sample1.json"])
+
+        self.assertEqual(exit_code, 0)
+        run_video.assert_called_once_with(
+            Path("/mnt/video-timeline/videos/sample1.mp4"),
+            Path("/mnt/video-timeline/timelines/timeline-sample1.json"),
+            Path("/mnt/video-timeline/frames"),
+            10,
+            vl_model="gemma3:12b",
+        )
+        self.assertIn("wrote /mnt/video-timeline/timelines/timeline-sample1.json", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_cli_uses_video_stem_output_with_app_config_when_output_is_omitted(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        with (
+            patch("video_timeline.cli.load_app_config", return_value=config),
+            patch("video_timeline.cli.run_video", return_value=Path("/mnt/video-timeline/timelines/sample1.json")) as run_video,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["sample1.mp4"])
+
+        self.assertEqual(exit_code, 0)
+        run_video.assert_called_once_with(
+            Path("/mnt/video-timeline/videos/sample1.mp4"),
+            Path("/mnt/video-timeline/timelines/sample1.json"),
+            Path("/mnt/video-timeline/frames"),
+            10,
+            vl_model="gemma3:12b",
+        )
+        self.assertIn("wrote /mnt/video-timeline/timelines/sample1.json", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
     def test_clip_cli_connects_timeline_json_to_video_clipper(self):
         with (
+            patch("video_timeline.cli.load_app_config", return_value=None),
             patch("video_timeline.cli.clip_timeline_entry", return_value=Path("clip.mp4")) as clip,
             patch("sys.stdout", new_callable=io.StringIO) as stdout,
             patch("sys.stderr", new_callable=io.StringIO) as stderr,
@@ -256,8 +299,33 @@ class CliTest(unittest.TestCase):
         self.assertIn("wrote clip.mp4", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
 
+    def test_clip_cli_resolves_simple_timeline_and_output_with_app_config(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        with (
+            patch("video_timeline.cli.load_app_config", return_value=config),
+            patch("video_timeline.cli.clip_timeline_entry", return_value=Path("/mnt/video-timeline/clips/clip1.mp4")) as clip,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["clip", "sample1.json", "--index", "3", "--output", "clip1.mp4"])
+
+        self.assertEqual(exit_code, 0)
+        clip.assert_called_once_with(
+            Path("/mnt/video-timeline/timelines/sample1.json"),
+            index=3,
+            output_path=Path("/mnt/video-timeline/clips/clip1.mp4"),
+            padding_seconds=0.0,
+            accurate=False,
+            crf=None,
+            preset=None,
+        )
+        self.assertIn("wrote /mnt/video-timeline/clips/clip1.mp4", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
     def test_clip_cli_allows_omitted_output_for_storage_timeline(self):
         with (
+            patch("video_timeline.cli.load_app_config", return_value=None),
             patch("video_timeline.cli.clip_timeline_entry", return_value=Path("/mnt/video-timeline/clips/timeline_000003.mp4")) as clip,
             patch("sys.stdout", new_callable=io.StringIO) as stdout,
             patch("sys.stderr", new_callable=io.StringIO) as stderr,
@@ -279,6 +347,7 @@ class CliTest(unittest.TestCase):
 
     def test_clip_cli_connects_index_range_to_video_clipper(self):
         with (
+            patch("video_timeline.cli.load_app_config", return_value=None),
             patch(
                 "video_timeline.cli.clip_timeline_entry_range",
                 return_value=[Path("clips/timeline_000003.mp4"), Path("clips/timeline_000004.mp4")],
@@ -323,6 +392,7 @@ class CliTest(unittest.TestCase):
 
     def test_clip_cli_connects_tag_to_video_clipper(self):
         with (
+            patch("video_timeline.cli.load_app_config", return_value=None),
             patch(
                 "video_timeline.cli.clip_timeline_entries_by_tag",
                 return_value=[Path("clips/timeline_000003.mp4"), Path("clips/timeline_000004.mp4")],
@@ -359,6 +429,7 @@ class CliTest(unittest.TestCase):
 
     def test_clip_cli_prints_no_matches_for_empty_tag_clip_result(self):
         with (
+            patch("video_timeline.cli.load_app_config", return_value=None),
             patch("video_timeline.cli.clip_timeline_entries_by_tag", return_value=[]),
             patch("sys.stdout", new_callable=io.StringIO) as stdout,
             patch("sys.stderr", new_callable=io.StringIO) as stderr,
@@ -416,6 +487,7 @@ class CliTest(unittest.TestCase):
 
     def test_clip_cli_returns_error_for_video_clipper_failure(self):
         with (
+            patch("video_timeline.cli.load_app_config", return_value=None),
             patch("video_timeline.cli.clip_timeline_entry", side_effect=ValueError("failed")),
             patch("sys.stdout", new_callable=io.StringIO),
             patch("sys.stderr", new_callable=io.StringIO) as stderr,
@@ -453,6 +525,22 @@ class CliTest(unittest.TestCase):
         self.assertIn("no matches", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
 
+    def test_search_cli_resolves_simple_timeline_with_app_config(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        with (
+            patch("video_timeline.cli.load_app_config", return_value=config),
+            patch("video_timeline.cli.search_timeline_file", return_value=[]) as search,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["search", "sample1.json", "chatgpt"])
+
+        self.assertEqual(exit_code, 0)
+        search.assert_called_once_with(Path("/mnt/video-timeline/timelines/sample1.json"), "chatgpt")
+        self.assertIn("no matches", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
     def test_search_cli_returns_error_for_search_failure(self):
         with (
             patch("video_timeline.cli.run_search", side_effect=ValueError("failed")),
@@ -466,6 +554,7 @@ class CliTest(unittest.TestCase):
 
     def test_export_html_cli_connects_timeline_json_to_exporter(self):
         with (
+            patch("video_timeline.cli.load_app_config", return_value=None),
             patch("video_timeline.cli.export_timeline_html_file", return_value=Path("timeline.html")) as export_html,
             patch("sys.stdout", new_callable=io.StringIO) as stdout,
             patch("sys.stderr", new_callable=io.StringIO) as stderr,
@@ -476,6 +565,39 @@ class CliTest(unittest.TestCase):
         export_html.assert_called_once_with("timeline.json", "timeline.html")
         self.assertIn("wrote timeline.html", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
+
+    def test_export_html_cli_resolves_basename_with_storage_config(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        with (
+            patch("video_timeline.cli.load_app_config", return_value=config),
+            patch(
+                "video_timeline.cli.export_timeline_html_file",
+                return_value=Path("/mnt/video-timeline/html/timeline.html"),
+            ) as export_html,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["export-html", "timeline"])
+
+        self.assertEqual(exit_code, 0)
+        export_html.assert_called_once_with(
+            Path("/mnt/video-timeline/timelines/timeline.json"),
+            Path("/mnt/video-timeline/html/timeline.html"),
+        )
+        self.assertIn("wrote /mnt/video-timeline/html/timeline.html", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_export_html_cli_requires_output_without_storage_config(self):
+        with (
+            patch("video_timeline.cli.load_app_config", return_value=None),
+            patch("sys.stdout", new_callable=io.StringIO),
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["export-html", "timeline.json"])
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("error: --outputが必要です", stderr.getvalue())
 
     def test_export_html_cli_returns_error_for_export_failure(self):
         with (
@@ -511,8 +633,6 @@ class CliTest(unittest.TestCase):
                     "5",
                     "--vl-model",
                     "custom-vl:latest",
-                    "--storage-mode",
-                    "server",
                 ]
             )
 
@@ -525,7 +645,6 @@ class CliTest(unittest.TestCase):
             build_batch_video_dir(first, "timelines") / "frames",
             5.0,
             isolate_frames=False,
-            storage_mode="server",
             vl_model="custom-vl:latest",
         )
         run_video.assert_any_call(
@@ -534,7 +653,6 @@ class CliTest(unittest.TestCase):
             build_batch_video_dir(second, "timelines") / "frames",
             5.0,
             isolate_frames=False,
-            storage_mode="server",
             vl_model="custom-vl:latest",
         )
         self.assertIn("batch complete: success=2 failure=0", stdout.getvalue())

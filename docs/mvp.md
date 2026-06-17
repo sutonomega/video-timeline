@@ -39,17 +39,30 @@ MVPで実装しないこと:
 PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json
 ```
 
-サーバー上の保存場所を参照情報として残す場合は、入力動画、`--output`、`--frames-dir` にサーバー上のパスを渡し、`--storage-mode server` を指定する。
+共有ストレージ運用では、リポジトリ直下または作業ディレクトリの親ディレクトリに `video_timeline.toml` を置き、保存先をTOMLで管理する。実運用では `/mnt/video-timeline` を共有ストレージのマウント先とし、共有配下は `videos`、`frames`、`timelines`、`clips`、`html` に分ける。
+
+```toml
+[storage]
+root = "/mnt/video-timeline"
+videos_dir = "videos"
+frames_dir = "frames"
+timelines_dir = "timelines"
+clips_dir = "clips"
+html_dir = "html"
+```
+
+現在のMVPでは、動画解析CLI、`search`、`clip`、`export-html` の短縮指定が設定ファイルを参照する。batchの入力解決はまだ既存CLI引数を使うが、後続で同じ `video_timeline.toml` に寄せる。
+
+動画解析とHTML出力は別コマンドとして実行する。1つ目のコマンドで `timelines/` にJSONを生成し、2つ目の `export-html` でそのJSONをHTMLへ変換する。`input` がファイル名だけで `--output` を省略した場合、入力動画は `<storage.root>/<videos_dir>/`、出力JSONは動画ファイル名のstemを使って `<storage.root>/<timelines_dir>/` に解決する。
 
 ```bash
-PYTHONPATH=src python3 -m video_timeline.cli /mnt/storage/videos/input.mp4 --output /mnt/storage/timelines/input.json --frames-dir /mnt/storage/frames --storage-mode server
+PYTHONPATH=src python3 -m video_timeline.cli sample1.mp4
+PYTHONPATH=src python3 -m video_timeline.cli export-html sample1
 ```
 
-実運用のサーバー格納場所は `\\192.168.10.112\video-timeline` とする。共有配下は `videos`、`frames`、`timelines`、`clips` に分ける。Windows共有パスから実行する場合は、次のように動画、timeline、framesの保存先を同じ共有配下に置く。
+この場合、入力動画は `/mnt/video-timeline/videos/sample1.mp4`、出力JSONは `/mnt/video-timeline/timelines/sample1.json`、フレーム保存先は `/mnt/video-timeline/frames` として扱う。HTML出力は `/mnt/video-timeline/html/sample1.html` として扱う。
 
-```powershell
-python -m video_timeline.cli "\\192.168.10.112\video-timeline\videos\input.mp4" --output "\\192.168.10.112\video-timeline\timelines\input.json" --frames-dir "\\192.168.10.112\video-timeline\frames" --storage-mode server
-```
+出力JSON名を明示したい場合は、`--output timeline-sample1.json` のようにファイル名だけを指定すると `/mnt/video-timeline/timelines/timeline-sample1.json` に保存する。
 
 複数動画をまとめて解析する場合は、入力ディレクトリと出力ディレクトリを指定する。
 
@@ -63,11 +76,13 @@ PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir
 PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --output clip.mp4
 ```
 
-`storage` 情報を持つサーバー保存済み `timeline.json` では、`--output` を省略すると `storage.timeline_path` から共有配下の `clips/` を推定して保存する。
+共有ストレージ運用では、ファイル名だけで `timelines/` の入力JSONと `clips/` の出力MP4を解決できる。
 
 ```bash
-PYTHONPATH=src python3 -m video_timeline.cli clip /mnt/video-timeline/timelines/sample.json --index 3
+PYTHONPATH=src python3 -m video_timeline.cli clip sample1.json --index 3 --output clip1.mp4
 ```
+
+この場合、入力JSONは `/mnt/video-timeline/timelines/sample1.json`、出力MP4は `/mnt/video-timeline/clips/clip1.mp4` として扱う。`--output` を省略した場合は、従来通り `storage.timeline_path` または読み込んだ `timeline.json` の場所から `clips/` を推定する。
 
 複数の連続した `timeline` 区間を個別に切り出す場合は、index範囲と出力ディレクトリを指定する。
 
@@ -84,14 +99,24 @@ PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --tag github --o
 生成済み `timeline.json` から作業区間を検索する場合は `search` サブコマンドを使う。
 
 ```bash
-PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt
+PYTHONPATH=src python3 -m video_timeline.cli search sample1.json chatgpt
 ```
 
-生成済み `timeline.json` をブラウザで確認するHTMLに出力する場合は `export-html` サブコマンドを使う。
+生成済み `timeline.json` をブラウザで確認するHTMLに出力する場合は `export-html` サブコマンドを使う。`video_timeline.toml` がある共有ストレージ運用では、ファイル名だけで `timelines/` の入力JSONと `html/` の出力HTMLを解決する。
+
+```bash
+PYTHONPATH=src python3 -m video_timeline.cli export-html timeline
+```
+
+この場合、入力JSONは `/mnt/video-timeline/timelines/timeline.json`、出力HTMLは `/mnt/video-timeline/html/timeline.html` として扱う。
+
+設定ファイルがない場合、または通常のパスを指定する場合は、従来通り `--output` で出力HTMLを明示する。
 
 ```bash
 PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output timeline.html
 ```
+
+設定ファイルはTOML、解析結果やHTML出力の元になる生成物はJSONとし、MVP以降もTOMLは設定専用、JSONはデータ交換形式として使い分ける。
 
 引数:
 
@@ -101,7 +126,6 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output 
 - `--output-dir`: 一括解析結果の保存先ベースディレクトリ
 - `--interval-seconds`: フレーム抽出間隔。既定値は`10`
 - `--frames-dir`: 抽出フレームの保存先ベースディレクトリ。既定値は`frames`
-- `--storage-mode`: JSONに記録する保存先の種別。`local`または`server`。既定値は`local`
 - `--vl-model`: フレーム要約に使うOllamaモデル。既定値は`gemma3:12b`
 - `clip timeline.json`: `timeline` の指定区間を元動画から切り出す
 - `clip --index`: 切り出す `timeline` 配列の0始まりindex
@@ -115,7 +139,7 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output 
 - `clip --preset`: `--accurate`時のx264エンコード速度。既定値は`veryfast`
 - `search timeline.json query`: `timeline` と `events` からqueryに一致する区間を検索する
 - `export-html timeline.json`: `timeline.json` を静的HTMLに変換する
-- `export-html --output`: 出力HTMLファイルのパス
+- `export-html --output`: 出力HTMLファイルのパス。`video_timeline.toml` があり、入力がファイル名だけの場合は省略できる
 
 `clip` は既定では高速な `ffmpeg -c copy` で切り出す。キーフレーム位置の影響で開始位置が指定秒から少しずれる可能性がある。厳密な切り出しが必要な場合は `--accurate` を使う。`--crf`と`--preset`は`--accurate`時だけ有効で、copy切り出しでは指定できない。
 
@@ -123,7 +147,31 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output 
 
 `search` は `timeline[].summary`、`timeline[].tags`、対応する `events[].kind`、`events[].summary`、`events[].tags` を大文字小文字を区別せず検索する。結果は `3  01:20-04:10  ChatGPTで仕様相談` のように、timeline index、時刻範囲、summaryを1行ずつ表示する。小数秒は切り捨てて表示する。空結果はエラーにせず `no matches` を表示する。存在しないファイルや不正なJSONはエラーにする。
 
-`export-html` は `video`、`analysis`、`timeline`、`events` を1つの静的HTMLに出力する。`timeline` はindex、時刻範囲、summary、tagsを表で表示する。`events` はkind、時刻範囲、summary、timeline_index、importance_score、tagsを表で表示する。HTML内の値はエスケープし、CSSやJavaScriptに依存しない最小表示にする。存在しないファイル、不正なJSON、`timeline`がないJSON、dictではない`timeline`/`events`要素はエラーにする。
+`export-html` は `video`、`analysis`、`timeline`、`events` を1つの静的HTMLに出力する。`timeline` はindex、時刻範囲、summary、tagsを表で表示する。`events` はkind、時刻範囲、summary、timeline_index、importance_score、tagsを表で表示する。HTML内の値はエスケープし、CSSやJavaScriptに依存しない最小表示にする。存在しないファイル、不正なJSON、`timeline`がないJSON、dictではない`timeline`/`events`要素はエラーにする。`video_timeline.toml` はカレントディレクトリから親ディレクトリへ向かって探索する。設定ファイルがあり、`export-html` の入力が `sample` または `sample.json` のようなファイル名だけの場合は、`storage.root`、`storage.timelines_dir`、`storage.html_dir` から入出力パスを解決する。既存のフルパス指定と `--output` 指定はそのまま優先する。
+
+## 設定ファイル方針
+
+設定ファイルはTOML、生成物はJSONとする。TOMLは人が編集する設定を読みやすく管理するために使い、JSONは解析結果、APIレスポンス、検索インデックスなど機械処理やWeb表示で扱うデータ交換形式として使う。
+
+TOMLの対象:
+
+- アプリケーション設定
+- ストレージ設定
+- 既定モデル設定
+- HTML出力設定
+- タイムライン生成設定
+- 将来の検索設定
+
+JSONの対象:
+
+- `timeline.json`
+- `frame_summaries`
+- `analysis` 結果
+- export用データ
+- APIレスポンス
+- 将来の検索インデックス
+
+`timeline` 出力、`frame_summaries`、APIレスポンスはTOML化しない。CLIはまず `video_timeline.toml` を読み込み、設定が存在しない場合は現在の既定値と明示されたCLI引数を使う。
 
 将来拡張する任意引数:
 
@@ -178,7 +226,6 @@ CLIで生成したJSONには、動画、フレーム画像、timeline JSONの参
 ```json
 {
   "storage": {
-    "mode": "server",
     "video_path": "/mnt/storage/videos/input.mp4",
     "frames_dir": "/mnt/storage/frames/input_abcd1234ef56",
     "timeline_path": "/mnt/storage/timelines/input.json"
@@ -186,9 +233,9 @@ CLIで生成したJSONには、動画、フレーム画像、timeline JSONの参
 }
 ```
 
-`mode` は `local` または `server` とする。`server` はファイルを自動転送する機能ではなく、入力動画、フレーム保存先、timeline保存先がサーバー上のパスであることをJSONに明示するためのメタデータとして扱う。既存のローカル運用では `mode` を `local` とし、従来通り `video.path` と `frame_summaries[].image` から参照できる状態を維持する。
+`storage` はlocal/serverの種別を判定するためのものではなく、実際に参照した動画、フレーム保存先、timeline保存先のパスを記録する。明示パスを渡した場合はそのパスを保存し、`video_timeline.toml` の短縮解決を使った場合は解決後の共有ストレージ上のパスを保存する。
 
-将来、別PCやサーバー上で同じJSONを扱う場合は、絶対パスだけでなく `storage_root` と相対パスを組み合わせる方式も検討する。例として、`storage_root` を `/data/video-timeline`、`video_path` を `videos/a.mp4`、`frames_dir` を `frames/a_xxxx`、`timeline_path` を `timelines/a.json` のように保存すると、環境ごとの差を `storage_root` に寄せられる。
+将来、別PCや別マウント先で同じJSONを扱う場合は、絶対パスだけでなく `storage.root` と相対パスを組み合わせる方式も検討する。例として、`storage.root` を `/mnt/video-timeline`、`video_path` を `videos/a.mp4`、`frames_dir` を `frames/a_xxxx`、`timeline_path` を `timelines/a.json` のように保存すると、ローカルSSD、外付けSSD、NAS、SMB共有、NFSなどの違いを `storage.root` に寄せられる。
 
 同じ考え方で、clipの保存先を明示したい場合は将来 `storage.clips_dir` を追加する。現時点では、共有ルート直下に `timelines` と `clips` を兄弟ディレクトリとして置くMVP運用を前提に、`storage.timeline_path` から `clips/` を推定する。
 
@@ -254,7 +301,6 @@ MVPのJSONは次の構造にする。
     "vl_model": "gemma3:12b"
   },
   "storage": {
-    "mode": "local",
     "video_path": "input.mp4",
     "frames_dir": "frames/input_abcd1234ef56",
     "timeline_path": "timeline.json"
@@ -295,7 +341,6 @@ MVPのJSONは次の構造にする。
 - `analysis.interval_seconds`
 - `analysis.vl_provider`
 - `analysis.vl_model`
-- `storage.mode`
 - `storage.video_path`
 - `storage.frames_dir`
 - `storage.timeline_path`
