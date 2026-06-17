@@ -149,12 +149,18 @@ class DocsMvpContractTest(unittest.TestCase):
 
     def test_docs_record_mvp_acceptance(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        mvp = (ROOT / "docs" / "mvp.md").read_text(encoding="utf-8")
         roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
         acceptance = (ROOT / "docs" / "acceptance.md").read_text(encoding="utf-8")
 
         self.assertIn("MVP accepted", readme)
         self.assertIn("docs/acceptance.md", readme)
         self.assertIn("[x] 短い検証用MP4とOllamaでのMVP受け入れ確認", roadmap)
+        self.assertIn("`docs/mvp.md` の手順でCLIを実行できる", mvp)
+        self.assertIn("MVPの受け入れ確認結果を `docs/acceptance.md` に記録している", mvp)
+        self.assertNotIn("READMEの手順だけでCLIを実行できる", mvp)
+        self.assertNotIn("docs/roadmap.mdでMVP完了として扱える", mvp)
+        self.assertIn("docs/mvp.md の手順でCLIを実行し", acceptance)
         self.assertIn("qwen2.5vl:7b", acceptance)
         self.assertIn("PYTHONPATH=src python3 -m video_timeline.cli", acceptance)
 
@@ -368,6 +374,9 @@ class DocsMvpContractTest(unittest.TestCase):
     def test_roadmap_tracks_frame_summary_tags(self):
         roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
 
+        self.assertIn("## MVP後に実装済み", roadmap)
+        self.assertIn("## 次にやること", roadmap)
+        self.assertIn("MVP完了後の拡張として", roadmap)
         self.assertIn("[x] フレーム要約にタグ付けを追加する（#34）", roadmap)
         self.assertIn("[x] タグを使ったtimeline統合ロジックを実装する（#35）", roadmap)
         self.assertIn("[x] 実録画でタグ統合品質を確認する（#43）", roadmap)
@@ -381,6 +390,11 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[x] timeline検索CLIを追加する（#49）", roadmap)
         self.assertIn("[x] タグ別クリップ生成CLIを追加する（#50）", roadmap)
         self.assertIn("[x] タイムラインHTML出力CLIを追加する（#51）", roadmap)
+        self.assertIn("[x] 設定ファイルで共有ストレージの保存先を管理する（#77）", roadmap)
+        self.assertIn("[x] 設定・ストレージ・CLI UXの責務を整理する（#79）", roadmap)
+        self.assertIn("[x] storage mode 概念の残骸を削除する（#81）", roadmap)
+        self.assertIn("[x] events の責務を再定義する（#83）", roadmap)
+        self.assertIn("[x] batch CLI と通常CLIのストレージ解決を揃える（#82）", roadmap)
 
     def test_quality_review_records_frame_summary_to_timeline_findings(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
