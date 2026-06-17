@@ -104,6 +104,8 @@ class DocsMvpContractTest(unittest.TestCase):
             "`transcripts[].text`",
             "`transcripts[].source`",
             "`external_asr`",
+            "`ffmpeg -progress pipe:1`",
+            "scene detection progress: 01:20/10:00 (13%)",
             "Whisper 系",
             "faster-whisper",
             "whisper.cpp",
@@ -210,6 +212,9 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("source", architecture)
         self.assertIn("timeline 生成の主判断には使わず", architecture)
         self.assertIn("品質確認や後続の区間調整", architecture)
+        self.assertIn("ffmpeg -progress pipe:1", architecture)
+        self.assertIn("CLI進捗", architecture)
+        self.assertIn("保存する `scene_boundaries` の形式は変えない", architecture)
         self.assertIn("シーン境界をイベントと同一視すること", architecture)
 
     def test_architecture_defines_transcript_loader_contract(self):
@@ -407,6 +412,7 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[x] summary/tagsを使ったイベントkind分類と重要度補正（#90）", roadmap)
         self.assertIn("[x] シーン分割をtimeline生成の補助情報として追加する（#88）", roadmap)
         self.assertIn("[x] 音声認識結果をtimeline補助情報として保存する（#89）", roadmap)
+        self.assertIn("[x] シーン境界検出中の進捗表示を追加する（#98）", roadmap)
         self.assertIn("[ ] LLMを使ったイベント重要度判定と分類理由生成", roadmap)
         self.assertIn("[ ] ローカルASR実行とtranscript品質確認", roadmap)
 
