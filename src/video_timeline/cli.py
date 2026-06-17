@@ -17,12 +17,15 @@ from .frame_summarizer import (
     save_frame_summary_json,
     summarize_frames_with_ollama,
 )
-from .app_config import load_app_config, resolve_export_html_paths
+from .app_config import load_app_config, resolve_export_html_paths, resolve_video_run_paths
 from .timeline_generator import build_timeline
 from .timeline_html_exporter import export_timeline_html_file
 from .timeline_searcher import format_search_result, search_timeline_file
 from .video_clipper import clip_timeline_entries_by_tag, clip_timeline_entry, clip_timeline_entry_range
 from .video_loader import load_video_metadata
+
+
+DEFAULT_FRAMES_DIR = "frames"
 
 
 def print_progress(message: str) -> None:
@@ -96,7 +99,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_INTERVAL_SECONDS,
         help="フレーム抽出間隔。既定値は10秒",
     )
-    parser.add_argument("--frames-dir", default="frames", help="抽出フレームの保存先")
+    parser.add_argument("--frames-dir", default=DEFAULT_FRAMES_DIR, help="抽出フレームの保存先")
     parser.add_argument("--vl-model", default=DEFAULT_VL_MODEL, help=f"フレーム要約に使うOllamaモデル。既定値は{DEFAULT_VL_MODEL}")
     parser.add_argument(
         "--storage-mode",
@@ -301,13 +304,20 @@ def run(args: argparse.Namespace) -> Path | tuple[int, int]:
         return run_batch(args)
     if args.input is None:
         raise ValueError("inputまたは--input-dirが必要です")
-    if args.output is None:
-        raise ValueError("--outputが必要です")
 
-    return run_video(
+    input_path, output_path, frames_dir = resolve_video_run_paths(
         args.input,
         args.output,
         args.frames_dir,
+        load_app_config(),
+    )
+    if output_path is None:
+        raise ValueError("--outputが必要です")
+
+    return run_video(
+        input_path,
+        output_path,
+        frames_dir,
         args.interval_seconds,
         storage_mode=args.storage_mode,
         vl_model=args.vl_model,

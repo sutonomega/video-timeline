@@ -11,13 +11,17 @@ class DocsMvpContractTest(unittest.TestCase):
 
         required_terms = [
             "PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json",
-            "PYTHONPATH=src python3 -m video_timeline.cli /mnt/video-timeline/videos/input.mp4 --output /mnt/video-timeline/timelines/timeline.json --frames-dir /mnt/video-timeline/frames --storage-mode server",
+            "PYTHONPATH=src python3 -m video_timeline.cli sample1.mp4",
+            "PYTHONPATH=src python3 -m video_timeline.cli /mnt/video-timeline/videos/input.mp4 --output /mnt/video-timeline/timelines/input.json --frames-dir /mnt/video-timeline/frames --storage-mode server",
             "PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir timelines",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --output clip.mp4",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --start-index 3 --end-index 7 --output clips",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --tag github --output clips",
             "PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt",
             "PYTHONPATH=src python3 -m video_timeline.cli export-html timeline",
+            "PYTHONPATH=src python3 -m video_timeline.cli export-html sample1",
+            "/mnt/video-timeline/timelines/sample1.json",
+            "/mnt/video-timeline/html/sample1.html",
             "\\\\192.168.10.112\\video-timeline",
             "`video_timeline.toml`",
             "`storage.root`",

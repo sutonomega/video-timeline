@@ -34,10 +34,20 @@ class StoragePathConfig:
         )
 
     def timeline_json_path(self, name: str) -> Path:
-        return self.storage_root / self.timelines_dir / f"{name}.json"
+        path = Path(name)
+        filename = path.name if path.suffix == ".json" else f"{path.name}.json"
+        return self.storage_root / self.timelines_dir / filename
 
     def html_output_path(self, name: str) -> Path:
-        return self.storage_root / self.html_dir / f"{name}.html"
+        path = Path(name)
+        filename = f"{path.stem}.html" if path.suffix else f"{path.name}.html"
+        return self.storage_root / self.html_dir / filename
+
+    def video_file_path(self, filename: str | Path) -> Path:
+        return self.storage_root / self.videos_dir / Path(filename).name
+
+    def frames_directory_path(self) -> Path:
+        return self.storage_root / self.frames_dir
 
 
 @dataclass(frozen=True)
@@ -57,6 +67,12 @@ class AppConfig:
 
     def html_output_path(self, name: str) -> Path:
         return self.storage.html_output_path(name)
+
+    def video_file_path(self, filename: str | Path) -> Path:
+        return self.storage.video_file_path(filename)
+
+    def frames_directory_path(self) -> Path:
+        return self.storage.frames_directory_path()
 
 
 def _read_dir_name(payload: Mapping[str, object], key: str, default: str) -> str:
@@ -99,6 +115,35 @@ def resolve_export_html_paths(
 
     name = timeline_path.stem if timeline_path.suffix == ".json" else timeline_path.name
     return config.timeline_json_path(name), config.html_output_path(name)
+
+
+def resolve_video_run_paths(
+    input_path: str | Path,
+    output_path: str | Path | None,
+    frames_dir: str | Path,
+    config: AppConfig | None,
+) -> tuple[str | Path, str | Path | None, str | Path]:
+    if config is None:
+        return input_path, output_path, frames_dir
+
+    input_candidate = Path(input_path)
+    if not _is_simple_filename(input_candidate):
+        return input_path, output_path, frames_dir
+
+    if output_path is not None:
+        output_candidate = Path(output_path)
+        if not _is_simple_filename(output_candidate):
+            return input_path, output_path, frames_dir
+        output_name = output_candidate
+    else:
+        output_name = input_candidate.stem
+
+    resolved_frames_dir: str | Path = config.frames_directory_path() if Path(frames_dir) == Path("frames") else frames_dir
+    return (
+        config.video_file_path(input_candidate),
+        config.timeline_json_path(output_name),
+        resolved_frames_dir,
+    )
 
 
 def _default_config_dirs() -> list[Path]:

@@ -220,6 +220,52 @@ class CliTest(unittest.TestCase):
 
         self.assertEqual(exit_code, 1)
 
+    def test_cli_resolves_simple_video_run_paths_with_app_config(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        with (
+            patch("video_timeline.cli.load_app_config", return_value=config),
+            patch("video_timeline.cli.run_video", return_value=Path("/mnt/video-timeline/timelines/timeline-sample1.json")) as run_video,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["sample1.mp4", "--output", "timeline-sample1.json"])
+
+        self.assertEqual(exit_code, 0)
+        run_video.assert_called_once_with(
+            Path("/mnt/video-timeline/videos/sample1.mp4"),
+            Path("/mnt/video-timeline/timelines/timeline-sample1.json"),
+            Path("/mnt/video-timeline/frames"),
+            10,
+            storage_mode="local",
+            vl_model="gemma3:12b",
+        )
+        self.assertIn("wrote /mnt/video-timeline/timelines/timeline-sample1.json", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_cli_uses_video_stem_output_with_app_config_when_output_is_omitted(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        with (
+            patch("video_timeline.cli.load_app_config", return_value=config),
+            patch("video_timeline.cli.run_video", return_value=Path("/mnt/video-timeline/timelines/sample1.json")) as run_video,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["sample1.mp4"])
+
+        self.assertEqual(exit_code, 0)
+        run_video.assert_called_once_with(
+            Path("/mnt/video-timeline/videos/sample1.mp4"),
+            Path("/mnt/video-timeline/timelines/sample1.json"),
+            Path("/mnt/video-timeline/frames"),
+            10,
+            storage_mode="local",
+            vl_model="gemma3:12b",
+        )
+        self.assertIn("wrote /mnt/video-timeline/timelines/sample1.json", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
     def test_clip_cli_connects_timeline_json_to_video_clipper(self):
         with (
             patch("video_timeline.cli.clip_timeline_entry", return_value=Path("clip.mp4")) as clip,

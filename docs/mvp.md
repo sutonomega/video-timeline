@@ -51,14 +51,18 @@ clips_dir = "clips"
 html_dir = "html"
 ```
 
-現在のMVPでは `export-html` の短縮指定が設定ファイルを参照する。動画解析、batch、clipの入力解決はまだ既存CLI引数を使うが、後続で同じ `video_timeline.toml` に寄せる。
+現在のMVPでは、動画解析CLIと `export-html` の短縮指定が設定ファイルを参照する。batchとclipの入力解決はまだ既存CLI引数を使うが、後続で同じ `video_timeline.toml` に寄せる。
 
-動画解析とHTML出力は別コマンドとして実行する。1つ目のコマンドで `timelines/` にJSONを生成し、2つ目の `export-html` でそのJSONをHTMLへ変換する。
+動画解析とHTML出力は別コマンドとして実行する。1つ目のコマンドで `timelines/` にJSONを生成し、2つ目の `export-html` でそのJSONをHTMLへ変換する。`input` がファイル名だけで `--output` を省略した場合、入力動画は `<storage.root>/<videos_dir>/`、出力JSONは動画ファイル名のstemを使って `<storage.root>/<timelines_dir>/` に解決する。
 
 ```bash
-PYTHONPATH=src python3 -m video_timeline.cli /mnt/video-timeline/videos/input.mp4 --output /mnt/video-timeline/timelines/timeline.json --frames-dir /mnt/video-timeline/frames --storage-mode server
-PYTHONPATH=src python3 -m video_timeline.cli export-html timeline
+PYTHONPATH=src python3 -m video_timeline.cli sample1.mp4
+PYTHONPATH=src python3 -m video_timeline.cli export-html sample1
 ```
+
+この場合、入力動画は `/mnt/video-timeline/videos/sample1.mp4`、出力JSONは `/mnt/video-timeline/timelines/sample1.json`、フレーム保存先は `/mnt/video-timeline/frames` として扱う。HTML出力は `/mnt/video-timeline/html/sample1.html` として扱う。
+
+出力JSON名を明示したい場合は、`--output timeline-sample1.json` のようにファイル名だけを指定すると `/mnt/video-timeline/timelines/timeline-sample1.json` に保存する。
 
 複数動画をまとめて解析する場合は、入力ディレクトリと出力ディレクトリを指定する。
 

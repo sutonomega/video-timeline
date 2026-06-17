@@ -14,6 +14,7 @@ from video_timeline.app_config import (
     load_app_config,
     load_app_config_file,
     resolve_export_html_paths,
+    resolve_video_run_paths,
 )
 
 
@@ -68,7 +69,13 @@ class AppConfigTest(unittest.TestCase):
         config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
 
         self.assertEqual(config.timeline_json_path("sample1"), Path("/mnt/video-timeline/timelines/sample1.json"))
+        self.assertEqual(
+            config.timeline_json_path("timeline-sample1.json"),
+            Path("/mnt/video-timeline/timelines/timeline-sample1.json"),
+        )
         self.assertEqual(config.html_output_path("sample1"), Path("/mnt/video-timeline/html/sample1.html"))
+        self.assertEqual(config.video_file_path("sample1.mp4"), Path("/mnt/video-timeline/videos/sample1.mp4"))
+        self.assertEqual(config.frames_directory_path(), Path("/mnt/video-timeline/frames"))
 
     def test_resolve_export_html_paths_uses_basename_with_config(self):
         config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
@@ -107,6 +114,48 @@ class AppConfigTest(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "--output"):
             resolve_export_html_paths("timelines/sample1.json", None, config)
+
+    def test_resolve_video_run_paths_uses_storage_for_simple_input_and_output(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        input_path, output_path, frames_dir = resolve_video_run_paths(
+            "sample1.mp4",
+            "timeline-sample1.json",
+            "frames",
+            config,
+        )
+
+        self.assertEqual(input_path, Path("/mnt/video-timeline/videos/sample1.mp4"))
+        self.assertEqual(output_path, Path("/mnt/video-timeline/timelines/timeline-sample1.json"))
+        self.assertEqual(frames_dir, Path("/mnt/video-timeline/frames"))
+
+    def test_resolve_video_run_paths_uses_video_stem_when_output_is_omitted(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        input_path, output_path, frames_dir = resolve_video_run_paths(
+            "sample1.mp4",
+            None,
+            "frames",
+            config,
+        )
+
+        self.assertEqual(input_path, Path("/mnt/video-timeline/videos/sample1.mp4"))
+        self.assertEqual(output_path, Path("/mnt/video-timeline/timelines/sample1.json"))
+        self.assertEqual(frames_dir, Path("/mnt/video-timeline/frames"))
+
+    def test_resolve_video_run_paths_keeps_explicit_paths(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        input_path, output_path, frames_dir = resolve_video_run_paths(
+            "/tmp/sample1.mp4",
+            "timeline-sample1.json",
+            "frames",
+            config,
+        )
+
+        self.assertEqual(input_path, "/tmp/sample1.mp4")
+        self.assertEqual(output_path, "timeline-sample1.json")
+        self.assertEqual(frames_dir, "frames")
 
     def test_load_app_config_file_rejects_absolute_child_dir(self):
         with TemporaryDirectory() as directory:
