@@ -485,19 +485,19 @@ class CliTest(unittest.TestCase):
             patch("video_timeline.cli.load_app_config", return_value=config),
             patch(
                 "video_timeline.cli.export_timeline_html_file",
-                return_value=Path("/mnt/video-timeline/html/sample1-gemma312b.html"),
+                return_value=Path("/mnt/video-timeline/html/timeline.html"),
             ) as export_html,
             patch("sys.stdout", new_callable=io.StringIO) as stdout,
             patch("sys.stderr", new_callable=io.StringIO) as stderr,
         ):
-            exit_code = main(["export-html", "sample1-gemma312b"])
+            exit_code = main(["export-html", "timeline"])
 
         self.assertEqual(exit_code, 0)
         export_html.assert_called_once_with(
-            Path("/mnt/video-timeline/timelines/sample1-gemma312b.json"),
-            Path("/mnt/video-timeline/html/sample1-gemma312b.html"),
+            Path("/mnt/video-timeline/timelines/timeline.json"),
+            Path("/mnt/video-timeline/html/timeline.html"),
         )
-        self.assertIn("wrote /mnt/video-timeline/html/sample1-gemma312b.html", stdout.getvalue())
+        self.assertIn("wrote /mnt/video-timeline/html/timeline.html", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
 
     def test_export_html_cli_requires_output_without_storage_config(self):

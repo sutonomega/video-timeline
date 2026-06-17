@@ -73,18 +73,18 @@ class AppConfigTest(unittest.TestCase):
     def test_resolve_export_html_paths_uses_basename_with_config(self):
         config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
 
-        timeline_json, output_path = resolve_export_html_paths("sample1-gemma312b", None, config)
+        timeline_json, output_path = resolve_export_html_paths("timeline", None, config)
 
-        self.assertEqual(timeline_json, Path("/mnt/video-timeline/timelines/sample1-gemma312b.json"))
-        self.assertEqual(output_path, Path("/mnt/video-timeline/html/sample1-gemma312b.html"))
+        self.assertEqual(timeline_json, Path("/mnt/video-timeline/timelines/timeline.json"))
+        self.assertEqual(output_path, Path("/mnt/video-timeline/html/timeline.html"))
 
     def test_resolve_export_html_paths_accepts_json_basename_with_config(self):
         config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
 
-        timeline_json, output_path = resolve_export_html_paths("sample1-gemma312b.json", None, config)
+        timeline_json, output_path = resolve_export_html_paths("timeline.json", None, config)
 
-        self.assertEqual(timeline_json, Path("/mnt/video-timeline/timelines/sample1-gemma312b.json"))
-        self.assertEqual(output_path, Path("/mnt/video-timeline/html/sample1-gemma312b.html"))
+        self.assertEqual(timeline_json, Path("/mnt/video-timeline/timelines/timeline.json"))
+        self.assertEqual(output_path, Path("/mnt/video-timeline/html/timeline.html"))
 
     def test_resolve_export_html_paths_keeps_explicit_output(self):
         config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))

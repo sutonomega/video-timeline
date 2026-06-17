@@ -92,10 +92,10 @@ PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt
 生成済み `timeline.json` をブラウザで確認するHTMLに出力する場合は `export-html` サブコマンドを使う。`video_timeline.toml` がある共有ストレージ運用では、ファイル名だけで `timelines/` の入力JSONと `html/` の出力HTMLを解決する。
 
 ```bash
-PYTHONPATH=src python3 -m video_timeline.cli export-html sample1-gemma312b
+PYTHONPATH=src python3 -m video_timeline.cli export-html timeline
 ```
 
-この場合、入力JSONは `/mnt/video-timeline/timelines/sample1-gemma312b.json`、出力HTMLは `/mnt/video-timeline/html/sample1-gemma312b.html` として扱う。
+この場合、入力JSONは `/mnt/video-timeline/timelines/timeline.json`、出力HTMLは `/mnt/video-timeline/html/timeline.html` として扱う。
 
 設定ファイルがない場合、または通常のパスを指定する場合は、従来通り `--output` で出力HTMLを明示する。
 

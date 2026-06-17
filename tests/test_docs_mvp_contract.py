@@ -16,7 +16,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --start-index 3 --end-index 7 --output clips",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --tag github --output clips",
             "PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt",
-            "PYTHONPATH=src python3 -m video_timeline.cli export-html sample1-gemma312b",
+            "PYTHONPATH=src python3 -m video_timeline.cli export-html timeline",
             "\\\\192.168.10.112\\video-timeline",
             "`video_timeline.toml`",
             "`storage.root`",
