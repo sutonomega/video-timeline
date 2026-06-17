@@ -260,7 +260,7 @@ CLIで生成したJSONには、動画、フレーム画像、timeline JSONの参
 }
 ```
 
-`storage` はlocal/serverの種別を判定するためのものではなく、実際に参照した動画、フレーム保存先、timeline保存先のパスを記録する。明示パスを渡した場合はそのパスを保存し、`video_timeline.toml` の短縮解決を使った場合は解決後の共有ストレージ上のパスを保存する。
+`storage` は保存先種別を判定するためのものではなく、実際に参照した動画、フレーム保存先、timeline保存先のパスを記録する。保存するキーは `storage.video_path`、`storage.frames_dir`、`storage.timeline_path` とし、`storage.mode` は保存しない。明示パスを渡した場合はそのパスを保存し、`video_timeline.toml` の短縮解決を使った場合は解決後の `storage.root` 配下のパスを保存する。
 
 将来、別PCや別マウント先で同じJSONを扱う場合は、絶対パスだけでなく `storage.root` と相対パスを組み合わせる方式も検討する。例として、`storage.root` を `/mnt/video-timeline`、`video_path` を `videos/a.mp4`、`frames_dir` を `frames/a_xxxx`、`timeline_path` を `timelines/a.json` のように保存すると、ローカルSSD、外付けSSD、NAS、SMB共有、NFSなどの違いを `storage.root` に寄せられる。
 

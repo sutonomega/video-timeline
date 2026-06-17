@@ -35,7 +35,7 @@ Main Modules
 
 設定ファイルはTOML、生成物はJSONに固定する。TOMLは人が編集するアプリケーション設定に使い、JSONは解析結果、APIレスポンス、検索インデックスなど機械処理とデータ交換を優先する生成物に使う。`timeline` 出力、`frame_summaries`、APIレスポンスをTOML化することは非目標とする。
 
-`video_timeline.toml` は、ローカルSSD、外付けSSD、NAS、SMB共有、NFSなどの媒体差を意識せず、指定された `storage.root` 配下の標準ディレクトリを使うための既定値を管理する。プログラムは「local」「server」のような保存先種別を判定しない。明示されたパスは通常のファイルパスとして扱い、TOMLはファイル名だけを指定したときの解決規則として使う。
+`video_timeline.toml` は、ローカルSSD、外付けSSD、NAS、SMB共有、NFSなどの媒体差を意識せず、指定された `storage.root` 配下の標準ディレクトリを使うための既定値を管理する。プログラムは保存先種別を判定しない。明示されたパスは通常のファイルパスとして扱い、TOMLはファイル名だけを指定したときの解決規則として使う。
 
 現在実装する設定は `[storage]` のみとする。
 
@@ -76,7 +76,7 @@ CLI引数とTOML設定の優先順位は次の通りとする。
 4. CLI引数とTOMLが同じ種類の値を指定できる場合は、CLI引数を優先する。
 5. batch CLIは現時点では `--input-dir` と `--output-dir` を明示する運用を維持し、短縮解決は後続で揃える。
 
-生成JSONの `storage` は、実際に参照した動画、フレーム保存先、timeline保存先を記録するメタデータとする。現時点では即時利用を優先し、解決後のパスを `storage.video_path`、`storage.frames_dir`、`storage.timeline_path` に保存する。別PCや別マウント先での移動性が必要になった段階で、`storage.root` と `videos/sample.mp4`、`timelines/sample.json` のような相対パスを組み合わせる形式へ拡張する。
+生成JSONの `storage` は、実際に参照した動画、フレーム保存先、timeline保存先を記録するメタデータとする。現時点では即時利用を優先し、解決後のパスを `storage.video_path`、`storage.frames_dir`、`storage.timeline_path` に保存する。`storage.mode` は保存しない。別PCや別マウント先での移動性が必要になった段階で、`storage.root` と `videos/sample.mp4`、`timelines/sample.json` のような相対パスを組み合わせる形式へ拡張する。
 
 ## video_loader
 
@@ -107,7 +107,7 @@ CLIから使う場合は、`--frames-dir`をベースディレクトリとして
 - `storage.frames_dir` に抽出フレームの保存ディレクトリを保存する
 - `storage.timeline_path` にtimeline JSONの保存先を保存する
 
-`storage` はlocal/serverの種別を判定するためのものではなく、実際に参照したパスを記録するためのメタデータとする。明示パスを渡した場合はそのパスを保存し、`video_timeline.toml` の短縮解決を使った場合は解決後の `storage.root` 配下のパスを保存する。clipを実行する場合は、この `storage` 情報と従来の `video.path` を使って元動画とフレーム保存先を解決する。
+`storage` は保存先種別を判定するためのものではなく、実際に参照したパスを記録するためのメタデータとする。明示パスを渡した場合はそのパスを保存し、`video_timeline.toml` の短縮解決を使った場合は解決後の `storage.root` 配下のパスを保存する。clipを実行する場合は、この `storage` 情報と従来の `video.path` を使って元動画とフレーム保存先を解決する。
 
 共有ストレージの例は `\\192.168.10.112\video-timeline` とする。Windows共有パスを使う場合も、CLIには通常のパス文字列として渡し、JSONの `storage.video_path`、`storage.frames_dir`、`storage.timeline_path` に同じ参照先を記録する。
 
