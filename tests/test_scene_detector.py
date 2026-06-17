@@ -39,6 +39,20 @@ class SceneDetectorTest(unittest.TestCase):
             ],
         )
 
+    def test_parse_ffmpeg_scene_metadata_filters_by_threshold(self):
+        output = "\n".join(
+            [
+                "frame:0 pts:100 pts_time:10.5",
+                "lavfi.scene_score=0.1",
+                "frame:1 pts:200 pts_time:20",
+                "lavfi.scene_score=0.789",
+            ]
+        )
+
+        boundaries = parse_ffmpeg_scene_metadata(output, threshold=0.4)
+
+        self.assertEqual(boundaries, [SceneBoundary(time_seconds=20.0, score=0.789)])
+
     def test_parse_ffmpeg_scene_metadata_deduplicates_times(self):
         output = "\n".join(
             [
@@ -82,7 +96,7 @@ class SceneDetectorTest(unittest.TestCase):
         self.assertIn("ffmpeg", command)
         self.assertIn("-progress", command)
         self.assertIn("pipe:1", command)
-        self.assertIn("select='gt(scene,0.35)',metadata=print", command)
+        self.assertIn("select='gte(scene,0)',metadata=print", command)
         self.assertEqual(boundaries, [SceneBoundary(time_seconds=12.25, score=0.6)])
         self.assertEqual(progress_calls, [5.0])
 
@@ -108,6 +122,7 @@ class SceneDetectorTest(unittest.TestCase):
     def test_parse_ffmpeg_progress_time_reads_out_time(self):
         self.assertEqual(parse_ffmpeg_progress_time("out_time=01:02:03.500000"), 3723.5)
         self.assertIsNone(parse_ffmpeg_progress_time("progress=continue"))
+        self.assertIsNone(parse_ffmpeg_progress_time("out_time=N/A"))
 
 
 if __name__ == "__main__":

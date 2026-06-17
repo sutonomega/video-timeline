@@ -49,12 +49,11 @@ def detect_scene_boundaries(
         "-i",
         str(video_path),
         "-vf",
-        f"select='gt(scene,{threshold:g})',metadata=print",
+        "select='gte(scene,0)',metadata=print",
         "-f",
         "null",
         "-",
     ]
-    output_lines: list[str] = []
     try:
         process = subprocess.Popen(
             command,
@@ -65,9 +64,10 @@ def detect_scene_boundaries(
     except FileNotFoundError as exc:
         raise SceneDetectorError("ffmpegが見つかりません。") from exc
 
+    metadata_parser = SceneMetadataParser(threshold=threshold)
     if process.stdout is not None:
         for line in process.stdout:
-            output_lines.append(line)
+            metadata_parser.feed_line(line)
             processed_seconds = parse_ffmpeg_progress_time(line)
             if progress is not None and processed_seconds is not None:
                 progress(processed_seconds)
@@ -76,7 +76,7 @@ def detect_scene_boundaries(
     if return_code != 0:
         raise SceneDetectorError(f"scene boundaryを検出できません: {video_path}")
 
-    return parse_ffmpeg_scene_metadata("".join(output_lines))
+    return metadata_parser.boundaries()
 
 
 def safe_detect_scene_boundaries(
@@ -90,28 +90,34 @@ def safe_detect_scene_boundaries(
         return []
 
 
-def parse_ffmpeg_scene_metadata(output: str) -> list[SceneBoundary]:
-    boundaries: list[SceneBoundary] = []
-    pending_time: float | None = None
-    pending_score: float | None = None
+class SceneMetadataParser:
+    def __init__(self, threshold: float = 0.0) -> None:
+        self.threshold = threshold
+        self.pending_time: float | None = None
+        self.boundary_candidates: list[SceneBoundary] = []
 
-    for line in output.splitlines():
+    def feed_line(self, line: str) -> None:
         time_match = re.search(r"pts_time:([0-9]+(?:\.[0-9]+)?)", line)
         if time_match:
-            if pending_time is not None:
-                boundaries.append(SceneBoundary(time_seconds=pending_time, score=pending_score))
-            pending_time = float(time_match.group(1))
-            pending_score = None
-            continue
+            self.pending_time = float(time_match.group(1))
+            return
 
         score_match = re.search(r"lavfi\.scene_score=([0-9]+(?:\.[0-9]+)?)", line)
-        if score_match and pending_time is not None:
-            pending_score = float(score_match.group(1))
+        if score_match and self.pending_time is not None:
+            score = float(score_match.group(1))
+            if score >= self.threshold:
+                self.boundary_candidates.append(SceneBoundary(time_seconds=self.pending_time, score=score))
+            self.pending_time = None
 
-    if pending_time is not None:
-        boundaries.append(SceneBoundary(time_seconds=pending_time, score=pending_score))
+    def boundaries(self) -> list[SceneBoundary]:
+        return _deduplicate_boundaries(self.boundary_candidates)
 
-    return _deduplicate_boundaries(boundaries)
+
+def parse_ffmpeg_scene_metadata(output: str, threshold: float = 0.0) -> list[SceneBoundary]:
+    parser = SceneMetadataParser(threshold=threshold)
+    for line in output.splitlines():
+        parser.feed_line(line)
+    return parser.boundaries()
 
 
 def parse_ffmpeg_progress_time(line: str) -> float | None:
