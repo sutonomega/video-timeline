@@ -93,6 +93,24 @@ PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt
 PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output timeline.html
 ```
 
+共有ストレージ運用では、`video_timeline.toml` に保存先を定義すると、ファイル名だけで `timeline.json` とHTML出力先を解決できる。
+
+```toml
+[storage]
+root = "/mnt/video-timeline"
+videos_dir = "videos"
+frames_dir = "frames"
+timelines_dir = "timelines"
+clips_dir = "clips"
+html_dir = "html"
+```
+
+```bash
+PYTHONPATH=src python3 -m video_timeline.cli export-html sample1-gemma312b
+```
+
+この場合、入力JSONは `/mnt/video-timeline/timelines/sample1-gemma312b.json`、出力HTMLは `/mnt/video-timeline/html/sample1-gemma312b.html` として扱う。設定ファイルがない場合、または通常のパスを指定する場合は、従来通り `--output` で出力HTMLを明示する。設定ファイルはTOML、解析結果やHTML出力の元になる生成物はJSONとし、MVP以降もTOMLは設定専用、JSONはデータ交換形式として使い分ける。
+
 引数:
 
 - `input`: 入力動画ファイルのパス
@@ -115,7 +133,7 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output 
 - `clip --preset`: `--accurate`時のx264エンコード速度。既定値は`veryfast`
 - `search timeline.json query`: `timeline` と `events` からqueryに一致する区間を検索する
 - `export-html timeline.json`: `timeline.json` を静的HTMLに変換する
-- `export-html --output`: 出力HTMLファイルのパス
+- `export-html --output`: 出力HTMLファイルのパス。`video_timeline.toml` があり、入力がファイル名だけの場合は省略できる
 
 `clip` は既定では高速な `ffmpeg -c copy` で切り出す。キーフレーム位置の影響で開始位置が指定秒から少しずれる可能性がある。厳密な切り出しが必要な場合は `--accurate` を使う。`--crf`と`--preset`は`--accurate`時だけ有効で、copy切り出しでは指定できない。
 
@@ -123,7 +141,31 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output 
 
 `search` は `timeline[].summary`、`timeline[].tags`、対応する `events[].kind`、`events[].summary`、`events[].tags` を大文字小文字を区別せず検索する。結果は `3  01:20-04:10  ChatGPTで仕様相談` のように、timeline index、時刻範囲、summaryを1行ずつ表示する。小数秒は切り捨てて表示する。空結果はエラーにせず `no matches` を表示する。存在しないファイルや不正なJSONはエラーにする。
 
-`export-html` は `video`、`analysis`、`timeline`、`events` を1つの静的HTMLに出力する。`timeline` はindex、時刻範囲、summary、tagsを表で表示する。`events` はkind、時刻範囲、summary、timeline_index、importance_score、tagsを表で表示する。HTML内の値はエスケープし、CSSやJavaScriptに依存しない最小表示にする。存在しないファイル、不正なJSON、`timeline`がないJSON、dictではない`timeline`/`events`要素はエラーにする。
+`export-html` は `video`、`analysis`、`timeline`、`events` を1つの静的HTMLに出力する。`timeline` はindex、時刻範囲、summary、tagsを表で表示する。`events` はkind、時刻範囲、summary、timeline_index、importance_score、tagsを表で表示する。HTML内の値はエスケープし、CSSやJavaScriptに依存しない最小表示にする。存在しないファイル、不正なJSON、`timeline`がないJSON、dictではない`timeline`/`events`要素はエラーにする。`video_timeline.toml` はカレントディレクトリまたはプロジェクトルートから読み込む。設定ファイルがあり、`export-html` の入力が `sample` または `sample.json` のようなファイル名だけの場合は、`storage.root`、`storage.timelines_dir`、`storage.html_dir` から入出力パスを解決する。既存のフルパス指定と `--output` 指定はそのまま優先する。
+
+## 設定ファイル方針
+
+設定ファイルはTOML、生成物はJSONとする。TOMLは人が編集する設定を読みやすく管理するために使い、JSONは解析結果、APIレスポンス、検索インデックスなど機械処理やWeb表示で扱うデータ交換形式として使う。
+
+TOMLの対象:
+
+- アプリケーション設定
+- ストレージ設定
+- 既定モデル設定
+- HTML出力設定
+- タイムライン生成設定
+- 将来の検索設定
+
+JSONの対象:
+
+- `timeline.json`
+- `frame_summaries`
+- `analysis` 結果
+- export用データ
+- APIレスポンス
+- 将来の検索インデックス
+
+`timeline` 出力、`frame_summaries`、APIレスポンスはTOML化しない。CLIはまず `video_timeline.toml` を読み込み、設定が存在しない場合は現在の既定値と明示されたCLI引数を使う。
 
 将来拡張する任意引数:
 

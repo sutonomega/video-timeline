@@ -21,6 +21,7 @@ from video_timeline.cli import (
 from video_timeline.event_detector import EventCandidate
 from video_timeline.frame_extractor import ExtractedFrame
 from video_timeline.frame_summarizer import FrameSummary
+from video_timeline.storage_config import StoragePathConfig
 from video_timeline.timeline_generator import TimelineEntry
 from video_timeline.video_loader import VideoMetadata
 
@@ -476,6 +477,39 @@ class CliTest(unittest.TestCase):
         export_html.assert_called_once_with("timeline.json", "timeline.html")
         self.assertIn("wrote timeline.html", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
+
+    def test_export_html_cli_resolves_basename_with_storage_config(self):
+        config = StoragePathConfig(storage_root=Path("/mnt/video-timeline"))
+
+        with (
+            patch("video_timeline.cli.load_storage_path_config", return_value=config),
+            patch(
+                "video_timeline.cli.export_timeline_html_file",
+                return_value=Path("/mnt/video-timeline/html/sample1-gemma312b.html"),
+            ) as export_html,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["export-html", "sample1-gemma312b"])
+
+        self.assertEqual(exit_code, 0)
+        export_html.assert_called_once_with(
+            Path("/mnt/video-timeline/timelines/sample1-gemma312b.json"),
+            Path("/mnt/video-timeline/html/sample1-gemma312b.html"),
+        )
+        self.assertIn("wrote /mnt/video-timeline/html/sample1-gemma312b.html", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_export_html_cli_requires_output_without_storage_config(self):
+        with (
+            patch("video_timeline.cli.load_storage_path_config", return_value=None),
+            patch("sys.stdout", new_callable=io.StringIO),
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["export-html", "timeline.json"])
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("error: --outputが必要です", stderr.getvalue())
 
     def test_export_html_cli_returns_error_for_export_failure(self):
         with (

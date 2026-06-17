@@ -17,6 +17,7 @@ from .frame_summarizer import (
     save_frame_summary_json,
     summarize_frames_with_ollama,
 )
+from .storage_config import load_storage_path_config, resolve_export_html_paths
 from .timeline_generator import build_timeline
 from .timeline_html_exporter import export_timeline_html_file
 from .timeline_searcher import format_search_result, search_timeline_file
@@ -147,7 +148,7 @@ def build_search_parser() -> argparse.ArgumentParser:
 def build_export_html_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Export timeline JSON to static HTML.")
     parser.add_argument("timeline_json", help="timeline JSONファイルのパス")
-    parser.add_argument("--output", required=True, help="出力HTMLファイルのパス")
+    parser.add_argument("--output", help="出力HTMLファイルのパス")
     return parser
 
 
@@ -202,7 +203,12 @@ def run_search(args: argparse.Namespace) -> list[str]:
 
 
 def run_export_html(args: argparse.Namespace) -> Path:
-    return export_timeline_html_file(args.timeline_json, args.output)
+    timeline_json, output_path = resolve_export_html_paths(
+        args.timeline_json,
+        args.output,
+        load_storage_path_config(),
+    )
+    return export_timeline_html_file(timeline_json, output_path)
 
 
 def run_video(
