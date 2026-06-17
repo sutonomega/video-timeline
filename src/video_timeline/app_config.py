@@ -20,21 +20,17 @@ class StoragePathConfig:
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, object]) -> StoragePathConfig:
-        storage = payload.get("storage")
-        if not isinstance(storage, Mapping):
-            raise ValueError("video_timeline.tomlには[storage]が必要です")
-
-        storage_root = storage.get("root")
+        storage_root = payload.get("root")
         if not isinstance(storage_root, str) or not storage_root.strip():
             raise ValueError("video_timeline.tomlにはstorage.rootが必要です")
 
         return cls(
             storage_root=Path(storage_root),
-            videos_dir=_read_dir_name(storage, "videos_dir", "videos"),
-            frames_dir=_read_dir_name(storage, "frames_dir", "frames"),
-            timelines_dir=_read_dir_name(storage, "timelines_dir", "timelines"),
-            clips_dir=_read_dir_name(storage, "clips_dir", "clips"),
-            html_dir=_read_dir_name(storage, "html_dir", "html"),
+            videos_dir=_read_dir_name(payload, "videos_dir", "videos"),
+            frames_dir=_read_dir_name(payload, "frames_dir", "frames"),
+            timelines_dir=_read_dir_name(payload, "timelines_dir", "timelines"),
+            clips_dir=_read_dir_name(payload, "clips_dir", "clips"),
+            html_dir=_read_dir_name(payload, "html_dir", "html"),
         )
 
     def timeline_json_path(self, name: str) -> Path:
@@ -42,6 +38,19 @@ class StoragePathConfig:
 
     def html_output_path(self, name: str) -> Path:
         return self.storage_root / self.html_dir / f"{name}.html"
+
+
+@dataclass(frozen=True)
+class AppConfig:
+    storage: StoragePathConfig
+
+    @classmethod
+    def from_mapping(cls, payload: Mapping[str, object]) -> AppConfig:
+        storage = payload.get("storage")
+        if not isinstance(storage, Mapping):
+            raise ValueError("video_timeline.tomlには[storage]が必要です")
+
+        return cls(storage=StoragePathConfig.from_mapping(storage))
 
 
 def _read_dir_name(payload: Mapping[str, object], key: str, default: str) -> str:
@@ -53,24 +62,24 @@ def _read_dir_name(payload: Mapping[str, object], key: str, default: str) -> str
     return value
 
 
-def load_storage_path_config(search_dirs: Sequence[Path] | None = None) -> StoragePathConfig | None:
+def load_app_config(search_dirs: Sequence[Path] | None = None) -> AppConfig | None:
     for directory in search_dirs if search_dirs is not None else _default_config_dirs():
         config_path = directory / CONFIG_FILE_NAME
         if config_path.is_file():
-            return load_storage_path_config_file(config_path)
+            return load_app_config_file(config_path)
     return None
 
 
-def load_storage_path_config_file(path: str | Path) -> StoragePathConfig:
+def load_app_config_file(path: str | Path) -> AppConfig:
     with Path(path).open("rb") as file:
         payload = tomllib.load(file)
-    return StoragePathConfig.from_mapping(payload)
+    return AppConfig.from_mapping(payload)
 
 
 def resolve_export_html_paths(
     timeline_json: str | Path,
     output_path: str | Path | None,
-    config: StoragePathConfig | None,
+    config: AppConfig | None,
 ) -> tuple[str | Path, str | Path]:
     if output_path is not None:
         return timeline_json, output_path
@@ -83,7 +92,7 @@ def resolve_export_html_paths(
         raise ValueError("--outputが必要です")
 
     name = timeline_path.stem if timeline_path.suffix == ".json" else timeline_path.name
-    return config.timeline_json_path(name), config.html_output_path(name)
+    return config.storage.timeline_json_path(name), config.storage.html_output_path(name)
 
 
 def _default_config_dirs() -> list[Path]:

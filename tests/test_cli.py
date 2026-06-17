@@ -21,7 +21,7 @@ from video_timeline.cli import (
 from video_timeline.event_detector import EventCandidate
 from video_timeline.frame_extractor import ExtractedFrame
 from video_timeline.frame_summarizer import FrameSummary
-from video_timeline.app_config import StoragePathConfig
+from video_timeline.app_config import AppConfig, StoragePathConfig
 from video_timeline.timeline_generator import TimelineEntry
 from video_timeline.video_loader import VideoMetadata
 
@@ -479,10 +479,10 @@ class CliTest(unittest.TestCase):
         self.assertEqual(stderr.getvalue(), "")
 
     def test_export_html_cli_resolves_basename_with_storage_config(self):
-        config = StoragePathConfig(storage_root=Path("/mnt/video-timeline"))
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
 
         with (
-            patch("video_timeline.cli.load_storage_path_config", return_value=config),
+            patch("video_timeline.cli.load_app_config", return_value=config),
             patch(
                 "video_timeline.cli.export_timeline_html_file",
                 return_value=Path("/mnt/video-timeline/html/sample1-gemma312b.html"),
@@ -502,7 +502,7 @@ class CliTest(unittest.TestCase):
 
     def test_export_html_cli_requires_output_without_storage_config(self):
         with (
-            patch("video_timeline.cli.load_storage_path_config", return_value=None),
+            patch("video_timeline.cli.load_app_config", return_value=None),
             patch("sys.stdout", new_callable=io.StringIO),
             patch("sys.stderr", new_callable=io.StringIO) as stderr,
         ):

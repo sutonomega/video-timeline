@@ -9,15 +9,16 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from video_timeline.app_config import (
+    AppConfig,
     StoragePathConfig,
-    load_storage_path_config,
-    load_storage_path_config_file,
+    load_app_config,
+    load_app_config_file,
     resolve_export_html_paths,
 )
 
 
 class AppConfigTest(unittest.TestCase):
-    def test_load_storage_path_config_file_reads_shared_storage_dirs(self):
+    def test_load_app_config_file_reads_shared_storage_dirs(self):
         with TemporaryDirectory() as directory:
             config_path = Path(directory) / "video_timeline.toml"
             config_path.write_text(
@@ -35,19 +36,20 @@ class AppConfigTest(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            config = load_storage_path_config_file(config_path)
+            config = load_app_config_file(config_path)
 
-        self.assertEqual(config.storage_root, Path("/mnt/video-timeline"))
-        self.assertEqual(config.timelines_dir, "timelines")
-        self.assertEqual(config.html_dir, "html")
+        self.assertIsInstance(config, AppConfig)
+        self.assertEqual(config.storage.storage_root, Path("/mnt/video-timeline"))
+        self.assertEqual(config.storage.timelines_dir, "timelines")
+        self.assertEqual(config.storage.html_dir, "html")
 
-    def test_load_storage_path_config_returns_none_without_config_file(self):
+    def test_load_app_config_returns_none_without_config_file(self):
         with TemporaryDirectory() as directory:
-            config = load_storage_path_config([Path(directory)])
+            config = load_app_config([Path(directory)])
 
         self.assertIsNone(config)
 
-    def test_load_storage_path_config_searches_parent_directories(self):
+    def test_load_app_config_searches_parent_directories(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             child = root / "project" / "subdir"
@@ -56,14 +58,14 @@ class AppConfigTest(unittest.TestCase):
             config_path.write_text('[storage]\nroot = "/mnt/video-timeline"\n', encoding="utf-8")
 
             with patch("video_timeline.app_config.Path.cwd", return_value=child):
-                config = load_storage_path_config()
+                config = load_app_config()
 
         self.assertIsNotNone(config)
         assert config is not None
-        self.assertEqual(config.storage_root, Path("/mnt/video-timeline"))
+        self.assertEqual(config.storage.storage_root, Path("/mnt/video-timeline"))
 
     def test_resolve_export_html_paths_uses_basename_with_config(self):
-        config = StoragePathConfig(storage_root=Path("/mnt/video-timeline"))
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
 
         timeline_json, output_path = resolve_export_html_paths("sample1-gemma312b", None, config)
 
@@ -71,7 +73,7 @@ class AppConfigTest(unittest.TestCase):
         self.assertEqual(output_path, Path("/mnt/video-timeline/html/sample1-gemma312b.html"))
 
     def test_resolve_export_html_paths_accepts_json_basename_with_config(self):
-        config = StoragePathConfig(storage_root=Path("/mnt/video-timeline"))
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
 
         timeline_json, output_path = resolve_export_html_paths("sample1-gemma312b.json", None, config)
 
@@ -79,7 +81,7 @@ class AppConfigTest(unittest.TestCase):
         self.assertEqual(output_path, Path("/mnt/video-timeline/html/sample1-gemma312b.html"))
 
     def test_resolve_export_html_paths_keeps_explicit_output(self):
-        config = StoragePathConfig(storage_root=Path("/mnt/video-timeline"))
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
 
         timeline_json, output_path = resolve_export_html_paths(
             "/tmp/timeline.json",
@@ -95,12 +97,12 @@ class AppConfigTest(unittest.TestCase):
             resolve_export_html_paths("timeline.json", None, None)
 
     def test_resolve_export_html_paths_requires_output_for_path_input(self):
-        config = StoragePathConfig(storage_root=Path("/mnt/video-timeline"))
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
 
         with self.assertRaisesRegex(ValueError, "--output"):
             resolve_export_html_paths("timelines/sample1.json", None, config)
 
-    def test_load_storage_path_config_file_rejects_absolute_child_dir(self):
+    def test_load_app_config_file_rejects_absolute_child_dir(self):
         with TemporaryDirectory() as directory:
             config_path = Path(directory) / "video_timeline.toml"
             config_path.write_text(
@@ -109,12 +111,12 @@ class AppConfigTest(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "html_dir"):
-                load_storage_path_config_file(config_path)
+                load_app_config_file(config_path)
 
-    def test_load_storage_path_config_file_requires_storage_table(self):
+    def test_load_app_config_file_requires_storage_table(self):
         with TemporaryDirectory() as directory:
             config_path = Path(directory) / "video_timeline.toml"
             config_path.write_text('root = "/mnt/video-timeline"\n', encoding="utf-8")
 
             with self.assertRaisesRegex(ValueError, r"\[storage\]"):
-                load_storage_path_config_file(config_path)
+                load_app_config_file(config_path)

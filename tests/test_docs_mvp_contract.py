@@ -213,6 +213,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("エスケープ", architecture)
         self.assertIn("01:20-04:10", architecture)
         self.assertIn("app_config", architecture)
+        self.assertIn("AppConfig", architecture)
+        self.assertIn("StoragePathConfig", architecture)
         self.assertIn("親ディレクトリへ向かって", architecture)
 
     def test_architecture_defines_storage_metadata_contract(self):
