@@ -29,6 +29,7 @@ from .app_config import (
 from .timeline_generator import build_timeline
 from .timeline_html_exporter import export_timeline_html_file
 from .timeline_searcher import format_search_result, search_timeline_file
+from .transcript_loader import load_transcript_segments
 from .video_clipper import clip_timeline_entries_by_tag, clip_timeline_entry, clip_timeline_entry_range
 from .video_loader import load_video_metadata
 
@@ -110,6 +111,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--frames-dir", default=DEFAULT_FRAMES_DIR, help="抽出フレームの保存先")
     parser.add_argument("--vl-model", default=DEFAULT_VL_MODEL, help=f"フレーム要約に使うOllamaモデル。既定値は{DEFAULT_VL_MODEL}")
+    parser.add_argument("--transcript-json", help="外部ASR結果のJSONをtranscriptsとして保存する")
     return parser
 
 
@@ -233,11 +235,15 @@ def run_video(
     *,
     isolate_frames: bool = True,
     vl_model: str = DEFAULT_VL_MODEL,
+    transcript_json: str | Path | None = None,
 ) -> Path:
     print_progress("動画メタデータ取得中")
     video = load_video_metadata(input_path)
     print_progress("シーン境界検出中")
     scene_boundaries = safe_detect_scene_boundaries(video.path)
+    if transcript_json is not None:
+        print_progress("音声文字起こし読み込み中")
+    transcripts = load_transcript_segments(transcript_json)
     print_progress("フレーム抽出中")
     actual_frames_dir = build_run_frames_dir(video.path, frames_dir) if isolate_frames else Path(frames_dir)
     frames = extract_frames(
@@ -265,6 +271,7 @@ def run_video(
             timeline_path=str(output_path),
         ),
         scene_boundaries=scene_boundaries,
+        transcripts=transcripts,
         frame_summaries=frame_summaries,
         timeline=timeline,
         events=events,
@@ -275,6 +282,9 @@ def run_video(
 
 
 def run_batch(args: argparse.Namespace, config=None) -> tuple[int, int]:
+    if args.transcript_json is not None:
+        raise ValueError("--transcript-jsonはbatch CLIでは指定できません")
+
     input_dir, output_dir = resolve_batch_paths(args.input_dir, args.output_dir, config)
     if input_dir is None:
         raise ValueError("--batchを使う場合はvideo_timeline.tomlまたは--input-dirが必要です")
@@ -298,6 +308,7 @@ def run_batch(args: argparse.Namespace, config=None) -> tuple[int, int]:
                 args.interval_seconds,
                 isolate_frames=False,
                 vl_model=args.vl_model,
+                transcript_json=None,
             )
         except Exception as exc:
             failure_count += 1
@@ -335,6 +346,7 @@ def run(args: argparse.Namespace) -> Path | tuple[int, int]:
         frames_dir,
         args.interval_seconds,
         vl_model=args.vl_model,
+        transcript_json=args.transcript_json,
     )
 
 

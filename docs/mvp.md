@@ -23,7 +23,7 @@ MVPで実装すること:
 
 MVPで実装しないこと:
 
-- 音声認識
+- 音声認識の実行
 - 類似要約の自動区間統合
 - シーン境界検出
 - AIによる実況文生成
@@ -144,6 +144,7 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output 
 - `--interval-seconds`: フレーム抽出間隔。既定値は`10`
 - `--frames-dir`: 抽出フレームの保存先ベースディレクトリ。既定値は`frames`
 - `--vl-model`: フレーム要約に使うOllamaモデル。既定値は`gemma3:12b`
+- `--transcript-json`: 外部ASR結果のJSONを読み込み、生成JSONの `transcripts` に補助情報として保存する。batch CLIでは指定できない
 - `clip timeline.json`: `timeline` の指定区間を元動画から切り出す
 - `clip --index`: 切り出す `timeline` 配列の0始まりindex
 - `clip --start-index`: 連続切り出しの開始 `timeline` index
@@ -354,6 +355,16 @@ MVPのJSONは次の構造にする。
       "tags": ["chatgpt", "planning"]
     }
   ],
+  "scene_boundaries": [],
+  "transcripts": [
+    {
+      "start_seconds": 118.2,
+      "end_seconds": 125.4,
+      "text": "この仕様ならフレーム要約から始めるのがよさそうです",
+      "source": "external_asr",
+      "speaker": "user"
+    }
+  ],
   "timeline": [
     {
       "start_seconds": 120.0,
@@ -383,6 +394,11 @@ MVPのJSONは次の構造にする。
 - `storage.frames_dir`
 - `storage.timeline_path`
 - `scene_boundaries`
+- `transcripts`
+- `transcripts[].start_seconds`
+- `transcripts[].end_seconds`
+- `transcripts[].text`
+- `transcripts[].source`
 - `frame_summaries[].index`
 - `frame_summaries[].time_seconds`
 - `frame_summaries[].image`
@@ -403,6 +419,30 @@ VLは `summary`、`primary_tag`、`secondary_tags` をJSONで返す。`primary_t
 VLの応答にJSONコードブロックや前後の説明文が混ざっている場合は、先頭のJSONオブジェクトを切り出してから読み取る。`secondary_tags[]` のような誤記は `secondary_tags` として救済する。`summary` の中にJSON文字列が埋まっている場合は、内側のJSONも再解釈する。JSONが閉じていない場合は `summary` と `primary_tag` だけを正規表現で拾い、`secondary_tags` は空配列にする。完全には復元できない場合だけ、再問い合わせはせず、従来通り全文を `summary` として保存する。
 
 `other` は判定不能時の退避先として扱う。`other` が多い実データではtimeline統合やタグ別clipのノイズになるため、タグ類似統合の類似度計算では `other` を除外する。`tags` は summary の補助条件として扱い、summary の語彙がまったく重ならない場合はタグ一致だけで timeline を結合しない。`other` が大量発生する場合は、自由タグや事前定義タグを追加して減らす。
+
+## transcript補助情報仕様
+
+音声認識はMVP本体には含めず、MVP後の拡張として扱う。現時点ではローカルASRを実行せず、外部ASRや手動生成されたJSONを `--transcript-json` で読み込み、生成JSONのトップレベル `transcripts` 配列へ保存する。
+
+```bash
+PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json --transcript-json transcript.json
+```
+
+transcript segmentは次の形に正規化する。
+
+```json
+{
+  "start_seconds": 12.0,
+  "end_seconds": 18.5,
+  "text": "次はHTML出力を確認します",
+  "source": "external_asr",
+  "speaker": "user"
+}
+```
+
+`speaker` は任意とする。`source` が入力にない場合は `external_asr` を保存する。入力JSONはトップレベル配列、`{"transcripts":[...]}`、またはWhisper系の `{"segments":[...]}` を受け入れる。`segments` 互換では `start` / `end` も `start_seconds` / `end_seconds` として読み取る。
+
+`transcripts` は `scene_boundaries` と同じ補助情報であり、timeline生成の主判断には使わない。`timeline` や `events` とは時刻の重なりで後から参照できるようにする。音声抽出、ローカルASRモデルの実行、transcriptを使ったtimeline分割、transcriptからの重要イベント判定は後続機能とする。ローカル実行可能なASR候補は Whisper 系、faster-whisper、whisper.cpp を後続で比較する。
 
 MVPの既定値:
 

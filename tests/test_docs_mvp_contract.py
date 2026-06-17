@@ -70,6 +70,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`--interval-seconds`",
             "`--frames-dir`",
             "`--vl-model`",
+            "`--transcript-json`",
             "`--vl-provider`",
             "`version`",
             "`generated_at`",
@@ -97,6 +98,16 @@ class DocsMvpContractTest(unittest.TestCase):
             "`storage.timeline_path`",
             "`storage.mode` は保存しない",
             "`scene_boundaries`",
+            "`transcripts`",
+            "`transcripts[].start_seconds`",
+            "`transcripts[].end_seconds`",
+            "`transcripts[].text`",
+            "`transcripts[].source`",
+            "`external_asr`",
+            "Whisper 系",
+            "faster-whisper",
+            "whisper.cpp",
+            "timeline生成の主判断には使わない",
             "`ollama`",
             "`gemma3:12b`",
             "`frame_summaries[].index`",
@@ -200,6 +211,24 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("timeline 生成の主判断には使わず", architecture)
         self.assertIn("品質確認や後続の区間調整", architecture)
         self.assertIn("シーン境界をイベントと同一視すること", architecture)
+
+    def test_architecture_defines_transcript_loader_contract(self):
+        architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+
+        self.assertIn("transcript_loader", architecture)
+        self.assertIn("transcripts", architecture)
+        self.assertIn("start_seconds", architecture)
+        self.assertIn("end_seconds", architecture)
+        self.assertIn("text", architecture)
+        self.assertIn("source", architecture)
+        self.assertIn("speaker", architecture)
+        self.assertIn("--transcript-json", architecture)
+        self.assertIn("timeline 生成の主判断には使わず", architecture)
+        self.assertIn("時刻の重なり", architecture)
+        self.assertIn("ローカルASRモデルの実行", architecture)
+        self.assertIn("Whisper 系", architecture)
+        self.assertIn("faster-whisper", architecture)
+        self.assertIn("whisper.cpp", architecture)
 
     def test_architecture_defines_per_video_frame_directory(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
@@ -377,7 +406,9 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[x] イベント候補に軽量な重要度スコアを追加する（#30）", roadmap)
         self.assertIn("[x] summary/tagsを使ったイベントkind分類と重要度補正（#90）", roadmap)
         self.assertIn("[x] シーン分割をtimeline生成の補助情報として追加する（#88）", roadmap)
+        self.assertIn("[x] 音声認識結果をtimeline補助情報として保存する（#89）", roadmap)
         self.assertIn("[ ] LLMを使ったイベント重要度判定と分類理由生成", roadmap)
+        self.assertIn("[ ] ローカルASR実行とtranscript品質確認", roadmap)
 
     def test_roadmap_tracks_per_video_frame_directory(self):
         roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")

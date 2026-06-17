@@ -28,6 +28,7 @@ from video_timeline.frame_summarizer import (
 )
 from video_timeline.event_detector import EventCandidate
 from video_timeline.scene_detector import SceneBoundary
+from video_timeline.transcript_loader import TranscriptSegment
 from video_timeline.video_loader import VideoMetadata
 
 
@@ -315,6 +316,46 @@ class FrameSummarizerTest(unittest.TestCase):
                     "time_seconds": 12.5,
                     "source": "ffmpeg_scene",
                     "score": 0.42,
+                }
+            ],
+        )
+
+    def test_build_frame_summary_document_includes_transcripts_when_given(self):
+        video = VideoMetadata(
+            path="/tmp/input.mp4",
+            duration_seconds=20.0,
+            fps=30.0,
+            frame_count=600,
+            width=1920,
+            height=1080,
+        )
+        analysis = AnalysisMetadata(interval_seconds=10.0)
+
+        document = build_frame_summary_document(
+            video=video,
+            analysis=analysis,
+            frame_summaries=[],
+            transcripts=[
+                TranscriptSegment(
+                    start_seconds=1.5,
+                    end_seconds=4.0,
+                    text="次はHTML出力を確認します",
+                    source="manual",
+                    speaker="user",
+                )
+            ],
+            generated_at="2026-06-11T00:00:00Z",
+        )
+
+        self.assertEqual(
+            document["transcripts"],
+            [
+                {
+                    "start_seconds": 1.5,
+                    "end_seconds": 4.0,
+                    "text": "次はHTML出力を確認します",
+                    "source": "manual",
+                    "speaker": "user",
                 }
             ],
         )

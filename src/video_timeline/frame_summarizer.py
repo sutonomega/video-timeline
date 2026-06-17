@@ -15,6 +15,7 @@ from .video_loader import VideoMetadata
 if TYPE_CHECKING:
     from .event_detector import EventCandidate
     from .scene_detector import SceneBoundary
+    from .transcript_loader import TranscriptSegment
     from .timeline_generator import TimelineEntry
 
 
@@ -182,6 +183,7 @@ def build_frame_summary_document(
     frame_summaries: list[FrameSummary],
     storage: StorageMetadata | None = None,
     scene_boundaries: list[SceneBoundary] | None = None,
+    transcripts: list[TranscriptSegment] | None = None,
     timeline: list[TimelineEntry] | None = None,
     events: list[EventCandidate] | None = None,
     generated_at: str | None = None,
@@ -197,6 +199,8 @@ def build_frame_summary_document(
         document["storage"] = storage.to_dict()
     if scene_boundaries is not None:
         document["scene_boundaries"] = [boundary.to_dict() for boundary in scene_boundaries]
+    if transcripts is not None:
+        document["transcripts"] = [segment.to_dict() for segment in transcripts]
     if timeline is not None:
         document["timeline"] = [entry.to_dict() for entry in timeline]
     if events is not None:
