@@ -1,6 +1,6 @@
 # MVP仕様
 
-このドキュメントは、Video TimelineのMVP完了条件を固定するための仕様です。
+このドキュメントは、Video Timeline のMVP完了条件と、MVP時点のCLI仕様を固定するための仕様です。
 
 ## 目的
 
@@ -430,12 +430,12 @@ Ollama呼び出し:
 
 MVPは次の条件を満たした時点で完了とする。
 
-- READMEの手順だけでCLIを実行できる
+- `docs/mvp.md` の手順でCLIを実行できる
 - 入力動画からフレーム要約JSONを生成できる
 - フレーム要約が時系列順に並ぶ
 - 各フレーム要約の時刻、画像パス、要約文がJSONに保存される
 - 正常系と異常系の自動テストがある
-- docs/roadmap.mdでMVP完了として扱える
+- MVPの受け入れ確認結果を `docs/acceptance.md` に記録している
 
 ## Issue分割
 

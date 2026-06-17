@@ -62,4 +62,4 @@ wrote timeline.json
 
 ## 判定
 
-MVP仕様で定義した「READMEの手順でCLIを実行し、入力動画からフレーム要約JSONを生成できる」状態を満たした。
+MVP仕様で定義した「docs/mvp.md の手順でCLIを実行し、入力動画からフレーム要約JSONを生成できる」状態を満たした。
