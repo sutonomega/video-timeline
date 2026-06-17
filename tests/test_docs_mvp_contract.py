@@ -311,6 +311,7 @@ class DocsMvpContractTest(unittest.TestCase):
 
     def test_architecture_defines_event_detector_contract(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
+        mvp = (ROOT / "docs" / "mvp.md").read_text(encoding="utf-8")
 
         self.assertIn("event_detector", architecture)
         self.assertIn("events", architecture)
@@ -320,6 +321,16 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("検索UI", architecture)
         self.assertIn("区間の長さ", architecture)
         self.assertIn("duration score", architecture)
+        self.assertIn("`timeline`は動画を時系列の区間へ分けた一次構造", architecture)
+        self.assertIn("`events`は`timeline`から派生する二次構造", architecture)
+        self.assertIn("重要イベント抽出", architecture)
+        self.assertIn("`kind`分類", architecture)
+        self.assertIn("timelineの完全な複製として育てない", architecture)
+        self.assertIn("`events`の非目標", architecture)
+        self.assertIn("clipの基本単位をeventsへ移すこと", architecture)
+        self.assertIn("重要イベントだけを保存する形へ縮小", architecture)
+        self.assertIn("`events` は `timeline_index` で元の `timeline` 区間へ戻れる派生イベント候補", mvp)
+        self.assertIn("`events` を timeline の代替構造にはしない", mvp)
 
     def test_roadmap_prioritizes_real_video_quality_review_before_event_importance(self):
         roadmap = (ROOT / "docs" / "roadmap.md").read_text(encoding="utf-8")
