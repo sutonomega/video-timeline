@@ -21,7 +21,7 @@ from video_timeline.cli import (
 from video_timeline.event_detector import EventCandidate
 from video_timeline.frame_extractor import ExtractedFrame
 from video_timeline.frame_summarizer import FrameSummary
-from video_timeline.storage_config import StoragePathConfig
+from video_timeline.app_config import StoragePathConfig
 from video_timeline.timeline_generator import TimelineEntry
 from video_timeline.video_loader import VideoMetadata
 

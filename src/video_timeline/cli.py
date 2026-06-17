@@ -17,7 +17,7 @@ from .frame_summarizer import (
     save_frame_summary_json,
     summarize_frames_with_ollama,
 )
-from .storage_config import load_storage_path_config, resolve_export_html_paths
+from .app_config import load_storage_path_config, resolve_export_html_paths
 from .timeline_generator import build_timeline
 from .timeline_html_exporter import export_timeline_html_file
 from .timeline_searcher import format_search_result, search_timeline_file

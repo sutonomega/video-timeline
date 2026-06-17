@@ -87,11 +87,13 @@ def resolve_export_html_paths(
 
 
 def _default_config_dirs() -> list[Path]:
-    cwd = Path.cwd()
-    project_root = Path(__file__).resolve().parents[2]
-    if cwd == project_root:
-        return [cwd]
-    return [cwd, project_root]
+    directories: list[Path] = []
+    current = Path.cwd().resolve(strict=False)
+    while True:
+        directories.append(current)
+        if current.parent == current:
+            return directories
+        current = current.parent
 
 
 def _is_simple_filename(path: Path) -> bool:

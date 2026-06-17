@@ -2,12 +2,13 @@ from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from video_timeline.storage_config import (
+from video_timeline.app_config import (
     StoragePathConfig,
     load_storage_path_config,
     load_storage_path_config_file,
@@ -15,7 +16,7 @@ from video_timeline.storage_config import (
 )
 
 
-class StorageConfigTest(unittest.TestCase):
+class AppConfigTest(unittest.TestCase):
     def test_load_storage_path_config_file_reads_shared_storage_dirs(self):
         with TemporaryDirectory() as directory:
             config_path = Path(directory) / "video_timeline.toml"
@@ -45,6 +46,21 @@ class StorageConfigTest(unittest.TestCase):
             config = load_storage_path_config([Path(directory)])
 
         self.assertIsNone(config)
+
+    def test_load_storage_path_config_searches_parent_directories(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            child = root / "project" / "subdir"
+            child.mkdir(parents=True)
+            config_path = root / "video_timeline.toml"
+            config_path.write_text('[storage]\nroot = "/mnt/video-timeline"\n', encoding="utf-8")
+
+            with patch("video_timeline.app_config.Path.cwd", return_value=child):
+                config = load_storage_path_config()
+
+        self.assertIsNotNone(config)
+        assert config is not None
+        self.assertEqual(config.storage_root, Path("/mnt/video-timeline"))
 
     def test_resolve_export_html_paths_uses_basename_with_config(self):
         config = StoragePathConfig(storage_root=Path("/mnt/video-timeline"))

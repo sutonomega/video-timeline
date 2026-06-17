@@ -26,6 +26,7 @@ class DocsMvpContractTest(unittest.TestCase):
             'root = "/mnt/video-timeline"',
             "設定ファイルはTOML、生成物はJSON",
             "TOMLは設定専用、JSONはデータ交換形式",
+            "カレントディレクトリから親ディレクトリへ向かって探索",
             "`input`",
             "`--output`",
             "`--input-dir`",
@@ -211,6 +212,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("静的HTML", architecture)
         self.assertIn("エスケープ", architecture)
         self.assertIn("01:20-04:10", architecture)
+        self.assertIn("app_config", architecture)
+        self.assertIn("親ディレクトリへ向かって", architecture)
 
     def test_architecture_defines_storage_metadata_contract(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
