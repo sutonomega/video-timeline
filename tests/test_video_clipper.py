@@ -60,7 +60,6 @@ class VideoClipperTest(unittest.TestCase):
         document = {
             "video": {"path": "/tmp/local-source.mp4"},
             "storage": {
-                "mode": "server",
                 "video_path": "/mnt/video-timeline/videos/source.mp4",
                 "timeline_path": "/mnt/video-timeline/timelines/source.json",
             },
@@ -83,7 +82,6 @@ class VideoClipperTest(unittest.TestCase):
         document = {
             "video": {"path": "/tmp/source.mp4"},
             "storage": {
-                "mode": "server",
                 "video_path": "/mnt/video-timeline/videos/source.mp4",
                 "timeline_path": "/mnt/video-timeline/timelines/source.json",
             },
@@ -275,7 +273,6 @@ class VideoClipperTest(unittest.TestCase):
         document = {
             "video": {"path": "/tmp/source.mp4"},
             "storage": {
-                "mode": "server",
                 "video_path": "/mnt/video-timeline/videos/source.mp4",
                 "timeline_path": "/mnt/video-timeline/timelines/source.json",
             },

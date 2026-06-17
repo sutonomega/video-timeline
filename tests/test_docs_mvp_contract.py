@@ -91,6 +91,7 @@ class DocsMvpContractTest(unittest.TestCase):
             "`storage.video_path`",
             "`storage.frames_dir`",
             "`storage.timeline_path`",
+            "`storage.mode` は保存しない",
             "`ollama`",
             "`gemma3:12b`",
             "`frame_summaries[].index`",
@@ -251,18 +252,25 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("storage.video_path", architecture)
         self.assertIn("storage.frames_dir", architecture)
         self.assertIn("storage.timeline_path", architecture)
-        self.assertIn("local/serverの種別を判定するためのものではなく", architecture)
+        self.assertIn("保存先種別を判定するためのものではなく", architecture)
+        self.assertIn("`storage.mode` は保存しない", architecture)
         self.assertIn("\\\\192.168.10.112\\video-timeline", architecture)
         self.assertIn("clips", architecture)
         self.assertIn("`storage.root` 配下のパス", architecture)
         self.assertIn("相対パス", architecture)
+
+    def test_video_clipper_fixtures_do_not_use_storage_type(self):
+        test_video_clipper = (ROOT / "tests" / "test_video_clipper.py").read_text(encoding="utf-8")
+
+        self.assertNotIn('"mode": ' + '"server"', test_video_clipper)
+        self.assertNotIn('"mode": ' + '"local"', test_video_clipper)
 
     def test_architecture_defines_config_storage_cli_policy(self):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
         self.assertIn("configuration and storage policy", architecture)
         self.assertIn("設定ファイルはTOML、生成物はJSON", architecture)
-        self.assertIn("local」「server」のような保存先種別を判定しない", architecture)
+        self.assertIn("プログラムは保存先種別を判定しない", architecture)
         self.assertIn("ファイル名だけを指定したときの解決規則", architecture)
         self.assertIn("[storage]", architecture)
         self.assertIn("[vl]", architecture)
