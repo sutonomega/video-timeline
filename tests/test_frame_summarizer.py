@@ -228,7 +228,6 @@ class FrameSummarizerTest(unittest.TestCase):
             video=video,
             analysis=analysis,
             storage=StorageMetadata(
-                mode="server",
                 video_path="/mnt/storage/videos/input.mp4",
                 frames_dir="/mnt/storage/frames/input_abcd1234ef56",
                 timeline_path="/mnt/storage/timelines/input.json",
@@ -240,23 +239,11 @@ class FrameSummarizerTest(unittest.TestCase):
         self.assertEqual(
             document["storage"],
             {
-                "mode": "server",
                 "video_path": "/mnt/storage/videos/input.mp4",
                 "frames_dir": "/mnt/storage/frames/input_abcd1234ef56",
                 "timeline_path": "/mnt/storage/timelines/input.json",
             },
         )
-
-    def test_storage_metadata_rejects_invalid_mode(self):
-        storage = StorageMetadata(
-            mode="remote",
-            video_path="/tmp/input.mp4",
-            frames_dir="frames",
-            timeline_path="timeline.json",
-        )
-
-        with self.assertRaisesRegex(FrameSummarizerError, "storage mode"):
-            storage.to_dict()
 
     def test_build_frame_summary_document_includes_events_when_given(self):
         video = VideoMetadata(

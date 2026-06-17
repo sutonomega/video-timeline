@@ -56,16 +56,15 @@ CLIから使う場合は、`--frames-dir`をベースディレクトリとして
 責務:
 
 - CLIで生成したJSONに `storage` を保存する
-- `storage.mode` で `local` と `server` を区別する
 - `storage.video_path` に元動画の参照先を保存する
 - `storage.frames_dir` に抽出フレームの保存ディレクトリを保存する
 - `storage.timeline_path` にtimeline JSONの保存先を保存する
 
-`--storage-mode server` はファイル転送やコピーを行うものではなく、入力動画、`--frames-dir`、`--output` に共有ストレージ上のパスを指定したとき、その参照先をJSONに明示するための既存互換の設定とする。`server` という値は共有ストレージ上のパスであることを示すメタデータとして扱う。既存のローカル運用では `local` を既定値にし、`video.path` と `frame_summaries[].image` の参照を維持する。共有ストレージ上のclipを実行する場合は、この `storage` 情報と従来の `video.path` を使って元動画とフレーム保存先を解決する。
+`storage` はlocal/serverの種別を判定するためのものではなく、実際に参照したパスを記録するためのメタデータとする。明示パスを渡した場合はそのパスを保存し、`video_timeline.toml` の短縮解決を使った場合は解決後の共有ストレージ上のパスを保存する。共有ストレージ上のclipを実行する場合は、この `storage` 情報と従来の `video.path` を使って元動画とフレーム保存先を解決する。
 
 共有保存先の例は `\\192.168.10.112\video-timeline` とし、配下に `videos`、`frames`、`timelines`、`clips` を置く想定にする。Windows共有パスを使う場合も、CLIには通常のパス文字列として渡し、JSONの `storage.video_path`、`storage.frames_dir`、`storage.timeline_path` に同じ参照先を記録する。
 
-今回の共有ストレージ設定は、ローカルSSD、外付けSSD、NAS、SMB共有、NFSなど、媒体を問わず `root` 配下の `videos/`、`frames/`、`timelines/`、`clips/`、`html/` を使うための土台とする。共有ストレージ上の動画を解決してclipを生成する処理は、共有ストレージclip機能として扱う。将来は `storage.root` と相対パスを使い、`video_path`、`frames_dir`、`timeline_path` を `videos/a.mp4` や `timelines/a.json` のように保存する方式へ寄せる。設定ファイルの `[storage] root` が共有ストレージを表すようになれば、`storage_mode` は不要になる可能性がある。
+今回の共有ストレージ設定は、ローカルSSD、外付けSSD、NAS、SMB共有、NFSなど、媒体を問わず `root` 配下の `videos/`、`frames/`、`timelines/`、`clips/`、`html/` を使うための土台とする。共有ストレージ上の動画を解決してclipを生成する処理は、共有ストレージclip機能として扱う。将来は `storage.root` と相対パスを使い、`video_path`、`frames_dir`、`timeline_path` を `videos/a.mp4` や `timelines/a.json` のように保存する方式へ寄せる。
 
 ## frame_summarizer
 

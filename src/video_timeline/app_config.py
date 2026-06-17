@@ -43,6 +43,12 @@ class StoragePathConfig:
         filename = f"{path.stem}.html" if path.suffix else f"{path.name}.html"
         return self.storage_root / self.html_dir / filename
 
+    def clips_directory_path(self) -> Path:
+        return self.storage_root / self.clips_dir
+
+    def clip_file_path(self, filename: str | Path) -> Path:
+        return self.clips_directory_path() / Path(filename).name
+
     def video_file_path(self, filename: str | Path) -> Path:
         return self.storage_root / self.videos_dir / Path(filename).name
 
@@ -67,6 +73,12 @@ class AppConfig:
 
     def html_output_path(self, name: str) -> Path:
         return self.storage.html_output_path(name)
+
+    def clips_directory_path(self) -> Path:
+        return self.storage.clips_directory_path()
+
+    def clip_file_path(self, filename: str | Path) -> Path:
+        return self.storage.clip_file_path(filename)
 
     def video_file_path(self, filename: str | Path) -> Path:
         return self.storage.video_file_path(filename)
@@ -103,18 +115,66 @@ def resolve_export_html_paths(
     output_path: str | Path | None,
     config: AppConfig | None,
 ) -> tuple[str | Path, str | Path]:
-    if output_path is not None:
+    if config is None and output_path is None:
+        raise ValueError("--outputが必要です")
+    if config is None:
         return timeline_json, output_path
 
-    if config is None:
-        raise ValueError("--outputが必要です")
-
     timeline_path = Path(timeline_json)
+    if _is_simple_filename(timeline_path):
+        name = timeline_path.stem if timeline_path.suffix == ".json" else timeline_path.name
+        resolved_timeline: str | Path = config.timeline_json_path(name)
+    else:
+        resolved_timeline = timeline_json
+
+    if output_path is not None:
+        output_candidate = Path(output_path)
+        if _is_simple_filename(output_candidate):
+            return resolved_timeline, config.html_output_path(output_candidate)
+        return resolved_timeline, output_path
+
     if not _is_simple_filename(timeline_path):
         raise ValueError("--outputが必要です")
 
     name = timeline_path.stem if timeline_path.suffix == ".json" else timeline_path.name
-    return config.timeline_json_path(name), config.html_output_path(name)
+    return resolved_timeline, config.html_output_path(name)
+
+
+def resolve_timeline_json_path(timeline_json: str | Path, config: AppConfig | None) -> str | Path:
+    if config is None:
+        return timeline_json
+
+    timeline_candidate = Path(timeline_json)
+    if not _is_simple_filename(timeline_candidate):
+        return timeline_json
+    return config.timeline_json_path(timeline_candidate)
+
+
+def resolve_clip_paths(
+    timeline_json: str | Path,
+    output_path: str | Path | None,
+    *,
+    output_is_directory: bool,
+    config: AppConfig | None,
+) -> tuple[str | Path, str | Path | None]:
+    if config is None:
+        return timeline_json, output_path
+
+    resolved_timeline = resolve_timeline_json_path(timeline_json, config)
+
+    if output_path is None:
+        return resolved_timeline, None
+
+    output_candidate = Path(output_path)
+    if not _is_simple_filename(output_candidate):
+        return resolved_timeline, output_path
+
+    if output_is_directory:
+        if output_candidate.name == config.storage.clips_dir:
+            return resolved_timeline, config.clips_directory_path()
+        return resolved_timeline, config.clips_directory_path() / output_candidate.name
+
+    return resolved_timeline, config.clip_file_path(output_candidate)
 
 
 def resolve_video_run_paths(

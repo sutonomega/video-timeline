@@ -13,6 +13,7 @@ from video_timeline.app_config import (
     StoragePathConfig,
     load_app_config,
     load_app_config_file,
+    resolve_clip_paths,
     resolve_export_html_paths,
     resolve_video_run_paths,
 )
@@ -74,6 +75,8 @@ class AppConfigTest(unittest.TestCase):
             Path("/mnt/video-timeline/timelines/timeline-sample1.json"),
         )
         self.assertEqual(config.html_output_path("sample1"), Path("/mnt/video-timeline/html/sample1.html"))
+        self.assertEqual(config.clip_file_path("clip1.mp4"), Path("/mnt/video-timeline/clips/clip1.mp4"))
+        self.assertEqual(config.clips_directory_path(), Path("/mnt/video-timeline/clips"))
         self.assertEqual(config.video_file_path("sample1.mp4"), Path("/mnt/video-timeline/videos/sample1.mp4"))
         self.assertEqual(config.frames_directory_path(), Path("/mnt/video-timeline/frames"))
 
@@ -114,6 +117,45 @@ class AppConfigTest(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "--output"):
             resolve_export_html_paths("timelines/sample1.json", None, config)
+
+    def test_resolve_clip_paths_uses_storage_for_simple_timeline_and_output_file(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        timeline_json, output_path = resolve_clip_paths(
+            "sample1.json",
+            "clip1.mp4",
+            output_is_directory=False,
+            config=config,
+        )
+
+        self.assertEqual(timeline_json, Path("/mnt/video-timeline/timelines/sample1.json"))
+        self.assertEqual(output_path, Path("/mnt/video-timeline/clips/clip1.mp4"))
+
+    def test_resolve_clip_paths_accepts_timeline_stem_and_output_directory(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        timeline_json, output_path = resolve_clip_paths(
+            "sample1",
+            "selected",
+            output_is_directory=True,
+            config=config,
+        )
+
+        self.assertEqual(timeline_json, Path("/mnt/video-timeline/timelines/sample1.json"))
+        self.assertEqual(output_path, Path("/mnt/video-timeline/clips/selected"))
+
+    def test_resolve_clip_paths_keeps_explicit_paths(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        timeline_json, output_path = resolve_clip_paths(
+            "/tmp/sample1.json",
+            "/tmp/clip1.mp4",
+            output_is_directory=False,
+            config=config,
+        )
+
+        self.assertEqual(timeline_json, "/tmp/sample1.json")
+        self.assertEqual(output_path, "/tmp/clip1.mp4")
 
     def test_resolve_video_run_paths_uses_storage_for_simple_input_and_output(self):
         config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))

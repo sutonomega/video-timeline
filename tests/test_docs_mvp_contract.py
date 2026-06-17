@@ -12,17 +12,15 @@ class DocsMvpContractTest(unittest.TestCase):
         required_terms = [
             "PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json",
             "PYTHONPATH=src python3 -m video_timeline.cli sample1.mp4",
-            "PYTHONPATH=src python3 -m video_timeline.cli /mnt/video-timeline/videos/input.mp4 --output /mnt/video-timeline/timelines/input.json --frames-dir /mnt/video-timeline/frames --storage-mode server",
             "PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir timelines",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --output clip.mp4",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --start-index 3 --end-index 7 --output clips",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --tag github --output clips",
-            "PYTHONPATH=src python3 -m video_timeline.cli search timeline.json chatgpt",
+            "PYTHONPATH=src python3 -m video_timeline.cli search sample1.json chatgpt",
             "PYTHONPATH=src python3 -m video_timeline.cli export-html timeline",
             "PYTHONPATH=src python3 -m video_timeline.cli export-html sample1",
             "/mnt/video-timeline/timelines/sample1.json",
             "/mnt/video-timeline/html/sample1.html",
-            "\\\\192.168.10.112\\video-timeline",
             "`video_timeline.toml`",
             "`storage.root`",
             "`storage.timelines_dir`",
@@ -56,7 +54,6 @@ class DocsMvpContractTest(unittest.TestCase):
             "`--preset`",
             "`--interval-seconds`",
             "`--frames-dir`",
-            "`--storage-mode`",
             "`--vl-model`",
             "`--vl-provider`",
             "`version`",
@@ -80,7 +77,6 @@ class DocsMvpContractTest(unittest.TestCase):
             "`analysis.interval_seconds`",
             "`analysis.vl_provider`",
             "`analysis.vl_model`",
-            "`storage.mode`",
             "`storage.video_path`",
             "`storage.frames_dir`",
             "`storage.timeline_path`",
@@ -237,16 +233,13 @@ class DocsMvpContractTest(unittest.TestCase):
         architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
 
         self.assertIn("storage metadata", architecture)
-        self.assertIn("storage.mode", architecture)
         self.assertIn("storage.video_path", architecture)
         self.assertIn("storage.frames_dir", architecture)
         self.assertIn("storage.timeline_path", architecture)
-        self.assertIn("--storage-mode server", architecture)
-        self.assertIn("ファイル転送やコピーを行うものではなく", architecture)
+        self.assertIn("local/serverの種別を判定するためのものではなく", architecture)
         self.assertIn("\\\\192.168.10.112\\video-timeline", architecture)
         self.assertIn("clips", architecture)
         self.assertIn("共有ストレージ上のパス", architecture)
-        self.assertIn("不要になる可能性", architecture)
         self.assertIn("相対パス", architecture)
 
     def test_architecture_defines_frame_summary_tags(self):

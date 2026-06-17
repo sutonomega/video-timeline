@@ -17,7 +17,13 @@ from .frame_summarizer import (
     save_frame_summary_json,
     summarize_frames_with_ollama,
 )
-from .app_config import load_app_config, resolve_export_html_paths, resolve_video_run_paths
+from .app_config import (
+    load_app_config,
+    resolve_clip_paths,
+    resolve_export_html_paths,
+    resolve_timeline_json_path,
+    resolve_video_run_paths,
+)
 from .timeline_generator import build_timeline
 from .timeline_html_exporter import export_timeline_html_file
 from .timeline_searcher import format_search_result, search_timeline_file
@@ -101,12 +107,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--frames-dir", default=DEFAULT_FRAMES_DIR, help="抽出フレームの保存先")
     parser.add_argument("--vl-model", default=DEFAULT_VL_MODEL, help=f"フレーム要約に使うOllamaモデル。既定値は{DEFAULT_VL_MODEL}")
-    parser.add_argument(
-        "--storage-mode",
-        choices=("local", "server"),
-        default="local",
-        help="JSONに記録する保存先の種別。既定値はlocal",
-    )
     return parser
 
 
@@ -167,11 +167,18 @@ def run_clip(args: argparse.Namespace) -> Path | list[Path]:
     if has_range and (args.start_index is None or args.end_index is None):
         raise ValueError("--start-indexと--end-indexは両方指定してください")
 
+    timeline_json, output_path = resolve_clip_paths(
+        args.timeline_json,
+        args.output,
+        output_is_directory=not has_single_index,
+        config=load_app_config(),
+    )
+
     if has_single_index:
         return clip_timeline_entry(
-            args.timeline_json,
+            timeline_json,
             index=args.index,
-            output_path=args.output,
+            output_path=output_path,
             padding_seconds=args.padding_seconds,
             accurate=args.accurate,
             crf=args.crf,
@@ -180,9 +187,9 @@ def run_clip(args: argparse.Namespace) -> Path | list[Path]:
 
     if has_tag:
         return clip_timeline_entries_by_tag(
-            args.timeline_json,
+            timeline_json,
             tag=args.tag,
-            output_dir=args.output,
+            output_dir=output_path,
             padding_seconds=args.padding_seconds,
             accurate=args.accurate,
             crf=args.crf,
@@ -190,10 +197,10 @@ def run_clip(args: argparse.Namespace) -> Path | list[Path]:
         )
 
     return clip_timeline_entry_range(
-        args.timeline_json,
+        timeline_json,
         start_index=args.start_index,
         end_index=args.end_index,
-        output_dir=args.output,
+        output_dir=output_path,
         padding_seconds=args.padding_seconds,
         accurate=args.accurate,
         crf=args.crf,
@@ -202,7 +209,8 @@ def run_clip(args: argparse.Namespace) -> Path | list[Path]:
 
 
 def run_search(args: argparse.Namespace) -> list[str]:
-    return [format_search_result(result) for result in search_timeline_file(args.timeline_json, args.query)]
+    timeline_json = resolve_timeline_json_path(args.timeline_json, load_app_config())
+    return [format_search_result(result) for result in search_timeline_file(timeline_json, args.query)]
 
 
 def run_export_html(args: argparse.Namespace) -> Path:
@@ -221,7 +229,6 @@ def run_video(
     interval_seconds: float,
     *,
     isolate_frames: bool = True,
-    storage_mode: str = "local",
     vl_model: str = DEFAULT_VL_MODEL,
 ) -> Path:
     print_progress("動画メタデータ取得中")
@@ -248,7 +255,6 @@ def run_video(
         video=video,
         analysis=AnalysisMetadata(interval_seconds=interval_seconds, vl_model=vl_model),
         storage=StorageMetadata(
-            mode=storage_mode,
             video_path=video.path,
             frames_dir=str(actual_frames_dir),
             timeline_path=str(output_path),
@@ -282,7 +288,6 @@ def run_batch(args: argparse.Namespace) -> tuple[int, int]:
                 video_dir / "frames",
                 args.interval_seconds,
                 isolate_frames=False,
-                storage_mode=args.storage_mode,
                 vl_model=args.vl_model,
             )
         except Exception as exc:
@@ -305,11 +310,12 @@ def run(args: argparse.Namespace) -> Path | tuple[int, int]:
     if args.input is None:
         raise ValueError("inputまたは--input-dirが必要です")
 
+    config = load_app_config()
     input_path, output_path, frames_dir = resolve_video_run_paths(
         args.input,
         args.output,
         args.frames_dir,
-        load_app_config(),
+        config,
     )
     if output_path is None:
         raise ValueError("--outputが必要です")
@@ -319,7 +325,6 @@ def run(args: argparse.Namespace) -> Path | tuple[int, int]:
         output_path,
         frames_dir,
         args.interval_seconds,
-        storage_mode=args.storage_mode,
         vl_model=args.vl_model,
     )
 

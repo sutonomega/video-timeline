@@ -77,16 +77,12 @@ class AnalysisMetadata:
 
 @dataclass(frozen=True)
 class StorageMetadata:
-    mode: str
     video_path: str
     frames_dir: str
     timeline_path: str
 
     def to_dict(self) -> dict[str, str]:
-        if self.mode not in ("local", "server"):
-            raise FrameSummarizerError(f"不正なstorage modeです: {self.mode}")
         return {
-            "mode": self.mode,
             "video_path": self.video_path,
             "frames_dir": self.frames_dir,
             "timeline_path": self.timeline_path,
