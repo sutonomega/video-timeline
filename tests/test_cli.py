@@ -128,6 +128,21 @@ class CliTest(unittest.TestCase):
 
         with TemporaryDirectory() as directory:
             output_path = Path(directory) / "timeline.json"
+            transcript_path = Path(directory) / "transcript.json"
+            transcript_path.write_text(
+                json.dumps(
+                    [
+                        {
+                            "start_seconds": 1.0,
+                            "end_seconds": 3.5,
+                            "text": "仕様を確認しています",
+                            "speaker": "user",
+                        }
+                    ],
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
             with (
                 patch("video_timeline.cli.load_video_metadata", return_value=video) as load_video,
                 patch("video_timeline.cli.safe_detect_scene_boundaries", return_value=scene_boundaries) as detect_scenes,
@@ -148,6 +163,8 @@ class CliTest(unittest.TestCase):
                             "custom_frames",
                             "--vl-model",
                             "custom-vl:latest",
+                            "--transcript-json",
+                            str(transcript_path),
                         ]
                     )
 
@@ -166,6 +183,7 @@ class CliTest(unittest.TestCase):
         build_timeline.assert_called_once_with(summaries, video)
         detect_events.assert_called_once_with(timeline)
         self.assertIn("動画メタデータ取得中", output)
+        self.assertIn("音声文字起こし読み込み中", output)
         self.assertIn("フレーム抽出中", output)
         self.assertIn("フレーム要約中", output)
         self.assertIn("タイムライン生成中", output)
@@ -188,6 +206,18 @@ class CliTest(unittest.TestCase):
         self.assertEqual(
             saved["scene_boundaries"],
             [{"time_seconds": 8.0, "source": "ffmpeg_scene", "score": 0.55}],
+        )
+        self.assertEqual(
+            saved["transcripts"],
+            [
+                {
+                    "start_seconds": 1.0,
+                    "end_seconds": 3.5,
+                    "text": "仕様を確認しています",
+                    "source": "external_asr",
+                    "speaker": "user",
+                }
+            ],
         )
         self.assertEqual(
             saved["timeline"],
@@ -243,6 +273,7 @@ class CliTest(unittest.TestCase):
             Path("/mnt/video-timeline/frames"),
             10,
             vl_model="gemma3:12b",
+            transcript_json=None,
         )
         self.assertIn("wrote /mnt/video-timeline/timelines/timeline-sample1.json", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
@@ -265,6 +296,7 @@ class CliTest(unittest.TestCase):
             Path("/mnt/video-timeline/frames"),
             10,
             vl_model="gemma3:12b",
+            transcript_json=None,
         )
         self.assertIn("wrote /mnt/video-timeline/timelines/sample1.json", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
@@ -655,6 +687,7 @@ class CliTest(unittest.TestCase):
             5.0,
             isolate_frames=False,
             vl_model="custom-vl:latest",
+            transcript_json=None,
         )
         run_video.assert_any_call(
             second,
@@ -663,6 +696,7 @@ class CliTest(unittest.TestCase):
             5.0,
             isolate_frames=False,
             vl_model="custom-vl:latest",
+            transcript_json=None,
         )
         self.assertIn("batch complete: success=2 failure=0", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
@@ -692,6 +726,7 @@ class CliTest(unittest.TestCase):
             10.0,
             isolate_frames=False,
             vl_model="gemma3:12b",
+            transcript_json=None,
         )
         self.assertIn("batch complete: success=1 failure=0", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
@@ -717,6 +752,19 @@ class CliTest(unittest.TestCase):
 
         self.assertEqual(exit_code, 1)
         self.assertIn("error: --batchまたは--input-dirを使う場合は--output-dirが必要です", stderr.getvalue())
+
+    def test_batch_cli_rejects_transcript_json(self):
+        with (
+            patch("video_timeline.cli.load_app_config", return_value=None),
+            patch("video_timeline.cli.run_video") as run_video,
+            patch("sys.stdout", new_callable=io.StringIO),
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["--batch", "--input-dir", "videos", "--output-dir", "timelines", "--transcript-json", "transcript.json"])
+
+        self.assertEqual(exit_code, 1)
+        run_video.assert_not_called()
+        self.assertIn("--transcript-jsonはbatch CLIでは指定できません", stderr.getvalue())
 
     def test_batch_cli_continues_after_single_video_failure(self):
         first = Path("/tmp/videos/a/sample.mp4")

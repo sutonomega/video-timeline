@@ -24,6 +24,7 @@ Main Modules
 - video_loader
 - frame_extractor
 - scene_detector
+- transcript_loader
 - frame_summarizer
 - timeline_generator
 - event_detector
@@ -109,6 +110,20 @@ CLIから使う場合は、`--frames-dir`をベースディレクトリとして
 - 検出失敗時は動画解析全体を止めず、空の `scene_boundaries` として扱えるようにする
 
 `scene_boundaries` は `frame_summaries`、`timeline`、`events` と同じJSON内のトップレベル配列として保存する。`timeline` は引き続き summary / tags の類似度で生成し、scene boundary は「この時刻で画面が大きく変わった可能性がある」という補助情報に留める。scene boundary だけで timeline を分割すること、シーン境界をイベントと同一視すること、VL要約なしで動画内容を理解した扱いにすることは非目標とする。
+
+## transcript_loader
+
+責務:
+
+- 外部ASRや手動生成されたtranscript JSONを読み込む
+- `start_seconds`、`end_seconds`、`text`、`source`、任意の`speaker`を持つ `transcripts` を生成する
+- `transcripts` は timeline 生成の主判断には使わず、発話や環境音の補助情報として保存する
+- `timeline` や `events` とは時刻の重なりで後から紐づけられる形にする
+- 読み込めないJSON、必須項目がないsegment、不正な時刻範囲はエラーにする
+
+`transcripts` は `scene_boundaries` と同じ補助情報として、JSON内のトップレベル配列に保存する。現時点ではローカルASRモデルの実行、音声抽出、transcriptを使ったtimeline分割、transcriptからのイベント重要度判定は行わない。MVP後の拡張として、`--transcript-json` で外部ASR結果を読み込み、既存のVLフレーム要約、timeline、eventsと同じ生成JSONに同梱する。ローカルASR候補は Whisper 系、faster-whisper、whisper.cpp のような単体実行可能なものを後続で検討する。
+
+入力JSONは、トップレベル配列、`{"transcripts":[...]}`、またはWhisper系に多い `{"segments":[...]}` を受け入れる。標準形では `start_seconds` / `end_seconds` を使い、`segments` 互換では `start` / `end` も読み取る。`source` がない場合は `external_asr` として保存する。
 
 ## storage metadata
 
