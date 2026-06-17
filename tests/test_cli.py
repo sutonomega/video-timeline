@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from video_timeline.cli import (
     FrameSummarizationProgress,
+    SceneDetectionProgress,
     build_batch_video_dir,
     build_run_frames_dir,
     discover_mp4_files,
@@ -50,6 +51,17 @@ class CliTest(unittest.TestCase):
         output = stdout.getvalue()
         self.assertIn("frame summarization started: 1/2 (0s, remaining: calculating)", output)
         self.assertIn("frame summarization started: 2/2 (10s, remaining: 30s)", output)
+
+    def test_scene_detection_progress_reports_processed_time_and_percent(self):
+        with patch("sys.stdout", new_callable=io.StringIO) as stdout:
+            progress = SceneDetectionProgress(duration_seconds=600.0)
+            progress(80.0)
+            progress(80.4)
+            progress(120.0)
+
+        output = stdout.getvalue()
+        self.assertIn("scene detection progress: 01:20/10:00 (13%)", output)
+        self.assertEqual(output.count("scene detection progress"), 2)
 
     def test_build_run_frames_dir_appends_video_stem_and_path_hash(self):
         run_dir = build_run_frames_dir("videos/demo.mp4", "frames")
@@ -173,7 +185,7 @@ class CliTest(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         load_video.assert_called_once_with("input.mp4")
-        detect_scenes.assert_called_once_with(video.path)
+        detect_scenes.assert_called_once_with(video.path, progress=ANY)
         extract.assert_called_once_with(
             video,
             frames_dir=build_run_frames_dir(video.path, "custom_frames"),

@@ -4,10 +4,12 @@ from dataclasses import dataclass
 from pathlib import Path
 import re
 import subprocess
+from typing import Callable
 
 
 DEFAULT_SCENE_THRESHOLD = 0.4
 SCENE_DETECTOR_SOURCE = "ffmpeg_scene"
+SceneDetectionProgress = Callable[[float], None]
 
 
 class SceneDetectorError(ValueError):
@@ -33,6 +35,7 @@ class SceneBoundary:
 def detect_scene_boundaries(
     video_path: str | Path,
     threshold: float = DEFAULT_SCENE_THRESHOLD,
+    progress: SceneDetectionProgress | None = None,
 ) -> list[SceneBoundary]:
     if threshold < 0.0 or threshold > 1.0:
         raise SceneDetectorError("scene thresholdは0.0から1.0の範囲で指定してください。")
@@ -40,6 +43,9 @@ def detect_scene_boundaries(
     command = [
         "ffmpeg",
         "-hide_banner",
+        "-nostats",
+        "-progress",
+        "pipe:1",
         "-i",
         str(video_path),
         "-vf",
@@ -48,22 +54,38 @@ def detect_scene_boundaries(
         "null",
         "-",
     ]
+    output_lines: list[str] = []
     try:
-        completed = subprocess.run(command, capture_output=True, text=True, check=True)
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
     except FileNotFoundError as exc:
         raise SceneDetectorError("ffmpegが見つかりません。") from exc
-    except subprocess.CalledProcessError as exc:
-        raise SceneDetectorError(f"scene boundaryを検出できません: {video_path}") from exc
 
-    return parse_ffmpeg_scene_metadata(f"{completed.stdout}\n{completed.stderr}")
+    if process.stdout is not None:
+        for line in process.stdout:
+            output_lines.append(line)
+            processed_seconds = parse_ffmpeg_progress_time(line)
+            if progress is not None and processed_seconds is not None:
+                progress(processed_seconds)
+
+    return_code = process.wait()
+    if return_code != 0:
+        raise SceneDetectorError(f"scene boundaryを検出できません: {video_path}")
+
+    return parse_ffmpeg_scene_metadata("".join(output_lines))
 
 
 def safe_detect_scene_boundaries(
     video_path: str | Path,
     threshold: float = DEFAULT_SCENE_THRESHOLD,
+    progress: SceneDetectionProgress | None = None,
 ) -> list[SceneBoundary]:
     try:
-        return detect_scene_boundaries(video_path, threshold=threshold)
+        return detect_scene_boundaries(video_path, threshold=threshold, progress=progress)
     except SceneDetectorError:
         return []
 
@@ -90,6 +112,17 @@ def parse_ffmpeg_scene_metadata(output: str) -> list[SceneBoundary]:
         boundaries.append(SceneBoundary(time_seconds=pending_time, score=pending_score))
 
     return _deduplicate_boundaries(boundaries)
+
+
+def parse_ffmpeg_progress_time(line: str) -> float | None:
+    progress_match = re.search(r"^out_time=([0-9]+):([0-9]+):([0-9]+(?:\.[0-9]+)?)$", line.strip())
+    if not progress_match:
+        return None
+
+    hours = int(progress_match.group(1))
+    minutes = int(progress_match.group(2))
+    seconds = float(progress_match.group(3))
+    return hours * 3600 + minutes * 60 + seconds
 
 
 def _deduplicate_boundaries(boundaries: list[SceneBoundary]) -> list[SceneBoundary]:

@@ -28,7 +28,7 @@ from .app_config import (
 )
 from .timeline_generator import build_timeline
 from .timeline_html_exporter import export_timeline_html_file
-from .timeline_searcher import format_search_result, search_timeline_file
+from .timeline_searcher import format_search_result, format_timestamp, search_timeline_file
 from .transcript_loader import load_transcript_segments
 from .video_clipper import clip_timeline_entries_by_tag, clip_timeline_entry, clip_timeline_entry_range
 from .video_loader import load_video_metadata
@@ -74,6 +74,30 @@ def format_duration(seconds: int) -> str:
 
     hours, remaining_minutes = divmod(minutes, 60)
     return f"{hours}h {remaining_minutes}m {remaining_seconds}s"
+
+
+class SceneDetectionProgress:
+    def __init__(self, duration_seconds: float) -> None:
+        self.duration_seconds = max(duration_seconds, 0.0)
+        self.last_reported_second: int | None = None
+
+    def __call__(self, processed_seconds: float) -> None:
+        current_second = int(processed_seconds)
+        if self.last_reported_second == current_second:
+            return
+        self.last_reported_second = current_second
+
+        if self.duration_seconds <= 0:
+            print_progress(f"scene detection progress: {format_timestamp(current_second)}")
+            return
+
+        bounded_second = min(current_second, int(self.duration_seconds))
+        percent = min(100, round((bounded_second / self.duration_seconds) * 100))
+        print_progress(
+            "scene detection progress: "
+            f"{format_timestamp(bounded_second)}/{format_timestamp(self.duration_seconds)} "
+            f"({percent}%)"
+        )
 
 
 def build_run_frames_dir(video_path: str | Path, frames_dir: str | Path) -> Path:
@@ -240,7 +264,10 @@ def run_video(
     print_progress("動画メタデータ取得中")
     video = load_video_metadata(input_path)
     print_progress("シーン境界検出中")
-    scene_boundaries = safe_detect_scene_boundaries(video.path)
+    scene_boundaries = safe_detect_scene_boundaries(
+        video.path,
+        progress=SceneDetectionProgress(video.duration_seconds),
+    )
     if transcript_json is not None:
         print_progress("音声文字起こし読み込み中")
     transcripts = load_transcript_segments(transcript_json)
