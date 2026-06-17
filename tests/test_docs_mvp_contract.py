@@ -215,6 +215,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("app_config", architecture)
         self.assertIn("AppConfig", architecture)
         self.assertIn("StoragePathConfig", architecture)
+        self.assertIn("timeline_json_path()", architecture)
+        self.assertIn("html_output_path()", architecture)
         self.assertIn("親ディレクトリへ向かって", architecture)
 
     def test_architecture_defines_storage_metadata_contract(self):

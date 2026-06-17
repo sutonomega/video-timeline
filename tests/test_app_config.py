@@ -64,6 +64,12 @@ class AppConfigTest(unittest.TestCase):
         assert config is not None
         self.assertEqual(config.storage.storage_root, Path("/mnt/video-timeline"))
 
+    def test_app_config_exposes_common_storage_paths(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        self.assertEqual(config.timeline_json_path("sample1"), Path("/mnt/video-timeline/timelines/sample1.json"))
+        self.assertEqual(config.html_output_path("sample1"), Path("/mnt/video-timeline/html/sample1.html"))
+
     def test_resolve_export_html_paths_uses_basename_with_config(self):
         config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
 

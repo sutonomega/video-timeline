@@ -52,6 +52,12 @@ class AppConfig:
 
         return cls(storage=StoragePathConfig.from_mapping(storage))
 
+    def timeline_json_path(self, name: str) -> Path:
+        return self.storage.timeline_json_path(name)
+
+    def html_output_path(self, name: str) -> Path:
+        return self.storage.html_output_path(name)
+
 
 def _read_dir_name(payload: Mapping[str, object], key: str, default: str) -> str:
     value = payload.get(key, default)
@@ -92,7 +98,7 @@ def resolve_export_html_paths(
         raise ValueError("--outputが必要です")
 
     name = timeline_path.stem if timeline_path.suffix == ".json" else timeline_path.name
-    return config.storage.timeline_json_path(name), config.storage.html_output_path(name)
+    return config.timeline_json_path(name), config.html_output_path(name)
 
 
 def _default_config_dirs() -> list[Path]:
