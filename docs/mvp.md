@@ -65,7 +65,7 @@ PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir
 PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --output clip.mp4
 ```
 
-`storage` 情報を持つサーバー保存済み `timeline.json` では、`--output` を省略すると `storage.timeline_path` から共有配下の `clips/` を推定して保存する。
+`storage` 情報を持つ共有ストレージ上の `timeline.json` では、`--output` を省略すると `storage.timeline_path` から共有配下の `clips/` を推定して保存する。
 
 ```bash
 PYTHONPATH=src python3 -m video_timeline.cli clip /mnt/video-timeline/timelines/sample.json --index 3
@@ -103,7 +103,7 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html sample1-gemma312b
 PYTHONPATH=src python3 -m video_timeline.cli export-html timeline.json --output timeline.html
 ```
 
-既存互換として、サーバー上の保存場所を参照情報として残す場合は、入力動画、`--output`、`--frames-dir` にサーバー上のパスを渡し、`--storage-mode server` を指定できる。
+既存互換として、共有ストレージ上の保存場所を参照情報として残す場合は、入力動画、`--output`、`--frames-dir` に共有ストレージ上のパスを渡し、`--storage-mode server` を指定できる。ここでの `server` はファイルを転送する機能ではなく、このパスが共有ストレージ上の参照先であることを示す既存メタデータ値として扱う。
 
 ```bash
 PYTHONPATH=src python3 -m video_timeline.cli /mnt/video-timeline/videos/input.mp4 --output /mnt/video-timeline/timelines/input.json --frames-dir /mnt/video-timeline/frames --storage-mode server
@@ -125,7 +125,7 @@ python -m video_timeline.cli "\\192.168.10.112\video-timeline\videos\input.mp4" 
 - `--output-dir`: 一括解析結果の保存先ベースディレクトリ
 - `--interval-seconds`: フレーム抽出間隔。既定値は`10`
 - `--frames-dir`: 抽出フレームの保存先ベースディレクトリ。既定値は`frames`
-- `--storage-mode`: JSONに記録する保存先の種別。`local`または`server`。既定値は`local`
+- `--storage-mode`: JSONに記録する保存先の種別。`local`または既存互換の`server`。既定値は`local`
 - `--vl-model`: フレーム要約に使うOllamaモデル。既定値は`gemma3:12b`
 - `clip timeline.json`: `timeline` の指定区間を元動画から切り出す
 - `clip --index`: 切り出す `timeline` 配列の0始まりindex
@@ -234,9 +234,9 @@ CLIで生成したJSONには、動画、フレーム画像、timeline JSONの参
 }
 ```
 
-`mode` は `local` または `server` とする。`server` はファイルを自動転送する機能ではなく、入力動画、フレーム保存先、timeline保存先がサーバー上のパスであることをJSONに明示するためのメタデータとして扱う。既存のローカル運用では `mode` を `local` とし、従来通り `video.path` と `frame_summaries[].image` から参照できる状態を維持する。
+`mode` は `local` または既存互換の `server` とする。`server` はファイルを自動転送する機能ではなく、入力動画、フレーム保存先、timeline保存先が共有ストレージ上のパスであることをJSONに明示するためのメタデータとして扱う。既存のローカル運用では `mode` を `local` とし、従来通り `video.path` と `frame_summaries[].image` から参照できる状態を維持する。将来的に `video_timeline.toml` の `[storage] root` から共有ストレージを解決する運用へ寄せる場合は、`storage_mode` 自体を不要にすることも検討する。
 
-将来、別PCやサーバー上で同じJSONを扱う場合は、絶対パスだけでなく `storage_root` と相対パスを組み合わせる方式も検討する。例として、`storage_root` を `/data/video-timeline`、`video_path` を `videos/a.mp4`、`frames_dir` を `frames/a_xxxx`、`timeline_path` を `timelines/a.json` のように保存すると、環境ごとの差を `storage_root` に寄せられる。
+将来、別PCや別マウント先で同じJSONを扱う場合は、絶対パスだけでなく `storage.root` と相対パスを組み合わせる方式も検討する。例として、`storage.root` を `/mnt/video-timeline`、`video_path` を `videos/a.mp4`、`frames_dir` を `frames/a_xxxx`、`timeline_path` を `timelines/a.json` のように保存すると、ローカルSSD、外付けSSD、NAS、SMB共有、NFSなどの違いを `storage.root` に寄せられる。
 
 同じ考え方で、clipの保存先を明示したい場合は将来 `storage.clips_dir` を追加する。現時点では、共有ルート直下に `timelines` と `clips` を兄弟ディレクトリとして置くMVP運用を前提に、`storage.timeline_path` から `clips/` を推定する。
 

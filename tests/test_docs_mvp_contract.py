@@ -191,9 +191,9 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("--tag", architecture)
         self.assertIn("timeline_000003.mp4", architecture)
         self.assertIn("/mnt/video-timeline/clips/", architecture)
-        self.assertIn("サーバープロセス", architecture)
+        self.assertIn("常駐プロセス", architecture)
         self.assertIn("storage.clips_dir", architecture)
-        self.assertIn("storage_root", architecture)
+        self.assertIn("storage.root", architecture)
         self.assertIn("完全一致", architecture)
         self.assertIn("複数index", architecture)
 
@@ -239,7 +239,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("ファイル転送やコピーを行うものではなく", architecture)
         self.assertIn("\\\\192.168.10.112\\video-timeline", architecture)
         self.assertIn("clips", architecture)
-        self.assertIn("storage_root", architecture)
+        self.assertIn("共有ストレージ上のパス", architecture)
+        self.assertIn("不要になる可能性", architecture)
         self.assertIn("相対パス", architecture)
 
     def test_architecture_defines_frame_summary_tags(self):
@@ -311,8 +312,8 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("[x] accurateなtimeline切り出しモードを追加する（#46）", roadmap)
         self.assertIn("[x] accurate切り出しの画質と速度を指定できるようにする（#53）", roadmap)
         self.assertIn("[x] timeline index範囲をまとめて切り出せるようにする（#47）", roadmap)
-        self.assertIn("[x] 動画とフレーム画像の保存先を外部ストレージ対応にする（#37）", roadmap)
-        self.assertIn("[x] サーバー上でtimeline区間の動画切り出しを実行できるようにする（#38）", roadmap)
+        self.assertIn("[x] 動画とフレーム画像の保存先を共有ストレージ対応にする（#37）", roadmap)
+        self.assertIn("[x] 共有ストレージ上でtimeline区間の動画切り出しを実行できるようにする（#38）", roadmap)
         self.assertIn("[x] VLタグを事前定義タグとprimary_tagへ寄せる（#48）", roadmap)
         self.assertIn("[x] timeline検索CLIを追加する（#49）", roadmap)
         self.assertIn("[x] タグ別クリップ生成CLIを追加する（#50）", roadmap)
