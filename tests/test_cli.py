@@ -21,6 +21,7 @@ from video_timeline.cli import (
 from video_timeline.event_detector import EventCandidate
 from video_timeline.frame_extractor import ExtractedFrame
 from video_timeline.frame_summarizer import FrameSummary
+from video_timeline.scene_detector import SceneBoundary
 from video_timeline.app_config import AppConfig, StoragePathConfig
 from video_timeline.timeline_generator import TimelineEntry
 from video_timeline.video_loader import VideoMetadata
@@ -123,11 +124,13 @@ class CliTest(unittest.TestCase):
                 importance_score=0.21,
             )
         ]
+        scene_boundaries = [SceneBoundary(time_seconds=8.0, score=0.55)]
 
         with TemporaryDirectory() as directory:
             output_path = Path(directory) / "timeline.json"
             with (
                 patch("video_timeline.cli.load_video_metadata", return_value=video) as load_video,
+                patch("video_timeline.cli.safe_detect_scene_boundaries", return_value=scene_boundaries) as detect_scenes,
                 patch("video_timeline.cli.extract_frames", return_value=frames) as extract,
                 patch("video_timeline.cli.summarize_frames_with_ollama", return_value=summaries) as summarize,
                 patch("video_timeline.cli.build_timeline", return_value=timeline) as build_timeline,
@@ -153,6 +156,7 @@ class CliTest(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         load_video.assert_called_once_with("input.mp4")
+        detect_scenes.assert_called_once_with(video.path)
         extract.assert_called_once_with(
             video,
             frames_dir=build_run_frames_dir(video.path, "custom_frames"),
@@ -181,6 +185,10 @@ class CliTest(unittest.TestCase):
             },
         )
         self.assertEqual(saved["frame_summaries"][0]["summary"], "ChatGPTで仕様相談をしている")
+        self.assertEqual(
+            saved["scene_boundaries"],
+            [{"time_seconds": 8.0, "source": "ffmpeg_scene", "score": 0.55}],
+        )
         self.assertEqual(
             saved["timeline"],
             [

@@ -17,6 +17,7 @@ from .frame_summarizer import (
     save_frame_summary_json,
     summarize_frames_with_ollama,
 )
+from .scene_detector import safe_detect_scene_boundaries
 from .app_config import (
     load_app_config,
     resolve_batch_paths,
@@ -235,6 +236,8 @@ def run_video(
 ) -> Path:
     print_progress("動画メタデータ取得中")
     video = load_video_metadata(input_path)
+    print_progress("シーン境界検出中")
+    scene_boundaries = safe_detect_scene_boundaries(video.path)
     print_progress("フレーム抽出中")
     actual_frames_dir = build_run_frames_dir(video.path, frames_dir) if isolate_frames else Path(frames_dir)
     frames = extract_frames(
@@ -261,6 +264,7 @@ def run_video(
             frames_dir=str(actual_frames_dir),
             timeline_path=str(output_path),
         ),
+        scene_boundaries=scene_boundaries,
         frame_summaries=frame_summaries,
         timeline=timeline,
         events=events,
