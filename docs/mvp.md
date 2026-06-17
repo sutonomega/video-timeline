@@ -51,7 +51,7 @@ clips_dir = "clips"
 html_dir = "html"
 ```
 
-現在のMVPでは、動画解析CLI、`search`、`clip`、`export-html` の短縮指定が設定ファイルを参照する。batchの入力解決はまだ既存CLI引数を使うが、後続で同じ `video_timeline.toml` に寄せる。
+現在のMVPでは、動画解析CLI、`search`、`clip`、`export-html`、batch CLI の短縮指定が設定ファイルを参照する。
 
 CLI引数とTOML設定の優先順位は次の通りとする。
 
@@ -59,7 +59,7 @@ CLI引数とTOML設定の優先順位は次の通りとする。
 2. ファイル名だけの指定で `video_timeline.toml` が見つかる場合は、`storage.root` と各ディレクトリ設定から解決する。
 3. ファイル名だけの指定で `video_timeline.toml` がない場合は、従来通りカレントディレクトリ基準の通常パスとして扱う。ただし動画解析で `--output` を省略できるのは設定ファイルがある場合だけとする。
 4. CLI引数とTOMLが同じ種類の値を指定できる場合は、CLI引数を優先する。
-5. batch CLIは現時点では `--input-dir` と `--output-dir` を明示する運用を維持する。
+5. batch CLIは `--input-dir` を必須とする。`video_timeline.toml` がある場合、短い `--input-dir` と `--output-dir` は `storage.root` 配下へ解決し、`--output-dir` 省略時は `<storage.root>/<storage.timelines_dir>` を使う。設定ファイルがない場合は従来通り `--output-dir` を必須にする。
 
 動画解析とHTML出力は別コマンドとして実行する。1つ目のコマンドで `timelines/` にJSONを生成し、2つ目の `export-html` でそのJSONをHTMLへ変換する。`input` がファイル名だけで `--output` を省略した場合、入力動画は `<storage.root>/<videos_dir>/`、出力JSONは動画ファイル名のstemを使って `<storage.root>/<timelines_dir>/` に解決する。
 
@@ -77,6 +77,14 @@ PYTHONPATH=src python3 -m video_timeline.cli export-html sample1
 ```bash
 PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir timelines
 ```
+
+`video_timeline.toml` がある共有ストレージ運用では、短いディレクトリ名を `storage.root` 配下へ解決する。次の例では入力ディレクトリを `/mnt/video-timeline/videos`、出力ベースディレクトリを `/mnt/video-timeline/timelines` として扱う。
+
+```bash
+PYTHONPATH=src python3 -m video_timeline.cli --input-dir videos
+```
+
+batchの出力は通常CLIの `timelines/sample1.json` には寄せず、同名動画の衝突を避けるため `/mnt/video-timeline/timelines/<video_stem>_<path_hash>/timeline.json` と `/mnt/video-timeline/timelines/<video_stem>_<path_hash>/frames/` に保存する。
 
 生成済み `timeline.json` の指定区間を切り出す場合は `clip` サブコマンドを使う。
 

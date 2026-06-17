@@ -615,6 +615,7 @@ class CliTest(unittest.TestCase):
         second = Path("/tmp/videos/b/sample.mp4")
 
         with (
+            patch("video_timeline.cli.load_app_config", return_value=None),
             patch("video_timeline.cli.discover_mp4_files", return_value=[first, second]) as discover,
             patch(
                 "video_timeline.cli.run_video",
@@ -658,6 +659,46 @@ class CliTest(unittest.TestCase):
         self.assertIn("batch complete: success=2 failure=0", stdout.getvalue())
         self.assertEqual(stderr.getvalue(), "")
 
+    def test_batch_cli_resolves_simple_dirs_with_app_config(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+        first = Path("/mnt/video-timeline/videos/a/sample.mp4")
+
+        with (
+            patch("video_timeline.cli.load_app_config", return_value=config),
+            patch("video_timeline.cli.discover_mp4_files", return_value=[first]) as discover,
+            patch(
+                "video_timeline.cli.run_video",
+                side_effect=lambda _input, output, *_args, **_kwargs: Path(output),
+            ) as run_video,
+            patch("sys.stdout", new_callable=io.StringIO) as stdout,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["--input-dir", "videos"])
+
+        self.assertEqual(exit_code, 0)
+        discover.assert_called_once_with(Path("/mnt/video-timeline/videos"))
+        run_video.assert_called_once_with(
+            first,
+            build_batch_video_dir(first, Path("/mnt/video-timeline/timelines")) / "timeline.json",
+            build_batch_video_dir(first, Path("/mnt/video-timeline/timelines")) / "frames",
+            10.0,
+            isolate_frames=False,
+            vl_model="gemma3:12b",
+        )
+        self.assertIn("batch complete: success=1 failure=0", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_batch_cli_requires_output_dir_without_app_config(self):
+        with (
+            patch("video_timeline.cli.load_app_config", return_value=None),
+            patch("sys.stdout", new_callable=io.StringIO),
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            exit_code = main(["--input-dir", "videos"])
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("error: --input-dirを使う場合は--output-dirが必要です", stderr.getvalue())
+
     def test_batch_cli_continues_after_single_video_failure(self):
         first = Path("/tmp/videos/a/sample.mp4")
         second = Path("/tmp/videos/b/sample.mp4")
@@ -668,6 +709,7 @@ class CliTest(unittest.TestCase):
             return Path(output_path)
 
         with (
+            patch("video_timeline.cli.load_app_config", return_value=None),
             patch("video_timeline.cli.discover_mp4_files", return_value=[first, second]),
             patch("video_timeline.cli.run_video", side_effect=run_video_side_effect) as run_video,
             patch("sys.stdout", new_callable=io.StringIO) as stdout,

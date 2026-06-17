@@ -38,7 +38,9 @@ class DocsMvpContractTest(unittest.TestCase):
             "明示パス",
             "ファイル名だけ",
             "CLI引数を優先",
-            "batch CLIは現時点では `--input-dir` と `--output-dir` を明示する運用",
+            "batch CLIは `--input-dir` を必須",
+            "`--output-dir` 省略時は `<storage.root>/<storage.timelines_dir>` を使う",
+            "設定ファイルがない場合は従来通り `--output-dir` を必須",
             "`AppConfig`",
             "`StoragePathConfig`",
             "カレントディレクトリから親ディレクトリへ向かって探索",
@@ -280,7 +282,12 @@ class DocsMvpContractTest(unittest.TestCase):
         self.assertIn("CLI引数とTOML設定の優先順位", architecture)
         self.assertIn("明示パス", architecture)
         self.assertIn("CLI引数を優先", architecture)
-        self.assertIn("batch CLIは現時点では `--input-dir` と `--output-dir` を明示する運用", architecture)
+        self.assertIn("batch CLIは `--input-dir` を必須", architecture)
+        self.assertIn("短い `--input-dir videos`", architecture)
+        self.assertIn("短い `--output-dir timelines`", architecture)
+        self.assertIn("動画別ディレクトリを維持", architecture)
+        self.assertIn("通常CLIは1本の動画を対象", architecture)
+        self.assertIn("batch CLIは複数動画を対象", architecture)
         self.assertIn("即時利用を優先", architecture)
         self.assertIn("`storage.root` と `videos/sample.mp4`", architecture)
         self.assertIn("StoragePathConfig` は `[storage]` だけを表す値オブジェクト", architecture)

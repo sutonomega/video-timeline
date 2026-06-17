@@ -55,6 +55,9 @@ class StoragePathConfig:
     def frames_directory_path(self) -> Path:
         return self.storage_root / self.frames_dir
 
+    def directory_path(self, name: str | Path) -> Path:
+        return self.storage_root / Path(name).name
+
 
 @dataclass(frozen=True)
 class AppConfig:
@@ -85,6 +88,9 @@ class AppConfig:
 
     def frames_directory_path(self) -> Path:
         return self.storage.frames_directory_path()
+
+    def directory_path(self, name: str | Path) -> Path:
+        return self.storage.directory_path(name)
 
 
 def _read_dir_name(payload: Mapping[str, object], key: str, default: str) -> str:
@@ -204,6 +210,30 @@ def resolve_video_run_paths(
         config.timeline_json_path(output_name),
         resolved_frames_dir,
     )
+
+
+def resolve_batch_paths(
+    input_dir: str | Path,
+    output_dir: str | Path | None,
+    config: AppConfig | None,
+) -> tuple[str | Path, str | Path | None]:
+    if config is None:
+        return input_dir, output_dir
+
+    input_candidate = Path(input_dir)
+    resolved_input: str | Path
+    if _is_simple_filename(input_candidate):
+        resolved_input = config.directory_path(input_candidate)
+    else:
+        resolved_input = input_dir
+
+    if output_dir is None:
+        return resolved_input, config.directory_path(config.storage.timelines_dir)
+
+    output_candidate = Path(output_dir)
+    if _is_simple_filename(output_candidate):
+        return resolved_input, config.directory_path(output_candidate)
+    return resolved_input, output_dir
 
 
 def _default_config_dirs() -> list[Path]:
