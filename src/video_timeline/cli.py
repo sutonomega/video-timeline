@@ -19,6 +19,7 @@ from .frame_summarizer import (
 )
 from .app_config import (
     load_app_config,
+    resolve_batch_paths,
     resolve_clip_paths,
     resolve_export_html_paths,
     resolve_timeline_json_path,
@@ -97,6 +98,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generate frame summary JSON from a video.")
     parser.add_argument("input", nargs="?", help="入力動画ファイルのパス")
     parser.add_argument("--output", help="出力JSONファイルのパス")
+    parser.add_argument("--batch", action="store_true", help="設定された入力ディレクトリ配下のmp4を一括解析する")
     parser.add_argument("--input-dir", help="一括解析する入力ディレクトリ")
     parser.add_argument("--output-dir", help="一括解析結果の保存先ベースディレクトリ")
     parser.add_argument(
@@ -268,18 +270,21 @@ def run_video(
     return path
 
 
-def run_batch(args: argparse.Namespace) -> tuple[int, int]:
-    if args.output_dir is None:
-        raise ValueError("--input-dirを使う場合は--output-dirが必要です")
+def run_batch(args: argparse.Namespace, config=None) -> tuple[int, int]:
+    input_dir, output_dir = resolve_batch_paths(args.input_dir, args.output_dir, config)
+    if input_dir is None:
+        raise ValueError("--batchを使う場合はvideo_timeline.tomlまたは--input-dirが必要です")
+    if output_dir is None:
+        raise ValueError("--batchまたは--input-dirを使う場合は--output-dirが必要です")
     if args.input is not None or args.output is not None:
-        raise ValueError("--input-dirを使う場合はinputと--outputは指定できません")
+        raise ValueError("--batchまたは--input-dirを使う場合はinputと--outputは指定できません")
 
     success_count = 0
     failure_count = 0
     processed_count = 0
-    for video_path in discover_mp4_files(args.input_dir):
+    for video_path in discover_mp4_files(input_dir):
         processed_count += 1
-        video_dir = build_batch_video_dir(video_path, args.output_dir)
+        video_dir = build_batch_video_dir(video_path, output_dir)
         print_progress(f"batch video started: {video_path}")
         try:
             output_path = run_video(
@@ -299,18 +304,18 @@ def run_batch(args: argparse.Namespace) -> tuple[int, int]:
         print_progress(f"wrote {output_path}")
 
     if processed_count == 0:
-        raise ValueError(f"mp4が見つかりません: {args.input_dir}")
+        raise ValueError(f"mp4が見つかりません: {input_dir}")
 
     return success_count, failure_count
 
 
 def run(args: argparse.Namespace) -> Path | tuple[int, int]:
-    if args.input_dir is not None:
-        return run_batch(args)
+    config = load_app_config()
+    if args.batch or args.input_dir is not None:
+        return run_batch(args, config)
     if args.input is None:
         raise ValueError("inputまたは--input-dirが必要です")
 
-    config = load_app_config()
     input_path, output_path, frames_dir = resolve_video_run_paths(
         args.input,
         args.output,

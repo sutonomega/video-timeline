@@ -14,6 +14,7 @@ from video_timeline.app_config import (
     load_app_config,
     load_app_config_file,
     resolve_clip_paths,
+    resolve_batch_paths,
     resolve_export_html_paths,
     resolve_video_run_paths,
 )
@@ -198,6 +199,38 @@ class AppConfigTest(unittest.TestCase):
         self.assertEqual(input_path, "/tmp/sample1.mp4")
         self.assertEqual(output_path, "timeline-sample1.json")
         self.assertEqual(frames_dir, "frames")
+
+    def test_resolve_batch_paths_uses_storage_for_simple_dirs(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        input_dir, output_dir = resolve_batch_paths("videos", "timelines", config)
+
+        self.assertEqual(input_dir, Path("/mnt/video-timeline/videos"))
+        self.assertEqual(output_dir, Path("/mnt/video-timeline/timelines"))
+
+    def test_resolve_batch_paths_uses_timelines_dir_when_output_is_omitted(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        input_dir, output_dir = resolve_batch_paths("videos", None, config)
+
+        self.assertEqual(input_dir, Path("/mnt/video-timeline/videos"))
+        self.assertEqual(output_dir, Path("/mnt/video-timeline/timelines"))
+
+    def test_resolve_batch_paths_uses_storage_defaults_when_dirs_are_omitted(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        input_dir, output_dir = resolve_batch_paths(None, None, config)
+
+        self.assertEqual(input_dir, Path("/mnt/video-timeline/videos"))
+        self.assertEqual(output_dir, Path("/mnt/video-timeline/timelines"))
+
+    def test_resolve_batch_paths_keeps_explicit_dirs(self):
+        config = AppConfig(storage=StoragePathConfig(storage_root=Path("/mnt/video-timeline")))
+
+        input_dir, output_dir = resolve_batch_paths("/tmp/videos", "/tmp/timelines", config)
+
+        self.assertEqual(input_dir, "/tmp/videos")
+        self.assertEqual(output_dir, "/tmp/timelines")
 
     def test_load_app_config_file_rejects_absolute_child_dir(self):
         with TemporaryDirectory() as directory:
