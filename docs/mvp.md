@@ -53,6 +53,13 @@ html_dir = "html"
 
 現在のMVPでは `export-html` の短縮指定が設定ファイルを参照する。動画解析、batch、clipの入力解決はまだ既存CLI引数を使うが、後続で同じ `video_timeline.toml` に寄せる。
 
+動画解析とHTML出力は別コマンドとして実行する。1つ目のコマンドで `timelines/` にJSONを生成し、2つ目の `export-html` でそのJSONをHTMLへ変換する。
+
+```bash
+PYTHONPATH=src python3 -m video_timeline.cli /mnt/video-timeline/videos/input.mp4 --output /mnt/video-timeline/timelines/timeline.json --frames-dir /mnt/video-timeline/frames --storage-mode server
+PYTHONPATH=src python3 -m video_timeline.cli export-html timeline
+```
+
 複数動画をまとめて解析する場合は、入力ディレクトリと出力ディレクトリを指定する。
 
 ```bash

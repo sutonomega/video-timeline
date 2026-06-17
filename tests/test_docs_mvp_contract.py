@@ -11,6 +11,7 @@ class DocsMvpContractTest(unittest.TestCase):
 
         required_terms = [
             "PYTHONPATH=src python3 -m video_timeline.cli input.mp4 --output timeline.json",
+            "PYTHONPATH=src python3 -m video_timeline.cli /mnt/video-timeline/videos/input.mp4 --output /mnt/video-timeline/timelines/timeline.json --frames-dir /mnt/video-timeline/frames --storage-mode server",
             "PYTHONPATH=src python3 -m video_timeline.cli --input-dir recordings --output-dir timelines",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --index 3 --output clip.mp4",
             "PYTHONPATH=src python3 -m video_timeline.cli clip timeline.json --start-index 3 --end-index 7 --output clips",
@@ -26,6 +27,7 @@ class DocsMvpContractTest(unittest.TestCase):
             'root = "/mnt/video-timeline"',
             "設定ファイルはTOML、生成物はJSON",
             "TOMLは設定専用、JSONはデータ交換形式",
+            "動画解析とHTML出力は別コマンド",
             "カレントディレクトリから親ディレクトリへ向かって探索",
             "`input`",
             "`--output`",
